@@ -52,8 +52,7 @@ func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
 	return nil
 }
 
-func (g gameService) IsEnded(gb *models.GameBoard) (int, bool) {
-	board := gb.GetBoard()
+func (g gameService) IsEnded(board [][]int) (int, bool) {
 
 	checkBoard := func(board [][]int, fns ...func([][]int) (int, bool)) (int, bool) {
 		for _, fn := range fns {
