@@ -62,7 +62,7 @@ func (g gameService) IsEnded(gb models.GameBoard) (int, bool) {
 		return models.EmptyCage, false
 	}
 
-	return checkBoard(board)
+	return checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck, allCageOccupied)
 }
 
 func horizontalCheck(board [][]int) (int, bool) {
@@ -135,4 +135,19 @@ func diagonalsCheck(board [][]int) (int, bool) {
 	}
 
 	return models.EmptyCage, false
+}
+
+func allCageOccupied(board [][]int) (int, bool) {
+
+	for i := 0; i < len(board); i++ {
+		for j := 0; j < len(board[i]); j++ {
+
+			if board[i][j] == models.EmptyCage {
+
+				return models.EmptyCage, false
+			}
+		}
+	}
+
+	return models.EmptyCage, true
 }
