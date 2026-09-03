@@ -5,6 +5,10 @@ import (
 	"errors"
 )
 
+const (
+	Draw = -1
+)
+
 type repository interface {
 }
 
@@ -59,7 +63,7 @@ func (g gameService) IsEnded(gb models.GameBoard) (int, bool) {
 			}
 		}
 
-		return models.EmptyCage, false
+		return Draw, false
 	}
 
 	return checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck, allCageOccupied)
@@ -83,7 +87,7 @@ func horizontalCheck(board [][]int) (int, bool) {
 		}
 	}
 
-	return models.EmptyCage, false
+	return Draw, false
 }
 
 func verticalCheck(board [][]int) (int, bool) {
@@ -104,7 +108,7 @@ func verticalCheck(board [][]int) (int, bool) {
 		}
 	}
 
-	return models.EmptyCage, false
+	return Draw, false
 }
 
 func diagonalsCheck(board [][]int) (int, bool) {
@@ -134,7 +138,7 @@ func diagonalsCheck(board [][]int) (int, bool) {
 		return cageType, true
 	}
 
-	return models.EmptyCage, false
+	return Draw, false
 }
 
 func allCageOccupied(board [][]int) (int, bool) {
@@ -144,10 +148,10 @@ func allCageOccupied(board [][]int) (int, bool) {
 
 			if board[i][j] == models.EmptyCage {
 
-				return models.EmptyCage, false
+				return Draw, false
 			}
 		}
 	}
 
-	return models.EmptyCage, true
+	return Draw, true
 }
