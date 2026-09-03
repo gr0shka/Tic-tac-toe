@@ -5,7 +5,7 @@ import "sync"
 const (
 	EmptyCage = -1
 
-	countPlayers = 2
+	CountPlayers = 2
 	boardSize    = 3
 )
 
@@ -75,7 +75,7 @@ func (gb *GameBoard) HowIsNextTurn() *Player {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
-	return gb.players[gb.numberOfTurn%countPlayers]
+	return gb.players[gb.numberOfTurn%CountPlayers]
 }
 
 func (gb *GameBoard) NextTurn() {
@@ -90,4 +90,11 @@ func (gb *GameBoard) GetNumberOfTurns() int {
 	defer gb.mu.RUnlock()
 
 	return gb.numberOfTurn
+}
+
+func (gb *GameBoard) SetBoard(board [][]int) {
+	gb.mu.Lock()
+	defer gb.mu.Unlock()
+
+	gb.board = board
 }
