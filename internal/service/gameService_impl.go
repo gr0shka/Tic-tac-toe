@@ -2,6 +2,7 @@ package service
 
 import (
 	"Tic-Tac-Toy/internal/models"
+	"errors"
 )
 
 type repository interface {
@@ -22,9 +23,29 @@ func (g gameService) GetNextTurn(gb models.GameBoard) models.GameBoard {
 	panic("implement me")
 }
 
-func (g gameService) ValidateBoard(oldBoard, newBoard models.GameBoard) error {
-	//TODO implement me
-	panic("implement me")
+func (g gameService) ValidateBoard(oldB, newB models.GameBoard) error {
+	if newB.GetNumberOfTurns() != oldB.GetNumberOfTurns()+1 {
+		return errors.New("wrong number of turns")
+	}
+
+	newBoard := newB.GetBoard()
+	oldBoard := oldB.GetBoard()
+
+	countChangedCage := 0
+	for i := 0; i < len(newBoard); i++ {
+		for j := 0; j < len(newBoard[i]); j++ {
+
+			if newBoard[i][j] != oldBoard[i][j] {
+				countChangedCage++
+			}
+		}
+	}
+
+	if countChangedCage != 1 {
+		return errors.New("wrong number of turns")
+	}
+
+	return nil
 }
 
 func (g gameService) IsEnded(gb models.GameBoard) (int, bool) {
