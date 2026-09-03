@@ -73,3 +73,10 @@ func (gb *GameBoard) NextTurn() {
 
 	gb.numberOfTurn++
 }
+
+func (gb *GameBoard) GetNumberOfTurns() int {
+	gb.mu.RLock()
+	defer gb.mu.RUnlock()
+
+	return gb.numberOfTurn
+}
