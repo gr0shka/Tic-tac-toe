@@ -2,23 +2,33 @@ package models
 
 import "sync"
 
+const (
+	EmptyCage = -1
+
+	countPlayers = 2
+	boardSize    = 3
+)
+
 type GameBoard struct {
-	size     int
-	board    [][]int
-	nextTurn *Player
-	mu       sync.RWMutex
+	board        [][]int
+	numberOfTurn int
+	mu           sync.RWMutex
 }
 
-func NewGameBoard(size int) *GameBoard {
-	board := make([][]int, size)
-	for i := range board {
-		board[i] = make([]int, size)
+func NewGameBoard() *GameBoard {
+	board := make([][]int, boardSize)
+	for i := 0; i < boardSize; i++ {
+		board[i] = make([]int, boardSize)
+
+		for j := 0; j < boardSize; j++ {
+			board[i][j] = EmptyCage
+		}
 	}
 
 	return &GameBoard{
-		size:  size,
-		board: board,
-		mu:    sync.RWMutex{},
+		board:        board,
+		numberOfTurn: 0,
+		mu:           sync.RWMutex{},
 	}
 }
 
@@ -26,7 +36,7 @@ func (gb *GameBoard) Size() int {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
-	return gb.size
+	return boardSize
 }
 
 func (gb *GameBoard) Set(x, y int, v int) {
@@ -48,4 +58,18 @@ func (gb *GameBoard) GetBoard() [][]int {
 	defer gb.mu.RUnlock()
 
 	return gb.board
+}
+
+func (gb *GameBoard) HowIsNextTurn() int {
+	gb.mu.RLock()
+	defer gb.mu.RUnlock()
+
+	return gb.numberOfTurn % countPlayers
+}
+
+func (gb *GameBoard) NextTurn() {
+	gb.mu.Lock()
+	defer gb.mu.Unlock()
+
+	gb.numberOfTurn++
 }
