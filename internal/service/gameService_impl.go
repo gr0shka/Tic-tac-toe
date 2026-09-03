@@ -22,12 +22,12 @@ func NewGameService(rep *repository) *gameService {
 	}
 }
 
-func (g gameService) GetNextTurn(gb models.GameBoard) models.GameBoard {
+func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (g gameService) ValidateBoard(oldB, newB models.GameBoard) error {
+func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
 	if newB.GetNumberOfTurns() != oldB.GetNumberOfTurns()+1 {
 		return errors.New("wrong number of turns")
 	}
@@ -52,7 +52,7 @@ func (g gameService) ValidateBoard(oldB, newB models.GameBoard) error {
 	return nil
 }
 
-func (g gameService) IsEnded(gb models.GameBoard) (int, bool) {
+func (g gameService) IsEnded(gb *models.GameBoard) (int, bool) {
 	board := gb.GetBoard()
 
 	checkBoard := func(board [][]int, fns ...func([][]int) (int, bool)) (int, bool) {
