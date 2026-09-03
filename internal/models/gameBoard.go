@@ -12,6 +12,7 @@ const (
 type GameBoard struct {
 	board        [][]int
 	numberOfTurn int
+	players      []*Player
 	mu           sync.RWMutex
 }
 
@@ -28,7 +29,17 @@ func NewGameBoard() *GameBoard {
 	return &GameBoard{
 		board:        board,
 		numberOfTurn: 0,
+		players:      make([]*Player, 0),
 		mu:           sync.RWMutex{},
+	}
+}
+
+func (gb *GameBoard) AddPlayers(player ...*Player) {
+	gb.mu.Lock()
+	defer gb.mu.Unlock()
+
+	for _, p := range player {
+		gb.players = append(gb.players, p)
 	}
 }
 
@@ -60,11 +71,11 @@ func (gb *GameBoard) GetBoard() [][]int {
 	return gb.board
 }
 
-func (gb *GameBoard) HowIsNextTurn() int {
+func (gb *GameBoard) HowIsNextTurn() *Player {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
-	return gb.numberOfTurn % countPlayers
+	return gb.players[gb.numberOfTurn%countPlayers]
 }
 
 func (gb *GameBoard) NextTurn() {
