@@ -76,17 +76,17 @@ func (gb *GameBoard) GetBoard() [BoardSize][BoardSize]int {
 	return gb.board
 }
 
-func (gb *GameBoard) NextPlayer() Player {
+func (gb *GameBoard) NextPlayer() (Player, bool) {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
 	turnNumber := gb.numberOfTurn % CountPlayers
 
 	if turnNumber >= len(gb.players) {
-		return Player{}
+		return Player{}, false
 	}
 
-	return gb.players[gb.numberOfTurn%CountPlayers]
+	return gb.players[gb.numberOfTurn%CountPlayers], true
 }
 
 func (gb *GameBoard) NextTurn() {

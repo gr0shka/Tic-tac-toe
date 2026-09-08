@@ -41,8 +41,8 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 			}
 
 			tempGb := gb.Clone()
-			p := tempGb.NextPlayer()
-			if p == nil {
+			p, ok := tempGb.NextPlayer()
+			if !ok {
 				continue
 			}
 			tempGb.Set(i, j, p.GetTurnNumber())
@@ -56,14 +56,22 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 		}
 	}
 
-	gb.Set(bestTurn.x, bestTurn.y, gb.NextPlayer().GetTurnNumber())
+	np, ok := gb.NextPlayer()
+	if !ok {
+		return nil
+	}
+
+	gb.Set(bestTurn.x, bestTurn.y, np.GetTurnNumber())
 	gb.NextTurn()
 
 	return gb
 }
 
 func (g gameService) recursiveScoring(gb models.GameBoard) int {
-	current := gb.NextPlayer()
+	current, ok := gb.NextPlayer()
+	if !ok {
+		return 0
+	}
 
 	score := math.MinInt
 	if current.IsRealPlayer() {
@@ -93,8 +101,8 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 			}
 
 			branch := gb.Clone()
-			cp := branch.NextPlayer()
-			if cp == nil {
+			cp, ok := branch.NextPlayer()
+			if !ok {
 				continue
 			}
 
