@@ -1,4 +1,4 @@
-package DTO
+package dto
 
 type PlayerDTO struct {
 	TurnNumber int
