@@ -6,6 +6,8 @@ const (
 	EmptyCell = -1
 
 	CountPlayers = 2
+	FirstPlayer  = 0
+	SecondPlayer = 1
 	BoardSize    = 3
 )
 
@@ -49,8 +51,8 @@ func (gb *GameBoard) AddPlayers(player1, player2 *Player) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
 
-	gb.players[0] = player1
-	gb.players[1] = player2
+	gb.players[FirstPlayer] = player1
+	gb.players[SecondPlayer] = player2
 }
 
 func (gb *GameBoard) Set(x, y int, v int) {
