@@ -9,13 +9,20 @@ type CurrentGame struct {
 	*GameBoard
 }
 
-func NewCurrentGame(gb *GameBoard) *CurrentGame {
-	return &CurrentGame{
+func NewCurrentGame(gb *GameBoard) CurrentGame {
+	return CurrentGame{
 		id:        uuid.New(),
 		GameBoard: gb,
 	}
 }
 
-func (c *CurrentGame) ID() uuid.UUID {
+func NewCurrentGameWithID(id uuid.UUID, gb *GameBoard) CurrentGame {
+	return CurrentGame{
+		id:        id,
+		GameBoard: gb,
+	}
+}
+
+func (c CurrentGame) ID() uuid.UUID {
 	return c.id
 }
