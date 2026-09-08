@@ -67,6 +67,12 @@ func (gb *GameBoard) HowIsNextTurn() *Player {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
+	turnNumber := gb.numberOfTurn % CountPlayers
+
+	if turnNumber >= len(gb.players) {
+		return nil
+	}
+
 	return gb.players[gb.numberOfTurn%CountPlayers]
 }
 
