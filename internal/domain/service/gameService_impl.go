@@ -112,6 +112,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 	return score
 }
 
+// Добавить больше проверок (правильный ли ход и тд)
 func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
 	if newB.GetNumberOfTurns() != oldB.GetNumberOfTurns()+1 {
 		return errors.New("wrong number of turns")
