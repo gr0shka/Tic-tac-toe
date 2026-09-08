@@ -7,5 +7,5 @@ import (
 type GameService interface {
 	GetNextTurn(gb *models.GameBoard) *models.GameBoard
 	ValidateBoard(oldB, newB *models.GameBoard) error
-	IsEnded(board [][]int) (int, bool)
+	IsEnded(board [models.BoardSize][models.BoardSize]int) (int, bool)
 }
