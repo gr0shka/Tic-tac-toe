@@ -36,17 +36,22 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 
 	for i := 0; i < models.BoardSize; i++ {
 		for j := 0; j < models.BoardSize; j++ {
+			if gb.Get(i, j) != models.EmptyCell {
+				continue
+			}
 
-			if gb.Get(i, j) == models.EmptyCell {
-				tempGb := gb
-				turneNum := tempGb.NextPlayer().GetTurnNumber()
-				tempGb.Set(i, j, turneNum)
+			tempGb := gb.Clone()
+			p := tempGb.NextPlayer()
+			if p == nil {
+				continue
+			}
+			tempGb.Set(i, j, p.GetTurnNumber())
+			tempGb.NextTurn()
 
-				if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
-					bestTurn.score = sc
-					bestTurn.x = i
-					bestTurn.y = j
-				}
+			if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
+				bestTurn.score = sc
+				bestTurn.x = i
+				bestTurn.y = j
 			}
 		}
 	}
@@ -58,46 +63,48 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 }
 
 func (g gameService) recursiveScoring(gb models.GameBoard) int {
-	score := 0
+	current := gb.NextPlayer()
 
-	if gb.NextPlayer().IsRealPlayer() {
+	score := math.MinInt
+	if current.IsRealPlayer() {
 		score = math.MaxInt
-	} else {
-		score = math.MinInt
 	}
 
 	p, end := g.IsEnded(gb.GetBoard())
 	if end {
-		if !gb.NextPlayer().IsRealPlayer() {
-
-			if gb.NextPlayer().GetTurnNumber() == p {
+		if !current.IsRealPlayer() {
+			if current.GetTurnNumber() == p {
 				return 1
 			}
 			if p != Draw {
 				return -1
 			}
-
-		} else if gb.NextPlayer().GetTurnNumber() == p {
+		} else if current.GetTurnNumber() == p {
 			return -1
 		}
-
 		return 0
 	}
 
 	board := gb.GetBoard()
-	gb.NextTurn()
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
-
 			if board[i][j] == models.EmptyCell {
-				tempGb := gb
-				tempGb.Set(i, j, gb.NextPlayer().GetTurnNumber())
+				continue
+			}
 
-				if gb.NextPlayer().IsRealPlayer() {
-					score = min(score, g.recursiveScoring(tempGb))
-				} else {
-					score = max(score, g.recursiveScoring(tempGb))
-				}
+			branch := gb.Clone()
+			cp := branch.NextPlayer()
+			if cp == nil {
+				continue
+			}
+
+			branch.Set(i, j, cp.GetTurnNumber())
+			branch.NextTurn()
+
+			if current.IsRealPlayer() {
+				score = min(score, g.recursiveScoring(*branch))
+			} else {
+				score = max(score, g.recursiveScoring(*branch))
 			}
 		}
 	}
