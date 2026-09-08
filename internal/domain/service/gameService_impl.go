@@ -1,9 +1,10 @@
 package service
 
 import (
-	"Tic-Tac-Toy/internal/models"
 	"errors"
 	"math"
+
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
 )
 
 const (
@@ -14,16 +15,16 @@ type repository interface {
 }
 
 type gameService struct {
-	rep *repository
+	rep repository
 }
 
-func NewGameService(rep *repository) *gameService {
+func NewGameService(rep repository) *gameService {
 	return &gameService{
 		rep: rep,
 	}
 }
 
-func (g gameService) GetNextTurn(gb models.GameBoard) *models.GameBoard {
+func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 	bestTurn := struct {
 		score int
 		x, y  int
@@ -36,12 +37,12 @@ func (g gameService) GetNextTurn(gb models.GameBoard) *models.GameBoard {
 	for i := 0; i < gb.Size(); i++ {
 		for j := 0; j < gb.Size(); j++ {
 
-			if gb.Get(i, j) == models.EmptyCage {
+			if gb.Get(i, j) == models.EmptyCell {
 				tempGb := gb
 				turneNum := tempGb.HowIsNextTurn().GetTurnNumber()
 				tempGb.Set(i, j, turneNum)
 
-				if sc := g.recursiveScoring(tempGb); sc > bestTurn.score {
+				if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
 					bestTurn.score = sc
 					bestTurn.x = i
 					bestTurn.y = j
@@ -53,7 +54,7 @@ func (g gameService) GetNextTurn(gb models.GameBoard) *models.GameBoard {
 	gb.Set(bestTurn.x, bestTurn.y, gb.HowIsNextTurn().GetTurnNumber())
 	gb.NextTurn()
 
-	return &gb
+	return gb
 }
 
 func (g gameService) recursiveScoring(gb models.GameBoard) int {
@@ -88,7 +89,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
 
-			if board[i][j] == models.EmptyCage {
+			if board[i][j] == models.EmptyCell {
 				tempGb := gb
 				tempGb.Set(i, j, gb.HowIsNextTurn().GetTurnNumber())
 
@@ -104,7 +105,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 	return score
 }
 
-func (g gameService) ValidateBoard(oldB, newB models.GameBoard) error {
+func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
 	if newB.GetNumberOfTurns() != oldB.GetNumberOfTurns()+1 {
 		return errors.New("wrong number of turns")
 	}
@@ -112,17 +113,17 @@ func (g gameService) ValidateBoard(oldB, newB models.GameBoard) error {
 	newBoard := newB.GetBoard()
 	oldBoard := oldB.GetBoard()
 
-	countChangedCage := 0
+	countChangedCell := 0
 	for i := 0; i < len(newBoard); i++ {
 		for j := 0; j < len(newBoard[i]); j++ {
 
 			if newBoard[i][j] != oldBoard[i][j] {
-				countChangedCage++
+				countChangedCell++
 			}
 		}
 	}
 
-	if countChangedCage != 1 {
+	if countChangedCell != 1 {
 		return errors.New("wrong number of turns")
 	}
 
@@ -133,33 +134,38 @@ func (g gameService) IsEnded(board [][]int) (int, bool) {
 
 	checkBoard := func(board [][]int, fns ...func([][]int) (int, bool)) (int, bool) {
 		for _, fn := range fns {
-			cageType, ok := fn(board)
+			CellType, ok := fn(board)
 			if ok {
-				return cageType, true
+				return CellType, true
 			}
 		}
 
 		return Draw, false
 	}
 
-	return checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck, allCageOccupied)
+	return checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck, allCellOccupied)
 }
 
 func horizontalCheck(board [][]int) (int, bool) {
 	for i := 0; i < len(board); i++ {
-		cageType := board[i][0]
+		CellType := board[i][0]
 		flag := true
+
+		if CellType == models.EmptyCell {
+			flag = false
+			continue
+		}
 
 		for j := 1; j < len(board[i]); j++ {
 
-			if cageType != board[i][j] {
+			if CellType != board[i][j] {
 				flag = false
 				break
 			}
 		}
 
 		if flag {
-			return cageType, true
+			return CellType, true
 		}
 	}
 
@@ -168,19 +174,24 @@ func horizontalCheck(board [][]int) (int, bool) {
 
 func verticalCheck(board [][]int) (int, bool) {
 	for j := 0; j < len(board); j++ {
-		cageType := board[0][j]
+		CellType := board[0][j]
 		flag := true
+
+		if CellType == models.EmptyCell {
+			flag = false
+			continue
+		}
 
 		for i := 1; i < len(board[j]); i++ {
 
-			if cageType != board[i][j] {
+			if CellType != board[i][j] {
 				flag = false
 				break
 			}
 		}
 
 		if flag {
-			return cageType, true
+			return CellType, true
 		}
 	}
 
@@ -188,41 +199,52 @@ func verticalCheck(board [][]int) (int, bool) {
 }
 
 func diagonalsCheck(board [][]int) (int, bool) {
-	cageType := board[0][0]
+	CellType := board[0][0]
 	flag := true
 
-	for i := 1; i < len(board); i++ {
-		if cageType != board[i][i] {
-			flag = false
-			break
+	if CellType != models.EmptyCell {
+		for i := 1; i < len(board); i++ {
+			if CellType != board[i][i] {
+				flag = false
+				break
+			}
 		}
-	}
-	if flag {
-		return cageType, true
+
+	} else {
+		flag = false
 	}
 
-	cageType = board[len(board)-1][0]
+	if flag {
+		return CellType, true
+	}
+
+	CellType = board[len(board)-1][0]
 	flag = true
-
-	for i := 1; i < len(board); i++ {
-		if cageType != board[(len(board)-1)-i][i] {
-			flag = false
-			break
+	if CellType != models.EmptyCell {
+		for i := 1; i < len(board); i++ {
+			if CellType != board[(len(board)-1)-i][i] {
+				flag = false
+				break
+			}
 		}
+
+	} else {
+		flag = false
 	}
+
 	if flag {
-		return cageType, true
+		return CellType, true
 	}
 
 	return Draw, false
 }
 
-func allCageOccupied(board [][]int) (int, bool) {
+func allCellOccupied(board [][]int) (int, bool) {
 
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
 
-			if board[i][j] == models.EmptyCage {
+			if board[i][j] == models.EmptyCell {
 
 				return Draw, false
 			}
