@@ -33,6 +33,19 @@ func NewGameBoard() *GameBoard {
 	}
 }
 
+func (gb *GameBoard) Clone() *GameBoard {
+	gb.mu.RLock()
+	defer gb.mu.RUnlock()
+
+	clone := &GameBoard{
+		board:        gb.board,
+		numberOfTurn: gb.numberOfTurn,
+		players:      append([]*Player(nil), gb.players...),
+		mu:           sync.RWMutex{},
+	}
+	return clone
+}
+
 func (gb *GameBoard) AddPlayers(player ...*Player) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
