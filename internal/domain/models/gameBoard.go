@@ -63,7 +63,7 @@ func (gb *GameBoard) GetBoard() [BoardSize][BoardSize]int {
 	return gb.board
 }
 
-func (gb *GameBoard) HowIsNextTurn() *Player {
+func (gb *GameBoard) NextPlayer() *Player {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 

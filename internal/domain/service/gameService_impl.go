@@ -39,7 +39,7 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 
 			if gb.Get(i, j) == models.EmptyCell {
 				tempGb := gb
-				turneNum := tempGb.HowIsNextTurn().GetTurnNumber()
+				turneNum := tempGb.NextPlayer().GetTurnNumber()
 				tempGb.Set(i, j, turneNum)
 
 				if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
@@ -51,7 +51,7 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 		}
 	}
 
-	gb.Set(bestTurn.x, bestTurn.y, gb.HowIsNextTurn().GetTurnNumber())
+	gb.Set(bestTurn.x, bestTurn.y, gb.NextPlayer().GetTurnNumber())
 	gb.NextTurn()
 
 	return gb
@@ -60,7 +60,7 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 func (g gameService) recursiveScoring(gb models.GameBoard) int {
 	score := 0
 
-	if gb.HowIsNextTurn().IsRealPlayer() {
+	if gb.NextPlayer().IsRealPlayer() {
 		score = math.MaxInt
 	} else {
 		score = math.MinInt
@@ -68,16 +68,16 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 
 	p, end := g.IsEnded(gb.GetBoard())
 	if end {
-		if !gb.HowIsNextTurn().IsRealPlayer() {
+		if !gb.NextPlayer().IsRealPlayer() {
 
-			if gb.HowIsNextTurn().GetTurnNumber() == p {
+			if gb.NextPlayer().GetTurnNumber() == p {
 				return 1
 			}
 			if p != Draw {
 				return -1
 			}
 
-		} else if gb.HowIsNextTurn().GetTurnNumber() == p {
+		} else if gb.NextPlayer().GetTurnNumber() == p {
 			return -1
 		}
 
@@ -91,9 +91,9 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 
 			if board[i][j] == models.EmptyCell {
 				tempGb := gb
-				tempGb.Set(i, j, gb.HowIsNextTurn().GetTurnNumber())
+				tempGb.Set(i, j, gb.NextPlayer().GetTurnNumber())
 
-				if gb.HowIsNextTurn().IsRealPlayer() {
+				if gb.NextPlayer().IsRealPlayer() {
 					score = min(score, g.recursiveScoring(tempGb))
 				} else {
 					score = max(score, g.recursiveScoring(tempGb))
