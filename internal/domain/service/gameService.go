@@ -1,6 +1,8 @@
 package service
 
-import "Tic-Tac-Toy/internal/models"
+import (
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
+)
 
 type GameService interface {
 	GetNextTurn(gb *models.GameBoard) *models.GameBoard

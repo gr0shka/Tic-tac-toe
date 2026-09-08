@@ -1,4 +1,4 @@
-module Tic-Tac-Toy
+module github.com/gr0shka/Tic-tac-toe
 
 go 1.25.4
 
