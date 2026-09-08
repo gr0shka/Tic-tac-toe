@@ -55,6 +55,13 @@ func (gb *GameBoard) AddPlayers(player1, player2 Player) {
 	gb.players[SecondPlayer] = player2
 }
 
+func (gb *GameBoard) SetTurnNumber(turnNumber int) {
+	gb.mu.Lock()
+	defer gb.mu.Unlock()
+
+	gb.numberOfTurn = turnNumber
+}
+
 func (gb *GameBoard) Set(x, y int, v int) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
@@ -74,6 +81,13 @@ func (gb *GameBoard) GetBoard() [BoardSize][BoardSize]int {
 	defer gb.mu.RUnlock()
 
 	return gb.board
+}
+
+func (gb *GameBoard) GetPlayers() [CountPlayers]Player {
+	gb.mu.RLock()
+	defer gb.mu.RUnlock()
+
+	return gb.players
 }
 
 func (gb *GameBoard) NextPlayer() (Player, bool) {
