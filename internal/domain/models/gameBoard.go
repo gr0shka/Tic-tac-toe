@@ -3,7 +3,7 @@ package models
 import "sync"
 
 const (
-	EmptyCage = -1
+	EmptyCell = -1
 
 	CountPlayers = 2
 	boardSize    = 3
@@ -22,7 +22,7 @@ func NewGameBoard() *GameBoard {
 		board[i] = make([]int, boardSize)
 
 		for j := 0; j < boardSize; j++ {
-			board[i][j] = EmptyCage
+			board[i][j] = EmptyCell
 		}
 	}
 
