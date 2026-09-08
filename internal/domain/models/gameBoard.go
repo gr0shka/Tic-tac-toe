@@ -14,7 +14,7 @@ const (
 type GameBoard struct {
 	board        [BoardSize][BoardSize]int
 	numberOfTurn int
-	players      [CountPlayers]*Player
+	players      [CountPlayers]Player
 	mu           sync.RWMutex
 }
 
@@ -47,7 +47,7 @@ func (gb *GameBoard) Clone() *GameBoard {
 	return clone
 }
 
-func (gb *GameBoard) AddPlayers(player1, player2 *Player) {
+func (gb *GameBoard) AddPlayers(player1, player2 Player) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
 
@@ -76,14 +76,14 @@ func (gb *GameBoard) GetBoard() [BoardSize][BoardSize]int {
 	return gb.board
 }
 
-func (gb *GameBoard) NextPlayer() *Player {
+func (gb *GameBoard) NextPlayer() Player {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
 	turnNumber := gb.numberOfTurn % CountPlayers
 
 	if turnNumber >= len(gb.players) {
-		return nil
+		return Player{}
 	}
 
 	return gb.players[gb.numberOfTurn%CountPlayers]
