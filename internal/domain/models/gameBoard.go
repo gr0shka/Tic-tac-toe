@@ -6,21 +6,21 @@ const (
 	EmptyCell = -1
 
 	CountPlayers = 2
-	boardSize    = 3
+	BoardSize    = 3
 )
 
 type GameBoard struct {
-	board        [boardSize][boardSize]int
+	board        [BoardSize][BoardSize]int
 	numberOfTurn int
 	players      []*Player
 	mu           sync.RWMutex
 }
 
 func NewGameBoard() *GameBoard {
-	board := [boardSize][boardSize]int{}
+	board := [BoardSize][BoardSize]int{}
 
-	for i := 0; i < boardSize; i++ {
-		for j := 0; j < boardSize; j++ {
+	for i := 0; i < BoardSize; i++ {
+		for j := 0; j < BoardSize; j++ {
 			board[i][j] = EmptyCell
 		}
 	}
@@ -42,13 +42,6 @@ func (gb *GameBoard) AddPlayers(player ...*Player) {
 	}
 }
 
-func (gb *GameBoard) Size() int {
-	gb.mu.RLock()
-	defer gb.mu.RUnlock()
-
-	return boardSize
-}
-
 func (gb *GameBoard) Set(x, y int, v int) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
@@ -63,7 +56,7 @@ func (gb *GameBoard) Get(x, y int) int {
 	return gb.board[x][y]
 }
 
-func (gb *GameBoard) GetBoard() [boardSize][boardSize]int {
+func (gb *GameBoard) GetBoard() [BoardSize][BoardSize]int {
 	gb.mu.RLock()
 	defer gb.mu.RUnlock()
 
@@ -91,7 +84,7 @@ func (gb *GameBoard) GetNumberOfTurns() int {
 	return gb.numberOfTurn
 }
 
-func (gb *GameBoard) SetBoard(board [boardSize][boardSize]int) {
+func (gb *GameBoard) SetBoard(board [BoardSize][BoardSize]int) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
 

@@ -34,8 +34,8 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 		y:     0,
 	}
 
-	for i := 0; i < gb.Size(); i++ {
-		for j := 0; j < gb.Size(); j++ {
+	for i := 0; i < models.BoardSize; i++ {
+		for j := 0; j < models.BoardSize; j++ {
 
 			if gb.Get(i, j) == models.EmptyCell {
 				tempGb := gb
@@ -130,9 +130,9 @@ func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
 	return nil
 }
 
-func (g gameService) IsEnded(board [][]int) (int, bool) {
+func (g gameService) IsEnded(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 
-	checkBoard := func(board [][]int, fns ...func([][]int) (int, bool)) (int, bool) {
+	checkBoard := func(board [models.BoardSize][models.BoardSize]int, fns ...func([models.BoardSize][models.BoardSize]int) (int, bool)) (int, bool) {
 		for _, fn := range fns {
 			CellType, ok := fn(board)
 			if ok {
@@ -146,7 +146,7 @@ func (g gameService) IsEnded(board [][]int) (int, bool) {
 	return checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck, allCellOccupied)
 }
 
-func horizontalCheck(board [][]int) (int, bool) {
+func horizontalCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	for i := 0; i < len(board); i++ {
 		CellType := board[i][0]
 		flag := true
@@ -172,7 +172,7 @@ func horizontalCheck(board [][]int) (int, bool) {
 	return Draw, false
 }
 
-func verticalCheck(board [][]int) (int, bool) {
+func verticalCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	for j := 0; j < len(board); j++ {
 		CellType := board[0][j]
 		flag := true
@@ -198,7 +198,7 @@ func verticalCheck(board [][]int) (int, bool) {
 	return Draw, false
 }
 
-func diagonalsCheck(board [][]int) (int, bool) {
+func diagonalsCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	CellType := board[0][0]
 	flag := true
 
@@ -239,7 +239,7 @@ func diagonalsCheck(board [][]int) (int, bool) {
 	return Draw, false
 }
 
-func allCellOccupied(board [][]int) (int, bool) {
+func allCellOccupied(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
