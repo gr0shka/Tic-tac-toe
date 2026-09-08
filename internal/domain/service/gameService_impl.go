@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 
+	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
 )
 
@@ -12,6 +13,8 @@ const (
 )
 
 type repository interface {
+	Save(cg models.CurrentGame) error
+	Get(id uuid.UUID) (models.CurrentGame, error)
 }
 
 type gameService struct {
