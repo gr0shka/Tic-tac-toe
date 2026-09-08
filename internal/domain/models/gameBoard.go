@@ -12,7 +12,7 @@ const (
 type GameBoard struct {
 	board        [BoardSize][BoardSize]int
 	numberOfTurn int
-	players      []*Player
+	players      [CountPlayers]*Player
 	mu           sync.RWMutex
 }
 
@@ -28,7 +28,6 @@ func NewGameBoard() *GameBoard {
 	return &GameBoard{
 		board:        board,
 		numberOfTurn: 0,
-		players:      make([]*Player, 0),
 		mu:           sync.RWMutex{},
 	}
 }
@@ -40,19 +39,18 @@ func (gb *GameBoard) Clone() *GameBoard {
 	clone := &GameBoard{
 		board:        gb.board,
 		numberOfTurn: gb.numberOfTurn,
-		players:      append([]*Player(nil), gb.players...),
+		players:      gb.players,
 		mu:           sync.RWMutex{},
 	}
 	return clone
 }
 
-func (gb *GameBoard) AddPlayers(player ...*Player) {
+func (gb *GameBoard) AddPlayers(player1, player2 *Player) {
 	gb.mu.Lock()
 	defer gb.mu.Unlock()
 
-	for _, p := range player {
-		gb.players = append(gb.players, p)
-	}
+	gb.players[0] = player1
+	gb.players[1] = player2
 }
 
 func (gb *GameBoard) Set(x, y int, v int) {
