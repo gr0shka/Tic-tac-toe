@@ -5,15 +5,15 @@ import (
 
 	appService "github.com/gr0shka/Tic-tac-toe/internal/application/service"
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapStore"
-	transportHttp "github.com/gr0shka/Tic-tac-toe/internal/transport/http"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
+	transportHttp "github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"go.uber.org/fx"
 )
 
 func CreateApp() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			mapStore.NewMapRepository,
+			mapstore.NewMapRepository,
 			gameService.NewGameService,
 			appService.NewAppService,
 			transportHttp.NewHandler,

@@ -1,4 +1,4 @@
-package mapStore
+package mapstore
 
 import (
 	"errors"
