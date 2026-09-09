@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Крестики-нолики API tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 24px auto;
+            padding: 0 16px;
+            background: #f7f7f7;
+            color: #222;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        input, button {
+            font: inherit;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        input { min-width: 280px; flex: 1; }
+        button {
+            cursor: pointer;
+            background: #1f6feb;
+            color: white;
+            border: none;
+        }
+        button.secondary { background: #57606a; }
+        button.danger { background: #cf222e; }
+        button:disabled { opacity: .6; cursor: not-allowed; }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 96px);
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: start;
+        }
+        .cell {
+            width: 96px;
+            height: 96px;
+            font-size: 34px;
+            font-weight: bold;
+            border-radius: 12px;
+            border: 2px solid #d0d7de;
+            background: #fff;
+        }
+        .cell:hover { background: #f6f8fa; }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #0b1020;
+            color: #d6e7ff;
+            padding: 12px;
+            border-radius: 12px;
+            overflow: auto;
+        }
+        .status { font-weight: 700; }
+        label { display: block; font-size: 14px; margin-bottom: 6px; color: #57606a; }
+    </style>
+</head>
+<body>
+<h1>Тест API: Крестики-нолики</h1>
+
+<div class="card">
+    <div class="row">
+        <div style="flex:1">
+            <label for="apiBase">URL сервера</label>
+            <input id="apiBase" value="http://localhost:8080" />
+        </div>
+        <button id="createGameBtn">Создать игру</button>
+        <button id="loadGameBtn" class="secondary">Загрузить игру</button>
+    </div>
+
+    <div class="row">
+        <div style="flex:1">
+            <label for="gameId">UUID игры</label>
+            <input id="gameId" placeholder="сюда подставится UUID после создания" />
+        </div>
+        <button id="resetBoardBtn" class="danger">Сбросить локальную доску</button>
+    </div>
+
+    <div class="status" id="status">Статус: ожидание</div>
+</div>
+
+<div class="card">
+    <h2>Поле</h2>
+    <div id="board" class="board"></div>
+    <p>Ход: сначала играешь ты, потом API отвечает ходом компьютера.</p>
+</div>
+
+<div class="card">
+    <h2>Ответ API</h2>
+    <pre id="output">{}</pre>
+</div>
+
+<script>
+    const apiBaseEl = document.getElementById('apiBase');
+    const gameIdEl = document.getElementById('gameId');
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+    const boardEl = document.getElementById('board');
+    const createGameBtn = document.getElementById('createGameBtn');
+    const loadGameBtn = document.getElementById('loadGameBtn');
+    const resetBoardBtn = document.getElementById('resetBoardBtn');
+
+    let board = createEmptyBoard();
+    let gameEnded = false;
+
+    function createEmptyBoard() {
+        return Array.from({ length: 3 }, () => Array(3).fill(-1));
+    }
+
+    function cellToSymbol(v) {
+        if (v === 0) return 'X';
+        if (v === 1) return 'O';
+        return '';
+    }
+
+    function setStatus(text) {
+        statusEl.textContent = 'Статус: ' + text;
+    }
+
+    function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const btn = document.createElement('button');
+                btn.className = 'cell';
+                btn.textContent = cellToSymbol(board[i][j]);
+                btn.disabled = gameEnded || board[i][j] !== -1;
+                btn.addEventListener('click', () => makeMove(i, j));
+                boardEl.appendChild(btn);
+            }
+        }
+    }
+
+    function syncBoardFromApi(apiBoard) {
+        board = apiBoard.map(row => row.slice());
+        renderBoard();
+    }
+
+    function getApiBase() {
+        return apiBaseEl.value.trim().replace(/\/$/, '');
+    }
+
+    async function createGame() {
+        setStatus('создание игры...');
+        try {
+            const res = await fetch(`${getApiBase()}/create`);
+            const data = await res.json();
+            outputEl.textContent = JSON.stringify(data, null, 2);
+
+            if (!res.ok) {
+                throw new Error('Ошибка создания игры');
+            }
+
+            gameIdEl.value = data.Id || data.id || '';
+            if (data.Board) syncBoardFromApi(data.Board);
+            if (data.board) syncBoardFromApi(data.board);
+
+            gameEnded = false;
+            setStatus('игра создана');
+        } catch (err) {
+            setStatus('ошибка создания игры');
+            outputEl.textContent = String(err);
+        }
+    }
+
+    async function loadGame() {
+        const id = gameIdEl.value.trim();
+        if (!id) {
+            alert('Введите UUID игры');
+            return;
+        }
+
+        setStatus('загрузка игры...');
+        try {
+            const res = await fetch(`${getApiBase()}/get/${id}`);
+            const data = await res.json();
+            outputEl.textContent = JSON.stringify(data, null, 2);
+
+            if (!res.ok) {
+                throw new Error('Ошибка загрузки игры');
+            }
+
+            if (Array.isArray(data)) {
+                syncBoardFromApi(data);
+            }
+            gameEnded = false;
+            setStatus('игра загружена');
+        } catch (err) {
+            setStatus('ошибка загрузки игры');
+            outputEl.textContent = String(err);
+        }
+    }
+
+    async function makeMove(x, y) {
+        const id = gameIdEl.value.trim();
+        if (!id) {
+            alert('Сначала создайте игру');
+            return;
+        }
+        if (board[x][y] !== -1) return;
+
+        const userBoard = board.map(row => row.slice());
+        userBoard[x][y] = 0;
+
+        setStatus('отправка хода...');
+        try {
+            const res = await fetch(`${getApiBase()}/game/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ board: userBoard })
+            });
+
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = text;
+            }
+
+            outputEl.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+
+            if (!res.ok) {
+                setStatus('ошибка: сервер отклонил ход');
+                return;
+            }
+
+            if (Array.isArray(data)) {
+                syncBoardFromApi(data);
+            } else if (data.board) {
+                syncBoardFromApi(data.board);
+            }
+
+            setStatus('ход принят');
+        } catch (err) {
+            setStatus('ошибка запроса');
+            outputEl.textContent = String(err);
+        }
+    }
+
+    function resetBoard() {
+        board = createEmptyBoard();
+        gameEnded = false;
+        renderBoard();
+        setStatus('локальная доска сброшена');
+    }
+
+    createGameBtn.addEventListener('click', createGame);
+    loadGameBtn.addEventListener('click', loadGame);
+    resetBoardBtn.addEventListener('click', resetBoard);
+
+    renderBoard();
+</script>
+</body>
+</html>
