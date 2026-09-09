@@ -26,6 +26,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	var gameBoard dto.GameBoardRequest
