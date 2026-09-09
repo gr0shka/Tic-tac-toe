@@ -4,24 +4,19 @@ import (
 	"errors"
 	"math"
 
-	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository"
 )
 
 const (
 	Draw = -1
 )
 
-type repository interface {
-	Save(cg models.CurrentGame) error
-	Get(id uuid.UUID) (models.CurrentGame, error)
-}
-
 type gameService struct {
-	rep repository
+	rep repository.Repository
 }
 
-func NewGameService(rep repository) *gameService {
+func NewGameService(rep repository.Repository) *gameService {
 	return &gameService{
 		rep: rep,
 	}
