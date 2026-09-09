@@ -9,15 +9,15 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/dto"
 )
 
-type handler struct {
+type Handler struct {
 	service service.AppService
 }
 
-func NewHandler(service service.AppService) *handler {
-	return &handler{service: service}
+func NewHandler(service service.AppService) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *handler) NextTurn(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -46,7 +46,7 @@ func (h *handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(cg.GetBoard())
 }
 
-func (h *handler) NewGame(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -68,7 +68,7 @@ func (h *handler) NewGame(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(data)
 }
 
-func (h *handler) GetGame(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
