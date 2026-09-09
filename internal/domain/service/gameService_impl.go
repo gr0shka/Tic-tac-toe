@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository"
 )
 
 const (
@@ -13,13 +12,10 @@ const (
 )
 
 type gameService struct {
-	rep repository.Repository
 }
 
-func NewGameService(rep repository.Repository) *gameService {
-	return &gameService{
-		rep: rep,
-	}
+func NewGameService() *gameService {
+	return &gameService{}
 }
 
 func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
