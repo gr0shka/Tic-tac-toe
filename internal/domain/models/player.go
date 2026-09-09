@@ -5,8 +5,8 @@ type Player struct {
 	realPlayer bool
 }
 
-func NewPlayer(turnNumber int, realPlayer bool) Player {
-	return Player{
+func NewPlayer(turnNumber int, realPlayer bool) *Player {
+	return &Player{
 		turnNumber: turnNumber,
 		realPlayer: realPlayer,
 	}

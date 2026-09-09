@@ -25,11 +25,13 @@ func (m *MapRepository) Save(cg models.CurrentGame) error {
 	return nil
 }
 
-func (m *MapRepository) Get(id uuid.UUID) (models.CurrentGame, error) {
+func (m *MapRepository) Get(id uuid.UUID) (*models.CurrentGame, error) {
 	cgd, ok := m.data.Load(id)
 	if !ok {
-		return models.CurrentGame{}, errors.New("not found")
+		return nil, errors.New("not found")
 	}
 
-	return mapper.DTOToDomain(cgd.(dto.CurrentGameDTO)), nil
+	cg := cgd.(dto.CurrentGameDTO)
+
+	return mapper.DTOToDomain(cg), nil
 }

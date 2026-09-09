@@ -20,7 +20,7 @@ func DomainToDTO(cg models.CurrentGame) dto.CurrentGameDTO {
 	}
 }
 
-func DTOToDomain(cgd dto.CurrentGameDTO) models.CurrentGame {
+func DTOToDomain(cgd dto.CurrentGameDTO) *models.CurrentGame {
 	gameBoard := models.NewGameBoard()
 	gameBoard.SetBoard(cgd.Board)
 	gameBoard.SetTurnNumber(cgd.NumberOfTurn)
@@ -33,7 +33,7 @@ func DTOToDomain(cgd dto.CurrentGameDTO) models.CurrentGame {
 		cgd.Players[models.SecondPlayer].TurnNumber,
 		cgd.Players[models.SecondPlayer].RealPlayer,
 	)
-	gameBoard.AddPlayers(player1, player2)
+	gameBoard.AddPlayers(*player1, *player2)
 
 	return models.NewCurrentGameWithID(cgd.ID, gameBoard)
 }

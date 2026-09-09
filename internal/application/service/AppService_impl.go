@@ -25,15 +25,15 @@ func (a appService) CreateGame() (*models.CurrentGame, error) {
 	gb := models.NewGameBoard()
 	player := models.NewPlayer(models.FirstPlayer, true)
 	computer := models.NewPlayer(models.SecondPlayer, false)
-	gb.AddPlayers(player, computer)
+	gb.AddPlayers(*player, *computer)
 
 	cg := models.NewCurrentGame(gb)
 
-	if err := a.repository.Save(cg); err != nil {
+	if err := a.repository.Save(*cg); err != nil {
 		return nil, err
 	}
 
-	return &cg, nil
+	return cg, nil
 }
 
 func (a appService) ProcessPlayerMove(
@@ -57,10 +57,10 @@ func (a appService) ProcessPlayerMove(
 	nextCg := models.NewCurrentGameWithID(id, next)
 
 	if _, ok := a.gameService.IsEnded(board); ok {
-		if err = a.repository.Save(nextCg); err != nil {
+		if err = a.repository.Save(*nextCg); err != nil {
 			return nil, err
 		}
-		return &nextCg, nil
+		return nextCg, nil
 	}
 
 	next = a.gameService.GetNextTurn(nextCg.GameBoard)
@@ -69,11 +69,11 @@ func (a appService) ProcessPlayerMove(
 	}
 	nextCg.GameBoard = next
 
-	if err = a.repository.Save(nextCg); err != nil {
+	if err = a.repository.Save(*nextCg); err != nil {
 		return nil, err
 	}
 
-	return &nextCg, nil
+	return nextCg, nil
 }
 
 func (a appService) GetGame(id uuid.UUID) (*models.CurrentGame, error) {
@@ -82,5 +82,5 @@ func (a appService) GetGame(id uuid.UUID) (*models.CurrentGame, error) {
 		return nil, err
 	}
 
-	return &cg, nil
+	return cg, nil
 }

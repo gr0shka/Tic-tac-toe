@@ -9,15 +9,15 @@ type CurrentGame struct {
 	*GameBoard
 }
 
-func NewCurrentGame(gb *GameBoard) CurrentGame {
-	return CurrentGame{
+func NewCurrentGame(gb *GameBoard) *CurrentGame {
+	return &CurrentGame{
 		id:        uuid.New(),
 		GameBoard: gb,
 	}
 }
 
-func NewCurrentGameWithID(id uuid.UUID, gb *GameBoard) CurrentGame {
-	return CurrentGame{
+func NewCurrentGameWithID(id uuid.UUID, gb *GameBoard) *CurrentGame {
+	return &CurrentGame{
 		id:        id,
 		GameBoard: gb,
 	}
