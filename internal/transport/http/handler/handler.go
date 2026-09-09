@@ -23,7 +23,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gameUUID, err := uuid.FromBytes([]byte(r.PathValue("uuid")))
+	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -74,7 +74,7 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gameUUID, err := uuid.FromBytes([]byte(r.PathValue("uuid")))
+	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

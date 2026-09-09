@@ -14,8 +14,8 @@ type appService struct {
 	repository  repository.Repository
 }
 
-func NewAppService(gameService service.GameService, rep repository.Repository) *appService {
-	return &appService{
+func NewAppService(gameService service.GameService, rep repository.Repository) appService {
+	return appService{
 		gameService: gameService,
 		repository:  rep,
 	}
