@@ -74,17 +74,13 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 
 	p, end := g.IsEnded(gb.GetBoard())
 	if end {
-		if !current.IsRealPlayer() {
-			if current.GetTurnNumber() == p {
-				return 1
-			}
-			if p != Draw {
-				return -1
-			}
-		} else if current.GetTurnNumber() == p {
+		if p == Draw {
+			return 0
+		}
+		if p == models.FirstPlayer {
 			return -1
 		}
-		return 0
+		return 1
 	}
 
 	board := gb.GetBoard()
