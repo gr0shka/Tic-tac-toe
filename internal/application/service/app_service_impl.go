@@ -14,6 +14,15 @@ type appService struct {
 	repository  repository.Repository
 }
 
+func (a appService) GameIsEnded(id uuid.UUID) (int, bool) {
+	cg, err := a.repository.Get(id)
+	if err != nil {
+		return 0, false
+	}
+
+	return a.gameService.IsEnded(cg.GetBoard())
+}
+
 func NewAppService(gameService service.GameService, rep repository.Repository) *appService {
 	return &appService{
 		gameService: gameService,

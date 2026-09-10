@@ -12,4 +12,5 @@ type AppService interface {
 		board [models.BoardSize][models.BoardSize]int,
 	) (*models.CurrentGame, error)
 	GetGame(id uuid.UUID) (*models.CurrentGame, error)
+	GameIsEnded(id uuid.UUID) (int, bool)
 }
