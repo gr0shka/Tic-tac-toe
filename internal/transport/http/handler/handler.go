@@ -44,9 +44,24 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	boardResponse := dto.GameBoardResponse{}
+
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if cg, err := h.service.GetGame(gameUUID); err == nil {
+		if player, end := h.service.GameIsEnded(gameUUID); end {
+			boardResponse.GameIsEnded = end
+			boardResponse.HowIsWinner = player
+			boardResponse.Board = cg.GetBoard()
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	} else {
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -63,9 +78,11 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	boardResponse.Board = cg.GetBoard()
+
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
-	encoder.Encode(cg.GetBoard())
+	encoder.Encode(boardResponse)
 }
 
 func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
