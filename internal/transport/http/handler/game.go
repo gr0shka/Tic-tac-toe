@@ -49,7 +49,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	if cg, err := h.service.GetGame(gameUUID); err == nil {
 		if player, end := h.service.GameIsEnded(gameUUID); end {
 			boardResponse.GameIsEnded = end
-			boardResponse.HowIsWinner = player
+			boardResponse.Winner = player
 			boardResponse.Board = cg.GetBoard()
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(boardResponse)
