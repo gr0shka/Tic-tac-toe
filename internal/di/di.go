@@ -7,7 +7,7 @@ import (
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
-	transportHttp "github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"go.uber.org/fx"
 )
 
@@ -26,7 +26,7 @@ func CreateApp() fx.Option {
 				appService.NewAppService,
 				fx.As(new(appService.AppService)),
 			),
-			transportHttp.NewHandler,
+			handler.NewHandler,
 		),
 		fx.Invoke(
 			CreateMuxAndStartServer,
@@ -34,13 +34,16 @@ func CreateApp() fx.Option {
 	)
 }
 
-func CreateMuxAndStartServer(h *transportHttp.Handler) {
+func CreateMuxAndStartServer(h *handler.Handler) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /game/{uuid}", h.NextTurn)
 	mux.HandleFunc("GET /create", h.NewGame)
 	mux.HandleFunc("GET /get/{uuid}", h.GetGame)
 
+	muxWithMiddleware := handler.MiddlewareCorsResponse(mux)
+	muxWithMiddleware = handler.MiddlewareSetHeaders(muxWithMiddleware)
+
 	go func() {
-		http.ListenAndServe(":8080", mux)
+		http.ListenAndServe(":8080", muxWithMiddleware)
 	}()
 }
