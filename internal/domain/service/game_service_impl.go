@@ -90,7 +90,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 	board := gb.GetBoard()
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
-			if board[i][j] == models.EmptyCell {
+			if board[i][j] != models.EmptyCell {
 				continue
 			}
 
