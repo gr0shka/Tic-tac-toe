@@ -10,7 +10,7 @@ import (
 )
 
 type CreateGameResponse struct {
-	Id    uuid.UUID
+	Id    uuid.UUID                               `json:"id"`
 	Board [models.BoardSize][models.BoardSize]int `json:"board"`
 }
 
@@ -19,8 +19,8 @@ type GameBoardRequest struct {
 }
 
 type GameBoardResponse struct {
-	GameIsEnded bool
-	HowIsWinner int
+	GameIsEnded bool                                    `json:"game_is_ended"`
+	Winner      int                                     `json:"winner"`
 	Board       [models.BoardSize][models.BoardSize]int `json:"board"`
 }
 
