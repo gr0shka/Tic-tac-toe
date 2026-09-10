@@ -52,6 +52,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 			boardResponse.HowIsWinner = player
 			boardResponse.Board = cg.GetBoard()
 			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(boardResponse)
 			return
 		}
 	} else {
