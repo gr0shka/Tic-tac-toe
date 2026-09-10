@@ -6,8 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/dto"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapper"
 )
 
 type MapRepository struct {
@@ -19,7 +17,7 @@ func NewMapRepository() *MapRepository {
 }
 
 func (m *MapRepository) Save(cg models.CurrentGame) error {
-	cgd := mapper.DomainToDTO(cg)
+	cgd := DomainToDTO(cg)
 	m.data.Store(cgd.ID, cgd)
 
 	return nil
@@ -31,7 +29,7 @@ func (m *MapRepository) Get(id uuid.UUID) (*models.CurrentGame, error) {
 		return nil, errors.New("not found")
 	}
 
-	cg := cgd.(dto.CurrentGameDTO)
+	cg := cgd.(CurrentGameDTO)
 
-	return mapper.DTOToDomain(cg), nil
+	return DTOToDomain(cg), nil
 }

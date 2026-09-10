@@ -1,18 +1,17 @@
-package mapper
+package mapstore
 
 import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/dto"
 )
 
-func DomainToDTO(cg models.CurrentGame) dto.CurrentGameDTO {
+func DomainToDTO(cg models.CurrentGame) CurrentGameDTO {
 	cgPlayers := cg.GetPlayers()
-	players := [models.CountPlayers]dto.PlayerDTO{
+	players := [models.CountPlayers]PlayerDTO{
 		{cgPlayers[models.FirstPlayer].GetTurnNumber(), cgPlayers[models.FirstPlayer].IsRealPlayer()},
 		{cgPlayers[models.SecondPlayer].GetTurnNumber(), cgPlayers[models.SecondPlayer].IsRealPlayer()},
 	}
 
-	return dto.CurrentGameDTO{
+	return CurrentGameDTO{
 		ID:           cg.ID(),
 		Board:        cg.GetBoard(),
 		NumberOfTurn: cg.GetNumberOfTurns(),
@@ -20,7 +19,7 @@ func DomainToDTO(cg models.CurrentGame) dto.CurrentGameDTO {
 	}
 }
 
-func DTOToDomain(cgd dto.CurrentGameDTO) *models.CurrentGame {
+func DTOToDomain(cgd CurrentGameDTO) *models.CurrentGame {
 	gameBoard := models.NewGameBoard()
 	gameBoard.SetBoard(cgd.Board)
 	gameBoard.SetTurnNumber(cgd.NumberOfTurn)

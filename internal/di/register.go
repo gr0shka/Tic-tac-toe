@@ -3,11 +3,12 @@ package di
 import (
 	"net/http"
 
-	appService "github.com/gr0shka/Tic-tac-toe/internal/application/service"
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 	"go.uber.org/fx"
 )
 
@@ -23,8 +24,8 @@ func CreateApp() fx.Option {
 				fx.As(new(gameService.GameService)),
 			),
 			fx.Annotate(
-				appService.NewAppService,
-				fx.As(new(appService.AppService)),
+				usecase.NewAppService,
+				fx.As(new(usecase.AppService)),
 			),
 			handler.NewHandler,
 		),
@@ -40,8 +41,8 @@ func CreateMuxAndStartServer(h *handler.Handler) {
 	mux.HandleFunc("GET /create", h.NewGame)
 	mux.HandleFunc("GET /get/{uuid}", h.GetGame)
 
-	muxWithMiddleware := handler.MiddlewareCorsResponse(mux)
-	muxWithMiddleware = handler.MiddlewareSetHeaders(muxWithMiddleware)
+	muxWithMiddleware := middleware.MiddlewareCorsResponse(mux)
+	muxWithMiddleware = middleware.MiddlewareSetHeaders(muxWithMiddleware)
 
 	go func() {
 		http.ListenAndServe(":8080", muxWithMiddleware)
