@@ -39,7 +39,7 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 			if !ok {
 				continue
 			}
-			tempGb.Set(i, j, p.GetTurnNumber())
+			tempGb.Set(i, j, p.TurnNumber())
 			tempGb.NextTurn()
 
 			if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
@@ -55,7 +55,7 @@ func (g gameService) GetNextTurn(gb *models.GameBoard) *models.GameBoard {
 		return nil
 	}
 
-	gb.Set(bestTurn.x, bestTurn.y, np.GetTurnNumber())
+	gb.Set(bestTurn.x, bestTurn.y, np.TurnNumber())
 	gb.NextTurn()
 
 	return gb
@@ -72,7 +72,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 		score = math.MaxInt
 	}
 
-	p, end := g.IsEnded(gb.GetBoard())
+	p, end := g.IsEnded(gb.Board())
 	if end {
 		if p == Draw {
 			return 0
@@ -83,7 +83,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 		return 1
 	}
 
-	board := gb.GetBoard()
+	board := gb.Board()
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
 			if board[i][j] != models.EmptyCell {
@@ -96,7 +96,7 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 				continue
 			}
 
-			branch.Set(i, j, cp.GetTurnNumber())
+			branch.Set(i, j, cp.TurnNumber())
 			branch.NextTurn()
 
 			if current.IsRealPlayer() {
@@ -112,12 +112,12 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 
 // Добавить больше проверок (правильный ли ход и тд)
 func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
-	if newB.GetNumberOfTurns() != oldB.GetNumberOfTurns()+1 {
+	if newB.TurnNumber() != oldB.TurnNumber()+1 {
 		return errors.New("wrong number of turns")
 	}
 
-	newBoard := newB.GetBoard()
-	oldBoard := oldB.GetBoard()
+	newBoard := newB.Board()
+	oldBoard := oldB.Board()
 
 	countChangedCell := 0
 	for i := 0; i < len(newBoard); i++ {
@@ -140,9 +140,9 @@ func (g gameService) IsEnded(board [models.BoardSize][models.BoardSize]int) (int
 
 	checkBoard := func(board [models.BoardSize][models.BoardSize]int, fns ...func([models.BoardSize][models.BoardSize]int) (int, bool)) (int, bool) {
 		for _, fn := range fns {
-			CellType, ok := fn(board)
+			cellType, ok := fn(board)
 			if ok {
-				return CellType, true
+				return cellType, true
 			}
 		}
 
@@ -154,24 +154,24 @@ func (g gameService) IsEnded(board [models.BoardSize][models.BoardSize]int) (int
 
 func horizontalCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	for i := 0; i < len(board); i++ {
-		CellType := board[i][0]
+		cellType := board[i][0]
 		flag := true
 
-		if CellType == models.EmptyCell {
+		if cellType == models.EmptyCell {
 			flag = false
 			continue
 		}
 
 		for j := 1; j < len(board[i]); j++ {
 
-			if CellType != board[i][j] {
+			if cellType != board[i][j] {
 				flag = false
 				break
 			}
 		}
 
 		if flag {
-			return CellType, true
+			return cellType, true
 		}
 	}
 
@@ -180,24 +180,24 @@ func horizontalCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) 
 
 func verticalCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	for j := 0; j < len(board); j++ {
-		CellType := board[0][j]
+		cellType := board[0][j]
 		flag := true
 
-		if CellType == models.EmptyCell {
+		if cellType == models.EmptyCell {
 			flag = false
 			continue
 		}
 
 		for i := 1; i < len(board[j]); i++ {
 
-			if CellType != board[i][j] {
+			if cellType != board[i][j] {
 				flag = false
 				break
 			}
 		}
 
 		if flag {
-			return CellType, true
+			return cellType, true
 		}
 	}
 
@@ -205,12 +205,12 @@ func verticalCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 }
 
 func diagonalsCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
-	CellType := board[0][0]
+	cellType := board[0][0]
 	flag := true
 
-	if CellType != models.EmptyCell {
+	if cellType != models.EmptyCell {
 		for i := 1; i < len(board); i++ {
-			if CellType != board[i][i] {
+			if cellType != board[i][i] {
 				flag = false
 				break
 			}
@@ -221,14 +221,14 @@ func diagonalsCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	}
 
 	if flag {
-		return CellType, true
+		return cellType, true
 	}
 
-	CellType = board[len(board)-1][0]
+	cellType = board[len(board)-1][0]
 	flag = true
-	if CellType != models.EmptyCell {
+	if cellType != models.EmptyCell {
 		for i := 1; i < len(board); i++ {
-			if CellType != board[(len(board)-1)-i][i] {
+			if cellType != board[(len(board)-1)-i][i] {
 				flag = false
 				break
 			}
@@ -239,7 +239,7 @@ func diagonalsCheck(board [models.BoardSize][models.BoardSize]int) (int, bool) {
 	}
 
 	if flag {
-		return CellType, true
+		return cellType, true
 	}
 
 	return Draw, false

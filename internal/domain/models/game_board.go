@@ -56,11 +56,11 @@ func (gb *GameBoard) Get(x, y int) int {
 	return gb.board[x][y]
 }
 
-func (gb *GameBoard) GetBoard() [BoardSize][BoardSize]int {
+func (gb *GameBoard) Board() [BoardSize][BoardSize]int {
 	return gb.board
 }
 
-func (gb *GameBoard) GetPlayers() [CountPlayers]Player {
+func (gb *GameBoard) Players() [CountPlayers]Player {
 	return gb.players
 }
 
@@ -78,7 +78,7 @@ func (gb *GameBoard) NextTurn() {
 	gb.numberOfTurn++
 }
 
-func (gb *GameBoard) GetNumberOfTurns() int {
+func (gb *GameBoard) TurnNumber() int {
 	return gb.numberOfTurn
 }
 

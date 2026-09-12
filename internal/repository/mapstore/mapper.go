@@ -5,16 +5,16 @@ import (
 )
 
 func DomainToDTO(cg models.CurrentGame) CurrentGameDTO {
-	cgPlayers := cg.GetPlayers()
+	cgPlayers := cg.Players()
 	players := [models.CountPlayers]PlayerDTO{
-		{cgPlayers[models.FirstPlayer].GetTurnNumber(), cgPlayers[models.FirstPlayer].IsRealPlayer()},
-		{cgPlayers[models.SecondPlayer].GetTurnNumber(), cgPlayers[models.SecondPlayer].IsRealPlayer()},
+		{cgPlayers[models.FirstPlayer].TurnNumber(), cgPlayers[models.FirstPlayer].IsRealPlayer()},
+		{cgPlayers[models.SecondPlayer].TurnNumber(), cgPlayers[models.SecondPlayer].IsRealPlayer()},
 	}
 
 	return CurrentGameDTO{
 		ID:           cg.ID(),
-		Board:        cg.GetBoard(),
-		NumberOfTurn: cg.GetNumberOfTurns(),
+		Board:        cg.Board(),
+		NumberOfTurn: cg.TurnNumber(),
 		Players:      players,
 	}
 }

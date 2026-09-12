@@ -20,7 +20,7 @@ func (a appService) GameIsEnded(id uuid.UUID) (int, bool) {
 		return 0, false
 	}
 
-	return a.gameService.IsEnded(cg.GetBoard())
+	return a.gameService.IsEnded(cg.Board())
 }
 
 func NewAppService(gameService service.GameService, rep repository.Repository) *appService {
@@ -57,7 +57,7 @@ func (a appService) ProcessPlayerMove(
 
 	next := current.Clone()
 	next.SetBoard(board)
-	next.SetTurnNumber(current.GetNumberOfTurns() + 1)
+	next.SetTurnNumber(current.TurnNumber() + 1)
 
 	if err = a.gameService.ValidateBoard(current.GameBoard, next); err != nil {
 		return nil, err

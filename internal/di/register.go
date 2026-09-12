@@ -41,8 +41,8 @@ func CreateMuxAndStartServer(h *handler.Handler) {
 	mux.HandleFunc("GET /create", h.NewGame)
 	mux.HandleFunc("GET /get/{uuid}", h.GetGame)
 
-	muxWithMiddleware := middleware.MiddlewareCorsResponse(mux)
-	muxWithMiddleware = middleware.MiddlewareSetHeaders(muxWithMiddleware)
+	muxWithMiddleware := middleware.CORS(mux)
+	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
 
 	go func() {
 		http.ListenAndServe(":8080", muxWithMiddleware)

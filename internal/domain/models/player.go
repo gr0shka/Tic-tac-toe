@@ -12,7 +12,7 @@ func NewPlayer(turnNumber int, realPlayer bool) *Player {
 	}
 }
 
-func (player Player) GetTurnNumber() int {
+func (player Player) TurnNumber() int {
 	return player.turnNumber
 }
 
