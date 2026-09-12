@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/service"
@@ -74,7 +72,7 @@ func (a appService) ProcessPlayerMove(
 
 	next = a.gameService.GetNextTurn(nextCg.GameBoard)
 	if next == nil {
-		return nil, errors.New("failed to calculate next turn")
+		return nil, models.ErrFailedCalculateNextTurn
 	}
 	nextCg.GameBoard = next
 

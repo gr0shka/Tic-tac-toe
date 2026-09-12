@@ -1,7 +1,6 @@
 package mapstore
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/google/uuid"
@@ -26,7 +25,7 @@ func (m *Repository) Save(cg models.CurrentGame) error {
 func (m *Repository) Get(id uuid.UUID) (*models.CurrentGame, error) {
 	cgd, ok := m.data.Load(id)
 	if !ok {
-		return nil, errors.New("not found")
+		return nil, models.ErrNotFound
 	}
 
 	cg := cgd.(CurrentGameDTO)
