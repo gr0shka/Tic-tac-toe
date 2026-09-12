@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/mapper"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 )
 
@@ -26,15 +27,9 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boardResponse := dto.GameBoardResponse{
-		ID: gameUUID,
-	}
-
 	if cg, err := h.service.GetGame(gameUUID); err == nil {
 		if player, end := h.service.GameIsEnded(gameUUID); end {
-			boardResponse.GameIsEnded = end
-			boardResponse.Winner = player
-			boardResponse.Board = cg.Board()
+			boardResponse := mapper.ToGameBoardResponse(cg, player, end)
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(boardResponse)
 			return
@@ -59,9 +54,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	winner, ended := h.service.GameIsEnded(gameUUID)
-	boardResponse.Board = cg.Board()
-	boardResponse.Winner = winner
-	boardResponse.GameIsEnded = ended
+	boardResponse := mapper.ToGameBoardResponse(cg, winner, ended)
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
@@ -77,10 +70,7 @@ func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := dto.CreateGameResponse{
-		ID:    cg.ID(),
-		Board: cg.Board(),
-	}
+	data := mapper.ToGameBoardResponse(cg, -1, false)
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
