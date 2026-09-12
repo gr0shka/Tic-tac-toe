@@ -6,6 +6,6 @@ import (
 )
 
 type Repository interface {
-	Save(cg models.CurrentGame) error
+	Save(cg *models.CurrentGame) error
 	Get(id uuid.UUID) (*models.CurrentGame, error)
 }

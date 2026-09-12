@@ -15,8 +15,8 @@ func NewMapRepository() *Repository {
 	return &Repository{}
 }
 
-func (m *Repository) Save(cg models.CurrentGame) error {
-	cgd := DomainToDTO(cg)
+func (m *Repository) Save(cg *models.CurrentGame) error {
+	cgd := DomainToDTO(*cg)
 	m.data.Store(cgd.ID, cgd)
 
 	return nil
