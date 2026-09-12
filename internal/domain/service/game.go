@@ -1,11 +1,11 @@
 package service
 
 import (
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
 type GameService interface {
-	GetNextTurn(gb *models.GameBoard) *models.GameBoard
-	ValidateBoard(oldB, newB *models.GameBoard) error
-	IsEnded(board [models.BoardSize][models.BoardSize]int) (int, bool)
+	GetNextTurn(gb *game.GameBoard) *game.GameBoard
+	ValidateBoard(oldB, newB *game.GameBoard) error
+	IsEnded(board [game.BoardSize][game.BoardSize]int) (int, bool)
 }

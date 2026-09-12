@@ -2,7 +2,7 @@ package mapstore
 
 import (
 	"github.com/google/uuid"
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
 type PlayerDTO struct {
@@ -12,7 +12,7 @@ type PlayerDTO struct {
 
 type CurrentGameDTO struct {
 	ID           uuid.UUID
-	Board        [models.BoardSize][models.BoardSize]int
+	Board        [game.BoardSize][game.BoardSize]int
 	NumberOfTurn int
-	Players      [models.CountPlayers]PlayerDTO
+	Players      [game.CountPlayers]PlayerDTO
 }

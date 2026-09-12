@@ -8,7 +8,6 @@ import (
 	"time"
 
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
@@ -21,7 +20,7 @@ func CreateApp() fx.Option {
 		fx.Provide(
 			fx.Annotate(
 				mapstore.NewMapRepository,
-				fx.As(new(repository.Repository)),
+				fx.As(new(usecase.Repository)),
 			),
 			fx.Annotate(
 				gameService.NewGameService,

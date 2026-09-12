@@ -1,4 +1,4 @@
-package models
+package game
 
 const (
 	EmptyCell = -1

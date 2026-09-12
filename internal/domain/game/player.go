@@ -1,4 +1,4 @@
-package models
+package game
 
 type Player struct {
 	turnNumber int

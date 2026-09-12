@@ -20,12 +20,14 @@ func NewHandler(service usecase.AppService) *Handler {
 func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	boardResponse := dto.GameBoardResponse{}
-
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+
+	boardResponse := dto.GameBoardResponse{
+		ID: gameUUID,
 	}
 
 	if cg, err := h.service.GetGame(gameUUID); err == nil {
@@ -76,7 +78,7 @@ func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := dto.CreateGameResponse{
-		Id:    cg.ID(),
+		ID:    cg.ID(),
 		Board: cg.Board(),
 	}
 

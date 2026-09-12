@@ -1,14 +1,14 @@
 package mapstore
 
 import (
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
-func DomainToDTO(cg models.CurrentGame) CurrentGameDTO {
+func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 	cgPlayers := cg.Players()
-	players := [models.CountPlayers]PlayerDTO{
-		{cgPlayers[models.FirstPlayer].TurnNumber(), cgPlayers[models.FirstPlayer].IsRealPlayer()},
-		{cgPlayers[models.SecondPlayer].TurnNumber(), cgPlayers[models.SecondPlayer].IsRealPlayer()},
+	players := [game.CountPlayers]PlayerDTO{
+		{cgPlayers[game.FirstPlayer].TurnNumber(), cgPlayers[game.FirstPlayer].IsRealPlayer()},
+		{cgPlayers[game.SecondPlayer].TurnNumber(), cgPlayers[game.SecondPlayer].IsRealPlayer()},
 	}
 
 	return CurrentGameDTO{
@@ -19,20 +19,20 @@ func DomainToDTO(cg models.CurrentGame) CurrentGameDTO {
 	}
 }
 
-func DTOToDomain(cgd CurrentGameDTO) *models.CurrentGame {
-	gameBoard := models.NewGameBoard()
+func DTOToDomain(cgd CurrentGameDTO) *game.CurrentGame {
+	gameBoard := game.NewGameBoard()
 	gameBoard.SetBoard(cgd.Board)
 	gameBoard.SetTurnNumber(cgd.NumberOfTurn)
 
-	player1 := models.NewPlayer(
-		cgd.Players[models.FirstPlayer].TurnNumber,
-		cgd.Players[models.FirstPlayer].RealPlayer,
+	player1 := game.NewPlayer(
+		cgd.Players[game.FirstPlayer].TurnNumber,
+		cgd.Players[game.FirstPlayer].RealPlayer,
 	)
-	player2 := models.NewPlayer(
-		cgd.Players[models.SecondPlayer].TurnNumber,
-		cgd.Players[models.SecondPlayer].RealPlayer,
+	player2 := game.NewPlayer(
+		cgd.Players[game.SecondPlayer].TurnNumber,
+		cgd.Players[game.SecondPlayer].RealPlayer,
 	)
 	gameBoard.AddPlayers(*player1, *player2)
 
-	return models.NewCurrentGameWithID(cgd.ID, gameBoard)
+	return game.NewCurrentGameWithID(cgd.ID, gameBoard)
 }
