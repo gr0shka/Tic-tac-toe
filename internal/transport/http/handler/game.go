@@ -18,10 +18,7 @@ func NewHandler(service usecase.AppService) *Handler {
 }
 
 func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
 
 	boardResponse := dto.GameBoardResponse{}
 
@@ -55,10 +52,14 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	cg, err := h.service.ProcessPlayerMove(gameUUID, gameBoard.Board)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
+	winner, ended := h.service.GameIsEnded(gameUUID)
 	boardResponse.Board = cg.Board()
+	boardResponse.Winner = winner
+	boardResponse.GameIsEnded = ended
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
@@ -66,10 +67,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
 
 	cg, err := h.service.CreateGame()
 	if err != nil {
@@ -88,10 +86,7 @@ func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
