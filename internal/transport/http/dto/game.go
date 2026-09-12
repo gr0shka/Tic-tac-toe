@@ -5,11 +5,6 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
-type CreateGameResponse struct {
-	ID    uuid.UUID                           `json:"id"`
-	Board [game.BoardSize][game.BoardSize]int `json:"board"`
-}
-
 type GameBoardRequest struct {
 	Board [game.BoardSize][game.BoardSize]int `json:"board"`
 }
