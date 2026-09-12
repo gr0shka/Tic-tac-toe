@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"math"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
@@ -110,27 +109,43 @@ func (g gameService) recursiveScoring(gb models.GameBoard) int {
 	return score
 }
 
-// Добавить больше проверок (правильный ли ход и тд)
 func (g gameService) ValidateBoard(oldB, newB *models.GameBoard) error {
 	if newB.TurnNumber() != oldB.TurnNumber()+1 {
-		return errors.New("wrong number of turns")
+		return models.ErrWrongNumberOfTurns
 	}
 
 	newBoard := newB.Board()
 	oldBoard := oldB.Board()
 
-	countChangedCell := 0
-	for i := 0; i < len(newBoard); i++ {
-		for j := 0; j < len(newBoard[i]); j++ {
+	player, ok := oldB.NextPlayer()
+	if !ok {
+		return models.ErrInvalidTurn
+	}
 
+	changedX, changedY := -1, -1
+	for i := 0; i < models.BoardSize; i++ {
+		for j := 0; j < models.BoardSize; j++ {
 			if newBoard[i][j] != oldBoard[i][j] {
-				countChangedCell++
+
+				if oldBoard[i][j] != models.EmptyCell {
+					return models.ErrAlteredPreviousMoves
+				}
+
+				if changedX != -1 || changedY != -1 {
+					return models.ErrMultipleMoves
+				}
+
+				changedX, changedY = i, j
 			}
 		}
 	}
 
-	if countChangedCell != 1 {
-		return errors.New("wrong number of turns")
+	if changedX == -1 || changedY == -1 {
+		return models.ErrNoMoveMade
+	}
+
+	if newBoard[changedX][changedY] != player.TurnNumber() {
+		return models.ErrWrongPlayerMove
 	}
 
 	return nil
