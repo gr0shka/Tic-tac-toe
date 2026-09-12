@@ -5,24 +5,9 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/models"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 )
-
-type CreateGameResponse struct {
-	Id    uuid.UUID                               `json:"id"`
-	Board [models.BoardSize][models.BoardSize]int `json:"board"`
-}
-
-type GameBoardRequest struct {
-	Board [models.BoardSize][models.BoardSize]int `json:"board"`
-}
-
-type GameBoardResponse struct {
-	GameIsEnded bool                                    `json:"game_is_ended"`
-	Winner      int                                     `json:"winner"`
-	Board       [models.BoardSize][models.BoardSize]int `json:"board"`
-}
 
 type Handler struct {
 	service usecase.AppService
@@ -38,7 +23,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boardResponse := GameBoardResponse{}
+	boardResponse := dto.GameBoardResponse{}
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
@@ -50,7 +35,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		if player, end := h.service.GameIsEnded(gameUUID); end {
 			boardResponse.GameIsEnded = end
 			boardResponse.Winner = player
-			boardResponse.Board = cg.GetBoard()
+			boardResponse.Board = cg.Board()
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(boardResponse)
 			return
@@ -60,7 +45,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var gameBoard GameBoardRequest
+	var gameBoard dto.GameBoardRequest
 	decoder := json.NewDecoder(r.Body)
 	if err = decoder.Decode(&gameBoard); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -73,7 +58,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boardResponse.Board = cg.GetBoard()
+	boardResponse.Board = cg.Board()
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
@@ -92,9 +77,9 @@ func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := CreateGameResponse{
+	data := dto.CreateGameResponse{
 		Id:    cg.ID(),
-		Board: cg.GetBoard(),
+		Board: cg.Board(),
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -122,5 +107,5 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
-	encoder.Encode(game.GetBoard())
+	encoder.Encode(game.Board())
 }
