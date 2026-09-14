@@ -187,7 +187,7 @@
     }
 
     function cloneBoard(b) {
-        return b.map(row => row.slice());
+        return b.map(row => [...row]);
     }
 
     function symbol(v) {
@@ -220,15 +220,22 @@
 
     function extractEnded(data) {
         if (!data || typeof data !== 'object') return null;
+        if (typeof data.game_is_ended === 'boolean') return data.game_is_ended;
         if (typeof data.GameIsEnded === 'boolean') return data.GameIsEnded;
-        if (typeof data.gameIsEnded === 'boolean') return data.gameIsEnded;
         return null;
     }
 
     function extractWinner(data) {
         if (!data || typeof data !== 'object') return null;
-        if (typeof data.HowIsWinner === 'number') return data.HowIsWinner;
-        if (typeof data.howIsWinner === 'number') return data.howIsWinner;
+        if (typeof data.winner === 'number') return data.winner;
+        if (typeof data.Winner === 'number') return data.Winner;
+        return null;
+    }
+
+    function extractGameId(data) {
+        if (!data || typeof data !== 'object') return null;
+        if (data.id) return data.id;
+        if (data.Id) return data.Id;
         return null;
     }
 
@@ -278,8 +285,13 @@
                 return;
             }
 
-            gameIdEl.value = data.id || data.Id || '';
-            setStatus('Игра создана');
+            const gameId = extractGameId(data);
+            if (gameId) {
+                gameIdEl.value = gameId;
+                setStatus('Игра создана');
+            } else {
+                setStatus('Не удалось получить ID игры');
+            }
         } catch (e) {
             setStatus('Ошибка create');
             responseEl.textContent = String(e);
