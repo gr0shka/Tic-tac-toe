@@ -5,27 +5,51 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/service"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
-	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 )
 
-func TestHandler_GetGame(t *testing.T) {
+type mockAppService struct {
+	cg     *game.CurrentGame
+	outErr error
+	winner int
+	isEnd  bool
+}
+
+func (m mockAppService) CreateGame() (*game.CurrentGame, error) {
+	return m.cg, m.outErr
+}
+
+func (m mockAppService) ProcessPlayerMove(id uuid.UUID, board [3][3]int) (*game.CurrentGame, error) {
+	return m.cg, m.outErr
+}
+
+func (m mockAppService) GetGame(id uuid.UUID) (*game.CurrentGame, error) {
+	return m.cg, m.outErr
+}
+
+func (m mockAppService) GameIsEnded(id uuid.UUID) (int, bool) {
+	return m.winner, m.isEnd
+}
+
+func TestHandler_GetGame_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 
-	url := "/get/game/" + uuid.UUID{}.String()
+	gameID := uuid.New()
+	url := "/get/" + gameID.String()
 	req, _ := http.NewRequest("GET", url, nil)
+	req.SetPathValue("uuid", gameID.String())
 
-	gs := service.NewGameService()
-	repo := mapstore.NewMapRepository()
-	as := usecase.NewAppService(gs, repo)
+	gb := game.NewGameBoard()
+	mockGame := game.NewCurrentGame(gb)
+	mockApp := mockAppService{mockGame, nil, 0, false}
 
-	h := handler.NewHandler(as)
+	h := handler.NewHandler(mockApp)
 
 	h.GetGame(w, req)
 
@@ -48,17 +72,42 @@ func TestHandler_GetGame(t *testing.T) {
 	}
 }
 
+func TestHandler_GetGame_NotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	gameID := uuid.New()
+	url := "/get/" + gameID.String()
+	req, _ := http.NewRequest("GET", url, nil)
+	req.SetPathValue("uuid", gameID.String())
+
+	gb := game.NewGameBoard()
+	mockGame := game.NewCurrentGame(gb)
+	mockApp := mockAppService{mockGame, game.ErrNotFound, 0, false}
+
+	h := handler.NewHandler(mockApp)
+
+	h.GetGame(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusNotFound {
+		t.Errorf("expected status 200 OK, got %d", res.StatusCode)
+	}
+
+}
+
 func TestHandler_NewGame(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	url := "/create"
 	req, _ := http.NewRequest("GET", url, nil)
 
-	gs := service.NewGameService()
-	repo := mapstore.NewMapRepository()
-	as := usecase.NewAppService(gs, repo)
+	gb := game.NewGameBoard()
+	mockGame := game.NewCurrentGame(gb)
+	mockApp := mockAppService{mockGame, nil, 0, false}
 
-	h := handler.NewHandler(as)
+	h := handler.NewHandler(mockApp)
 
 	h.NewGame(w, req)
 
@@ -84,14 +133,19 @@ func TestHandler_NewGame(t *testing.T) {
 func TestHandler_NextTurn(t *testing.T) {
 	w := httptest.NewRecorder()
 
-	url := "/create"
-	req, _ := http.NewRequest("GET", url, nil)
+	gameID := uuid.New()
+	url := "/game/" + gameID.String()
 
-	gs := service.NewGameService()
-	repo := mapstore.NewMapRepository()
-	as := usecase.NewAppService(gs, repo)
+	jsonBody := `{"board": [[1,0,0],[0,2,0],[0,0,0]]}`
 
-	h := handler.NewHandler(as)
+	req, _ := http.NewRequest("POST", url, strings.NewReader(jsonBody))
+	req.SetPathValue("uuid", gameID.String())
+
+	gb := game.NewGameBoard()
+	mockGame := game.NewCurrentGame(gb)
+	mockApp := mockAppService{mockGame, nil, 0, false}
+
+	h := handler.NewHandler(mockApp)
 
 	h.NextTurn(w, req)
 
