@@ -40,9 +40,9 @@ func CreateApp() fx.Option {
 
 func RegisterServer(lc fx.Lifecycle, h *handler.Handler) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /game/{uuid}", h.NextTurn)
-	mux.HandleFunc("GET /create", h.NewGame)
-	mux.HandleFunc("GET /get/{uuid}", h.GetGame)
+	mux.HandleFunc("POST /games/{uuid}", h.NextTurn)
+	mux.HandleFunc("POST /games", h.NewGame)
+	mux.HandleFunc("GET /games/{uuid}", h.GetGame)
 
 	muxWithMiddleware := middleware.CORS(mux)
 	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
