@@ -92,7 +92,9 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := mapper.ToGameBoardResponse(game, -1, false)
+	winner, ended := h.service.GameIsEnded(gameUUID)
+
+	data := mapper.ToGameBoardResponse(game, winner, ended)
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
