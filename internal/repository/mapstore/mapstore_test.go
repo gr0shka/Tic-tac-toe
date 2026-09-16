@@ -26,8 +26,8 @@ func createCurrentGameDTO() *mapstore.CurrentGameDTO {
 
 	players := cg.Players()
 
-	pl1 := mapstore.PlayerDTO{players[0].TurnNumber(), players[0].IsRealPlayer()}
-	pl2 := mapstore.PlayerDTO{players[1].TurnNumber(), players[1].IsRealPlayer()}
+	pl1 := mapstore.PlayerDTO{players[0].Symbol(), players[0].IsRealPlayer()}
+	pl2 := mapstore.PlayerDTO{players[1].Symbol(), players[1].IsRealPlayer()}
 
 	cgDTO := mapstore.CurrentGameDTO{
 		ID:           cg.ID(),
@@ -146,11 +146,11 @@ func TestMapRepository_Mapper_DomainToDTO(t *testing.T) {
 			}
 
 			for k, pl := range testCase.cg.Players() {
-				if pl.TurnNumber() != cgDTO.Players[k].TurnNumber {
-					t.Errorf("player turn number error, expected %v, got %v", testCase.cg.ID(), pl.TurnNumber())
+				if pl.Symbol() != cgDTO.Players[k].TurnNumber {
+					t.Errorf("player turn number error, expected %v, got %v", testCase.cg.ID(), pl.Symbol())
 				}
 				if pl.IsRealPlayer() != cgDTO.Players[k].RealPlayer {
-					t.Errorf("player is real player error, expected %v, got %v", testCase.cg.ID(), pl.TurnNumber())
+					t.Errorf("player is real player error, expected %v, got %v", testCase.cg.ID(), pl.Symbol())
 				}
 			}
 		})
@@ -188,11 +188,11 @@ func TestMapRepository_Mapper_DTOtoDomain(t *testing.T) {
 			}
 
 			for k, pl := range cg.Players() {
-				if pl.TurnNumber() != cgDTO.Players[k].TurnNumber {
-					t.Errorf("player turn number error, expected %v, got %v", cg.ID(), pl.TurnNumber())
+				if pl.Symbol() != cgDTO.Players[k].TurnNumber {
+					t.Errorf("player turn number error, expected %v, got %v", cg.ID(), pl.Symbol())
 				}
 				if pl.IsRealPlayer() != cgDTO.Players[k].RealPlayer {
-					t.Errorf("player is real player error, expected %v, got %v", cg.ID(), pl.TurnNumber())
+					t.Errorf("player is real player error, expected %v, got %v", cg.ID(), pl.Symbol())
 				}
 			}
 		})

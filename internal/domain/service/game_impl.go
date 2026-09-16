@@ -38,7 +38,7 @@ func (g gameService) GetNextTurn(gb *game.GameBoard) *game.GameBoard {
 			if !ok {
 				continue
 			}
-			tempGb.Set(i, j, p.TurnNumber())
+			tempGb.Set(i, j, p.Symbol())
 			tempGb.NextTurn()
 
 			if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
@@ -58,7 +58,7 @@ func (g gameService) GetNextTurn(gb *game.GameBoard) *game.GameBoard {
 		return nil
 	}
 
-	gb.Set(bestTurn.x, bestTurn.y, np.TurnNumber())
+	gb.Set(bestTurn.x, bestTurn.y, np.Symbol())
 	gb.NextTurn()
 
 	return gb
@@ -99,7 +99,7 @@ func (g gameService) recursiveScoring(gb game.GameBoard) int {
 				continue
 			}
 
-			branch.Set(i, j, cp.TurnNumber())
+			branch.Set(i, j, cp.Symbol())
 			branch.NextTurn()
 
 			if current.IsRealPlayer() {
@@ -148,7 +148,7 @@ func (g gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 		return game.ErrNoMoveMade
 	}
 
-	if newBoard[changedX][changedY] != player.TurnNumber() {
+	if newBoard[changedX][changedY] != player.Symbol() {
 		return game.ErrWrongPlayerMove
 	}
 

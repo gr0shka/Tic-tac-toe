@@ -7,8 +7,8 @@ import (
 func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 	cgPlayers := cg.Players()
 	players := [game.CountPlayers]PlayerDTO{
-		{cgPlayers[game.FirstPlayer].TurnNumber(), cgPlayers[game.FirstPlayer].IsRealPlayer()},
-		{cgPlayers[game.SecondPlayer].TurnNumber(), cgPlayers[game.SecondPlayer].IsRealPlayer()},
+		{cgPlayers[game.FirstPlayer].Symbol(), cgPlayers[game.FirstPlayer].IsRealPlayer()},
+		{cgPlayers[game.SecondPlayer].Symbol(), cgPlayers[game.SecondPlayer].IsRealPlayer()},
 	}
 
 	return CurrentGameDTO{
