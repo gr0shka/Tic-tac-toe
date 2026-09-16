@@ -15,4 +15,6 @@ type CurrentGameDTO struct {
 	Board        [game.BoardSize][game.BoardSize]int
 	NumberOfTurn int
 	Players      [game.CountPlayers]PlayerDTO
+	IsEnded      bool
+	Winner       int
 }

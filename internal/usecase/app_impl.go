@@ -52,6 +52,10 @@ func (a appService) ProcessPlayerMove(
 		return nil, err
 	}
 
+	if current.IsEnded() {
+		return current, nil
+	}
+
 	next := current.Clone()
 	next.SetBoard(board)
 	next.SetTurnNumber(current.TurnNumber() + 1)
@@ -62,7 +66,11 @@ func (a appService) ProcessPlayerMove(
 
 	nextCg := game.NewCurrentGameWithID(id, next)
 
-	if _, ok := a.gameService.IsEnded(board); ok {
+	winner, ended := a.gameService.IsEnded(nextCg.Board())
+	nextCg.SetWinner(winner)
+	nextCg.SetIsEnded(ended)
+
+	if ended {
 		if err = a.repository.Save(nextCg); err != nil {
 			return nil, err
 		}
@@ -74,6 +82,10 @@ func (a appService) ProcessPlayerMove(
 		return nil, game.ErrFailedCalculateNextTurn
 	}
 	nextCg.GameBoard = next
+
+	winner, ended = a.gameService.IsEnded(nextCg.Board())
+	nextCg.SetWinner(winner)
+	nextCg.SetIsEnded(ended)
 
 	if err = a.repository.Save(nextCg); err != nil {
 		return nil, err

@@ -27,18 +27,6 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cg, err := h.service.GetGame(gameUUID); err == nil {
-		if player, end := h.service.GameIsEnded(gameUUID); end {
-			boardResponse := mapper.ToGameBoardResponse(cg, player, end)
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(boardResponse)
-			return
-		}
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	var gameBoard dto.GameBoardRequest
 	decoder := json.NewDecoder(r.Body)
 	if err = decoder.Decode(&gameBoard); err != nil {
@@ -46,19 +34,20 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cg, err := h.service.ProcessPlayerMove(gameUUID, gameBoard.Board)
+	nextCg, err := h.service.ProcessPlayerMove(gameUUID, gameBoard.Board)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	winner, ended := h.service.GameIsEnded(gameUUID)
-	boardResponse := mapper.ToGameBoardResponse(cg, winner, ended)
+	gameBoardResponse := mapper.ToGameBoardResponse(nextCg)
 
-	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
-	encoder.Encode(boardResponse)
+	if err = encoder.Encode(gameBoardResponse); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +59,7 @@ func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := mapper.ToGameBoardResponse(cg, -1, false)
+	data := mapper.ToGameBoardResponse(cg)
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
@@ -92,9 +81,7 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	winner, ended := h.service.GameIsEnded(gameUUID)
-
-	data := mapper.ToGameBoardResponse(game, winner, ended)
+	data := mapper.ToGameBoardResponse(game)
 
 	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
