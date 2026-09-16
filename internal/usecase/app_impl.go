@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/service"
@@ -11,7 +13,7 @@ type appService struct {
 	repository  Repository
 }
 
-func (a appService) GameIsEnded(id uuid.UUID) (int, bool) {
+func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
 	cg, err := a.repository.Get(id)
 	if err != nil {
 		return 0, false
@@ -27,7 +29,7 @@ func NewAppService(gameService service.GameService, rep Repository) *appService 
 	}
 }
 
-func (a appService) CreateGame() (*game.CurrentGame, error) {
+func (a appService) CreateGame(ctx context.Context) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
 	player := game.NewPlayer(game.FirstPlayer, true)
 	computer := game.NewPlayer(game.SecondPlayer, false)
@@ -43,6 +45,7 @@ func (a appService) CreateGame() (*game.CurrentGame, error) {
 }
 
 func (a appService) ProcessPlayerMove(
+	ctx context.Context,
 	id uuid.UUID,
 	board [game.BoardSize][game.BoardSize]int,
 ) (*game.CurrentGame, error) {
@@ -77,7 +80,7 @@ func (a appService) ProcessPlayerMove(
 		return nextCg, nil
 	}
 
-	next = a.gameService.GetNextTurn(nextCg.GameBoard)
+	next = a.gameService.GetNextTurn(ctx, nextCg.GameBoard)
 	if next == nil {
 		return nil, game.ErrFailedCalculateNextTurn
 	}

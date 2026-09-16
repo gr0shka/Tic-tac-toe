@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"math"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
@@ -17,7 +18,7 @@ func NewGameService() *gameService {
 	return &gameService{}
 }
 
-func (g gameService) GetNextTurn(gb *game.GameBoard) *game.GameBoard {
+func (g gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.GameBoard {
 	bestTurn := struct {
 		score int
 		x, y  int
@@ -29,6 +30,12 @@ func (g gameService) GetNextTurn(gb *game.GameBoard) *game.GameBoard {
 
 	for i := 0; i < game.BoardSize; i++ {
 		for j := 0; j < game.BoardSize; j++ {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
+
 			if gb.Get(i, j) != game.EmptyCell {
 				continue
 			}
@@ -41,7 +48,7 @@ func (g gameService) GetNextTurn(gb *game.GameBoard) *game.GameBoard {
 			tempGb.Set(i, j, p.Symbol())
 			tempGb.NextTurn()
 
-			if sc := g.recursiveScoring(*tempGb); sc > bestTurn.score {
+			if sc := g.recursiveScoring(ctx, *tempGb); sc > bestTurn.score {
 				bestTurn.score = sc
 				bestTurn.x = i
 				bestTurn.y = j
@@ -64,7 +71,7 @@ func (g gameService) GetNextTurn(gb *game.GameBoard) *game.GameBoard {
 	return gb
 }
 
-func (g gameService) recursiveScoring(gb game.GameBoard) int {
+func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard) int {
 	current, ok := gb.NextPlayer()
 	if !ok {
 		return 0
@@ -89,6 +96,12 @@ func (g gameService) recursiveScoring(gb game.GameBoard) int {
 	board := gb.Board()
 	for i := 0; i < len(board); i++ {
 		for j := 0; j < len(board[i]); j++ {
+			select {
+			case <-ctx.Done():
+				return 0
+			default:
+			}
+
 			if board[i][j] != game.EmptyCell {
 				continue
 			}
@@ -103,9 +116,9 @@ func (g gameService) recursiveScoring(gb game.GameBoard) int {
 			branch.NextTurn()
 
 			if current.IsRealPlayer() {
-				score = min(score, g.recursiveScoring(*branch))
+				score = min(score, g.recursiveScoring(ctx, *branch))
 			} else {
-				score = max(score, g.recursiveScoring(*branch))
+				score = max(score, g.recursiveScoring(ctx, *branch))
 			}
 		}
 	}
