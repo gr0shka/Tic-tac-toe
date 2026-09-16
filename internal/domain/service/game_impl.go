@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	Draw = -1
+	Draw     = -1
+	MaxDepth = 10
 )
 
 type gameService struct {
@@ -48,7 +49,9 @@ func (g gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.
 			tempGb.Set(i, j, p.Symbol())
 			tempGb.NextTurn()
 
-			if sc := g.recursiveScoring(ctx, *tempGb); sc > bestTurn.score {
+			depth := 0
+
+			if sc := g.recursiveScoring(ctx, *tempGb, depth); sc > bestTurn.score {
 				bestTurn.score = sc
 				bestTurn.x = i
 				bestTurn.y = j
@@ -71,7 +74,7 @@ func (g gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.
 	return gb
 }
 
-func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard) int {
+func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, depth int) int {
 	current, ok := gb.NextPlayer()
 	if !ok {
 		return 0
@@ -88,9 +91,9 @@ func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard) in
 			return 0
 		}
 		if p == game.FirstPlayer {
-			return -1
+			return -(MaxDepth - depth)
 		}
-		return 1
+		return MaxDepth - depth
 	}
 
 	board := gb.Board()
@@ -115,10 +118,12 @@ func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard) in
 			branch.Set(i, j, cp.Symbol())
 			branch.NextTurn()
 
+			depth++
+
 			if current.IsRealPlayer() {
-				score = min(score, g.recursiveScoring(ctx, *branch))
+				score = min(score, g.recursiveScoring(ctx, *branch, depth))
 			} else {
-				score = max(score, g.recursiveScoring(ctx, *branch))
+				score = max(score, g.recursiveScoring(ctx, *branch, depth))
 			}
 		}
 	}

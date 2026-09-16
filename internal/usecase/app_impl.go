@@ -13,6 +13,13 @@ type appService struct {
 	repository  Repository
 }
 
+func NewAppService(gameService service.GameService, rep Repository) *appService {
+	return &appService{
+		gameService: gameService,
+		repository:  rep,
+	}
+}
+
 func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
 	cg, err := a.repository.Get(id)
 	if err != nil {
@@ -20,13 +27,6 @@ func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
 	}
 
 	return a.gameService.IsEnded(cg.Board())
-}
-
-func NewAppService(gameService service.GameService, rep Repository) *appService {
-	return &appService{
-		gameService: gameService,
-		repository:  rep,
-	}
 }
 
 func (a appService) CreateGame(ctx context.Context) (*game.CurrentGame, error) {
@@ -97,7 +97,7 @@ func (a appService) ProcessPlayerMove(
 	return nextCg, nil
 }
 
-func (a appService) GetGame(id uuid.UUID) (*game.CurrentGame, error) {
+func (a appService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	cg, err := a.repository.Get(id)
 	if err != nil {
 		return nil, err
