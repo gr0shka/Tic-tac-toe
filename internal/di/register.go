@@ -40,7 +40,7 @@ func CreateApp() fx.Option {
 
 func RegisterServer(lc fx.Lifecycle, h *handler.Handler) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /games/{uuid}", h.NextTurn)
+	mux.HandleFunc("POST /game/{uuid}", h.NextTurn)
 	mux.HandleFunc("POST /games", h.NewGame)
 	mux.HandleFunc("GET /games/{uuid}", h.GetGame)
 

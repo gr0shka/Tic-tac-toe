@@ -41,7 +41,7 @@ func TestHandler_GetGame_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	gameID := uuid.New()
-	url := "/get/" + gameID.String()
+	url := "/games/" + gameID.String()
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetPathValue("uuid", gameID.String())
 
@@ -76,7 +76,7 @@ func TestHandler_GetGame_NotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	gameID := uuid.New()
-	url := "/get/" + gameID.String()
+	url := "/games/" + gameID.String()
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetPathValue("uuid", gameID.String())
 
@@ -100,8 +100,8 @@ func TestHandler_GetGame_NotFound(t *testing.T) {
 func TestHandler_NewGame(t *testing.T) {
 	w := httptest.NewRecorder()
 
-	url := "/create"
-	req, _ := http.NewRequest("GET", url, nil)
+	url := "/games"
+	req, _ := http.NewRequest("POST", url, nil)
 
 	gb := game.NewGameBoard()
 	mockGame := game.NewCurrentGame(gb)
