@@ -56,7 +56,8 @@ func TestMapRepository_Save(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			repo := mapstore.NewMapRepository()
+			store := mapstore.NewStorage()
+			repo := mapstore.NewMapRepository(store)
 			err := repo.Save(testCase.cg)
 
 			if !errors.Is(err, testCase.err) {
@@ -93,7 +94,8 @@ func TestMapRepository_Get(t *testing.T) {
 
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
-		repo := mapstore.NewMapRepository()
+		store := mapstore.NewStorage()
+		repo := mapstore.NewMapRepository(store)
 		err := repo.Save(testCase.cg)
 		if err != nil {
 			t.Errorf("save error, expected %v, got %v", testCase.err, err)
@@ -107,7 +109,8 @@ func TestMapRepository_Get(t *testing.T) {
 
 	testCase = testCases[1]
 	t.Run(testCase.name, func(t *testing.T) {
-		repo := mapstore.NewMapRepository()
+		store := mapstore.NewStorage()
+		repo := mapstore.NewMapRepository(store)
 
 		_, err := repo.Get(testCase.cg.ID())
 		if !errors.Is(err, testCase.err) {

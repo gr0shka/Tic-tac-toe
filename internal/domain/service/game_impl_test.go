@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -82,7 +83,7 @@ func TestGameService_GetNextTurn(t *testing.T) {
 	for _, ts := range testCases {
 		t.Run(ts.name, func(t *testing.T) {
 			gs := gameService.NewGameService()
-			gb := gs.GetNextTurn(ts.gb)
+			gb := gs.GetNextTurn(context.Background(), ts.gb)
 
 			if gb.TurnNumber() != ts.expectedTurnNumber {
 				t.Errorf("Expected turn number %d, got %d", ts.expectedTurnNumber, gb.TurnNumber())

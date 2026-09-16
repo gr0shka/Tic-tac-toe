@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -34,7 +35,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nextCg, err := h.service.ProcessPlayerMove(gameUUID, gameBoard.Board)
+	nextCg, err := h.service.ProcessPlayerMove(context.Background(), gameUUID, gameBoard.Board)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -53,7 +54,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	cg, err := h.service.CreateGame()
+	cg, err := h.service.CreateGame(context.Background())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -75,7 +76,7 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game, err := h.service.GetGame(gameUUID)
+	game, err := h.service.GetGame(context.Background(), gameUUID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

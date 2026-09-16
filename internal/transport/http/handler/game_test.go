@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -21,19 +22,19 @@ type mockAppService struct {
 	isEnd  bool
 }
 
-func (m mockAppService) CreateGame() (*game.CurrentGame, error) {
+func (m mockAppService) CreateGame(ctx context.Context) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
 
-func (m mockAppService) ProcessPlayerMove(id uuid.UUID, board [3][3]int) (*game.CurrentGame, error) {
+func (m mockAppService) ProcessPlayerMove(ctx context.Context, id uuid.UUID, board [3][3]int) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
 
-func (m mockAppService) GetGame(id uuid.UUID) (*game.CurrentGame, error) {
+func (m mockAppService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
 
-func (m mockAppService) GameIsEnded(id uuid.UUID) (int, bool) {
+func (m mockAppService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
 	return m.winner, m.isEnd
 }
 
