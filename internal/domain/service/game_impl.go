@@ -118,12 +118,10 @@ func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, de
 			branch.Set(i, j, cp.Symbol())
 			branch.NextTurn()
 
-			depth++
-
 			if current.IsRealPlayer() {
-				score = min(score, g.recursiveScoring(ctx, *branch, depth))
+				score = min(score, g.recursiveScoring(ctx, *branch, depth+1))
 			} else {
-				score = max(score, g.recursiveScoring(ctx, *branch, depth))
+				score = max(score, g.recursiveScoring(ctx, *branch, depth+1))
 			}
 		}
 	}
