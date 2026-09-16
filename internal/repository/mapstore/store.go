@@ -7,23 +7,33 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
-type Repository struct {
+type Storage struct {
 	data sync.Map
 }
 
-func NewMapRepository() *Repository {
-	return &Repository{}
+func NewStorage() *Storage {
+	return &Storage{}
 }
 
-func (m *Repository) Save(cg *game.CurrentGame) error {
+type repository struct {
+	storage *Storage
+}
+
+func NewMapRepository(storage *Storage) *repository {
+	return &repository{
+		storage: storage,
+	}
+}
+
+func (m *repository) Save(cg *game.CurrentGame) error {
 	cgd := DomainToDTO(*cg)
-	m.data.Store(cgd.ID, cgd)
+	m.storage.data.Store(cgd.ID, cgd)
 
 	return nil
 }
 
-func (m *Repository) Get(id uuid.UUID) (*game.CurrentGame, error) {
-	cgd, ok := m.data.Load(id)
+func (m *repository) Get(id uuid.UUID) (*game.CurrentGame, error) {
+	cgd, ok := m.storage.data.Load(id)
 	if !ok {
 		return nil, game.ErrNotFound
 	}

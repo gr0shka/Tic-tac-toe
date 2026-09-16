@@ -18,6 +18,7 @@ import (
 func CreateApp() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			mapstore.NewStorage,
 			fx.Annotate(
 				mapstore.NewMapRepository,
 				fx.As(new(usecase.Repository)),
