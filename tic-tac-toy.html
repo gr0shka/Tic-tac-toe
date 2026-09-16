@@ -274,14 +274,25 @@
         if (b) updateBoard(b);
     }
 
+    async function safeParseJSON(res) {
+        const text = await res.text();
+        try {
+            return JSON.parse(text);
+        } catch {
+            return { error: text || `HTTP ${res.status} ${res.statusText}` };
+        }
+    }
+
     async function createGame() {
         try {
-            const res = await fetch(`${apiBase()}/create`);
-            const data = await res.json();
+            const res = await fetch(`${apiBase()}/games`, {
+                method: 'POST'
+            });
+            const data = await safeParseJSON(res);
             applyServerResponse(data);
 
             if (!res.ok) {
-                setStatus(`Ошибка create: ${res.status}`);
+                setStatus(`Ошибка create: ${data.error || res.status}`);
                 return;
             }
 
@@ -306,12 +317,12 @@
         }
 
         try {
-            const res = await fetch(`${apiBase()}/get/${id}`);
-            const data = await res.json();
+            const res = await fetch(`${apiBase()}/games/${id}`);
+            const data = await safeParseJSON(res);
             applyServerResponse(data);
 
             if (!res.ok) {
-                setStatus(`Ошибка load: ${res.status}`);
+                setStatus(`Ошибка load: ${data.error || res.status}`);
                 return;
             }
 
@@ -344,11 +355,11 @@
                 body: JSON.stringify({ board: nextBoard })
             });
 
-            const data = await res.json();
+            const data = await safeParseJSON(res);
             applyServerResponse(data);
 
             if (!res.ok) {
-                setStatus(`Ошибка move: ${res.status}`);
+                setStatus(`Ошибка move: ${data.error || res.status}`);
                 return;
             }
 
