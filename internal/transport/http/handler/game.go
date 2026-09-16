@@ -37,7 +37,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	nextCg, err := h.service.ProcessPlayerMove(r.Context(), gameUUID, gameBoard.Board)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
