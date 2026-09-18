@@ -8,7 +8,7 @@ import (
 	"time"
 
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
@@ -18,9 +18,9 @@ import (
 func CreateApp() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			mapstore.NewStorage,
+			postgres.NewStorage,
 			fx.Annotate(
-				mapstore.NewMapRepository,
+				postgres.New,
 				fx.As(new(usecase.Repository)),
 			),
 			fx.Annotate(

@@ -1,4 +1,4 @@
-package mapstore
+package postgres
 
 import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"

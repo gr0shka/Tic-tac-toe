@@ -1,4 +1,4 @@
-package mapstore
+package postgres
 
 import (
 	"github.com/google/uuid"

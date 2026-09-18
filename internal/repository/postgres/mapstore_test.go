@@ -1,11 +1,11 @@
-package mapstore_test
+package postgres_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/mapstore"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 )
 
 func createCurrentGame() *game.CurrentGame {
@@ -21,19 +21,19 @@ func createCurrentGame() *game.CurrentGame {
 	return cg
 }
 
-func createCurrentGameDTO() *mapstore.CurrentGameDTO {
+func createCurrentGameDTO() *postgres.CurrentGameDTO {
 	cg := createCurrentGame()
 
 	players := cg.Players()
 
-	pl1 := mapstore.PlayerDTO{players[0].Symbol(), players[0].IsRealPlayer()}
-	pl2 := mapstore.PlayerDTO{players[1].Symbol(), players[1].IsRealPlayer()}
+	pl1 := postgres.PlayerDTO{players[0].Symbol(), players[0].IsRealPlayer()}
+	pl2 := postgres.PlayerDTO{players[1].Symbol(), players[1].IsRealPlayer()}
 
-	cgDTO := mapstore.CurrentGameDTO{
+	cgDTO := postgres.CurrentGameDTO{
 		ID:           cg.ID(),
 		Board:        cg.Board(),
 		NumberOfTurn: cg.TurnNumber(),
-		Players:      [2]mapstore.PlayerDTO{pl1, pl2},
+		Players:      [2]postgres.PlayerDTO{pl1, pl2},
 	}
 
 	return &cgDTO
@@ -56,8 +56,8 @@ func TestMapRepository_Save(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			store := mapstore.NewStorage()
-			repo := mapstore.NewMapRepository(store)
+			store := postgres.NewStorage()
+			repo := postgres.New(store)
 			err := repo.Save(testCase.cg)
 
 			if !errors.Is(err, testCase.err) {
@@ -94,8 +94,8 @@ func TestMapRepository_Get(t *testing.T) {
 
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
-		store := mapstore.NewStorage()
-		repo := mapstore.NewMapRepository(store)
+		store := postgres.NewStorage()
+		repo := postgres.New(store)
 		err := repo.Save(testCase.cg)
 		if err != nil {
 			t.Errorf("save error, expected %v, got %v", testCase.err, err)
@@ -109,8 +109,8 @@ func TestMapRepository_Get(t *testing.T) {
 
 	testCase = testCases[1]
 	t.Run(testCase.name, func(t *testing.T) {
-		store := mapstore.NewStorage()
-		repo := mapstore.NewMapRepository(store)
+		store := postgres.NewStorage()
+		repo := postgres.New(store)
 
 		_, err := repo.Get(testCase.cg.ID())
 		if !errors.Is(err, testCase.err) {
@@ -134,7 +134,7 @@ func TestMapRepository_Mapper_DomainToDTO(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			cgDTO := mapstore.DomainToDTO(*testCase.cg)
+			cgDTO := postgres.DomainToDTO(*testCase.cg)
 
 			if cgDTO.ID != testCase.cg.ID() {
 				t.Errorf("ID error, expected %v, got %v", testCase.cg.ID(), cgDTO.ID)
@@ -163,7 +163,7 @@ func TestMapRepository_Mapper_DomainToDTO(t *testing.T) {
 func TestMapRepository_Mapper_DTOtoDomain(t *testing.T) {
 	type useCases struct {
 		name string
-		cg   *mapstore.CurrentGameDTO
+		cg   *postgres.CurrentGameDTO
 	}
 
 	testCases := []useCases{
@@ -176,7 +176,7 @@ func TestMapRepository_Mapper_DTOtoDomain(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cgDTO := testCase.cg
-			cg := mapstore.DTOToDomain(*testCase.cg)
+			cg := postgres.DTOToDomain(*testCase.cg)
 
 			if cgDTO.ID != cg.ID() {
 				t.Errorf("ID error, expected %v, got %v", cg.ID(), cgDTO.ID)
