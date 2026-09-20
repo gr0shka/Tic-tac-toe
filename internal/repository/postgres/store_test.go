@@ -1,9 +1,11 @@
 package postgres_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 )
@@ -54,9 +56,11 @@ func TestMapRepository_Save(t *testing.T) {
 		},
 	}
 
+	cf, _ := config.Load()
+	store, _ := postgres.NewClient(context.Background(), cf.Postgres)
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			store := postgres.NewStorage()
 			repo := postgres.New(store)
 			err := repo.Save(testCase.cg)
 
@@ -92,9 +96,11 @@ func TestMapRepository_Get(t *testing.T) {
 		},
 	}
 
+	cf, _ := config.Load()
+	store, _ := postgres.NewClient(context.Background(), cf.Postgres)
+
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
-		store := postgres.NewStorage()
 		repo := postgres.New(store)
 		err := repo.Save(testCase.cg)
 		if err != nil {
@@ -109,7 +115,6 @@ func TestMapRepository_Get(t *testing.T) {
 
 	testCase = testCases[1]
 	t.Run(testCase.name, func(t *testing.T) {
-		store := postgres.NewStorage()
 		repo := postgres.New(store)
 
 		_, err := repo.Get(testCase.cg.ID())

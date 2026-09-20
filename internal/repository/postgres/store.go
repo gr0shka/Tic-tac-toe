@@ -3,14 +3,14 @@ package postgres
 import (
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type repository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func New(db *pgx.Conn) *repository {
+func New(db *pgxpool.Pool) *repository {
 	return &repository{
 		db: db,
 	}
