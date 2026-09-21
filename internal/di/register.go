@@ -10,9 +10,12 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
+	userRepo "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
-	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
 	"go.uber.org/fx"
 )
 
@@ -26,18 +29,28 @@ func CreateApp() fx.Option {
 			},
 			postgres.NewClient,
 			fx.Annotate(
-				postgres.New,
-				fx.As(new(usecase.Repository)),
+				game.New,
+				fx.As(new(app.GameRepository)),
+			),
+			fx.Annotate(
+				userRepo.New,
+				fx.As(new(user.UserRepository)),
 			),
 			fx.Annotate(
 				gameService.NewGameService,
 				fx.As(new(gameService.GameService)),
 			),
 			fx.Annotate(
-				usecase.NewAppService,
-				fx.As(new(usecase.AppService)),
+				app.NewAppService,
+				fx.As(new(app.AppService)),
 			),
-			handler.NewHandler,
+			fx.Annotate(
+				user.NewUserService,
+				fx.As(new(user.UserService)),
+			),
+			middleware.NewUserAuthenticator,
+			handler.NewGameHandler,
+			handler.NewUserHandler,
 		),
 		fx.Invoke(
 			RegisterServer,
@@ -45,11 +58,14 @@ func CreateApp() fx.Option {
 	)
 }
 
-func RegisterServer(lc fx.Lifecycle, h *handler.Handler) {
+func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, m *middleware.UserAuthenticator) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /game/{uuid}", h.NextTurn)
-	mux.HandleFunc("POST /games", h.NewGame)
-	mux.HandleFunc("GET /games/{uuid}", h.GetGame)
+	mux.HandleFunc("POST /user/register", uh.Register)
+	mux.HandleFunc("POST /user/auth", uh.Authenticate)
+
+	mux.Handle("POST /game/{uuid}", m.Authenticate(http.HandlerFunc(gh.NextTurn)))
+	mux.Handle("POST /games", m.Authenticate(http.HandlerFunc(gh.NewGame)))
+	mux.Handle("GET /games/{uuid}", m.Authenticate(http.HandlerFunc(gh.GetGame)))
 
 	muxWithMiddleware := middleware.CORS(mux)
 	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
