@@ -21,8 +21,9 @@ func New(db *pgxpool.Pool) *repository {
 
 func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 	dto := DomainToDTO(*cg)
-	query := "INSERT INTO current_game (id, player1_id, player1_real, player2_id, player2_real, board, number_of_turn, is_ended, winner) " +
-		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+
+	query := `INSERT INTO current_game (id, player1_id, player1_real, player2_id, player2_real, board, number_of_turn, is_ended, winner)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	_, err := m.db.Exec(ctx, query, dto.ID, dto.Player1ID, dto.Player1Real, dto.Player2ID, dto.Player2Real, dto.Board, dto.NumberOfTurn, dto.IsEnded, dto.Winner)
 	if err != nil {
@@ -46,4 +47,19 @@ func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, 
 	cg := DTOToDomain(dto)
 
 	return cg, nil
+}
+
+func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
+	dto := DomainToDTO(*cg)
+
+	query := `UPDATE current_game
+				SET board = $2, number_of_turn = $3, is_ended = $4, winner = $5
+				WHERE id = $1`
+
+	_, err := m.db.Exec(ctx, query, dto.ID, dto.Board, dto.NumberOfTurn, dto.IsEnded, dto.Winner)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

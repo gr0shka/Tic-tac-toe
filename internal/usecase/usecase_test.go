@@ -42,6 +42,10 @@ func (m mockRepository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGam
 	return m.cg, m.err
 }
 
+func (m mockRepository) Update(ctx context.Context, cg *game.CurrentGame) error {
+	return m.err
+}
+
 func TestAppService_CreateGame(t *testing.T) {
 	type testCase struct {
 		name    string

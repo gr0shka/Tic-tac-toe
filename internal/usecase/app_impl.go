@@ -74,7 +74,7 @@ func (a appService) ProcessPlayerMove(
 	nextCg.SetIsEnded(ended)
 
 	if ended {
-		if err = a.repository.Save(ctx, nextCg); err != nil {
+		if err = a.repository.Update(ctx, nextCg); err != nil {
 			return nil, err
 		}
 		return nextCg, nil
@@ -90,7 +90,7 @@ func (a appService) ProcessPlayerMove(
 	nextCg.SetWinner(winner)
 	nextCg.SetIsEnded(ended)
 
-	if err = a.repository.Save(ctx, nextCg); err != nil {
+	if err = a.repository.Update(ctx, nextCg); err != nil {
 		return nil, err
 	}
 

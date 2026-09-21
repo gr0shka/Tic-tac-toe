@@ -10,4 +10,5 @@ import (
 type Repository interface {
 	Save(ctx context.Context, cg *game.CurrentGame) error
 	Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error)
+	Update(ctx context.Context, cg *game.CurrentGame) error
 }
