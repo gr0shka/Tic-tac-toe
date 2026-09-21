@@ -7,18 +7,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/mapper"
-	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
 )
 
-type Handler struct {
-	service usecase.AppService
+type GameHandler struct {
+	service app.AppService
 }
 
-func NewHandler(service usecase.AppService) *Handler {
-	return &Handler{service: service}
+func NewGameHandler(service app.AppService) *GameHandler {
+	return &GameHandler{service: service}
 }
 
-func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
+func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
@@ -50,7 +50,7 @@ func (h *Handler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
+func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	cg, err := h.service.CreateGame(r.Context())
@@ -66,7 +66,7 @@ func (h *Handler) NewGame(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(data)
 }
 
-func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
+func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))

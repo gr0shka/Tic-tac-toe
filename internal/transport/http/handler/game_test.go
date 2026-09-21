@@ -50,7 +50,7 @@ func TestHandler_GetGame_Success(t *testing.T) {
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, 0, false}
 
-	h := handler.NewHandler(mockApp)
+	h := handler.NewGameHandler(mockApp)
 
 	h.GetGame(w, req)
 
@@ -85,7 +85,7 @@ func TestHandler_GetGame_NotFound(t *testing.T) {
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, game.ErrNotFound, 0, false}
 
-	h := handler.NewHandler(mockApp)
+	h := handler.NewGameHandler(mockApp)
 
 	h.GetGame(w, req)
 
@@ -108,7 +108,7 @@ func TestHandler_NewGame(t *testing.T) {
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, 0, false}
 
-	h := handler.NewHandler(mockApp)
+	h := handler.NewGameHandler(mockApp)
 
 	h.NewGame(w, req)
 
@@ -146,7 +146,7 @@ func TestHandler_NextTurn(t *testing.T) {
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, 0, false}
 
-	h := handler.NewHandler(mockApp)
+	h := handler.NewGameHandler(mockApp)
 
 	h.NextTurn(w, req)
 
