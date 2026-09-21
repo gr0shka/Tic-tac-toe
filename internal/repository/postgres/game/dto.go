@@ -1,4 +1,4 @@
-package postgres
+package game
 
 import (
 	"github.com/google/uuid"

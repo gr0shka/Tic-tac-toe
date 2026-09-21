@@ -1,4 +1,4 @@
-package postgres
+package game
 
 import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"

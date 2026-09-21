@@ -1,4 +1,4 @@
-package usecase
+package app
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
-type Repository interface {
+type GameRepository interface {
 	Save(ctx context.Context, cg *game.CurrentGame) error
 	Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error)
 	Update(ctx context.Context, cg *game.CurrentGame) error

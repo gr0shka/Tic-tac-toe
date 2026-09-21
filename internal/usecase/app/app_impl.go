@@ -1,4 +1,4 @@
-package usecase
+package app
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 
 type appService struct {
 	gameService service.GameService
-	repository  Repository
+	repository  GameRepository
 }
 
-func NewAppService(gameService service.GameService, rep Repository) *appService {
+func NewAppService(gameService service.GameService, rep GameRepository) *appService {
 	return &appService{
 		gameService: gameService,
 		repository:  rep,

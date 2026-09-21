@@ -1,4 +1,4 @@
-package postgres_test
+package game_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
+	game2 "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
 )
 
 func createCurrentGame() *game.CurrentGame {
@@ -25,14 +26,14 @@ func createCurrentGame() *game.CurrentGame {
 	return cg
 }
 
-func createCurrentGameDTO() *postgres.CurrentGameDTO {
+func createCurrentGameDTO() *game2.CurrentGameDTO {
 	cg := createCurrentGame()
 
 	players := cg.Players()
 
-	cgDTO := postgres.CurrentGameDTO{
+	cgDTO := game2.CurrentGameDTO{
 		ID:           cg.ID(),
-		Board:        postgres.FlattenBoard(cg.Board()),
+		Board:        game2.FlattenBoard(cg.Board()),
 		NumberOfTurn: cg.TurnNumber(),
 		Player1ID:    players[0].ID(),
 		Player2ID:    players[1].ID(),
@@ -69,7 +70,7 @@ func TestRepository_Save(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			repo := postgres.New(store)
+			repo := game2.New(store)
 			err := repo.Save(context.Background(), testCase.cg)
 
 			if !errors.Is(err, testCase.err) {
@@ -115,7 +116,7 @@ func TestRepository_Get(t *testing.T) {
 
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
-		repo := postgres.New(store)
+		repo := game2.New(store)
 		err := repo.Save(context.Background(), testCase.cg)
 		if err != nil {
 			t.Errorf("save error, expected %v, got %v", testCase.err, err)
@@ -129,7 +130,7 @@ func TestRepository_Get(t *testing.T) {
 
 	testCase = testCases[1]
 	t.Run(testCase.name, func(t *testing.T) {
-		repo := postgres.New(store)
+		repo := game2.New(store)
 
 		_, err := repo.Get(context.Background(), testCase.cg.ID())
 		if !errors.Is(err, testCase.err) {
@@ -153,13 +154,13 @@ func TestRepository_Mapper_DomainToDTO(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			cgDTO := postgres.DomainToDTO(*testCase.cg)
+			cgDTO := game2.DomainToDTO(*testCase.cg)
 
 			if cgDTO.ID != testCase.cg.ID() {
 				t.Errorf("ID error, expected %v, got %v", testCase.cg.ID(), cgDTO.ID)
 			}
 
-			if postgres.UnFlattenBoard(cgDTO.Board) != testCase.cg.Board() {
+			if game2.UnFlattenBoard(cgDTO.Board) != testCase.cg.Board() {
 				t.Errorf("Board error, expected %v, got %v", testCase.cg.ID(), cgDTO.Board)
 			}
 
@@ -173,7 +174,7 @@ func TestRepository_Mapper_DomainToDTO(t *testing.T) {
 func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 	type useCases struct {
 		name string
-		cg   *postgres.CurrentGameDTO
+		cg   *game2.CurrentGameDTO
 	}
 
 	testCases := []useCases{
@@ -186,13 +187,13 @@ func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cgDTO := testCase.cg
-			cg := postgres.DTOToDomain(*testCase.cg)
+			cg := game2.DTOToDomain(*testCase.cg)
 
 			if cgDTO.ID != cg.ID() {
 				t.Errorf("ID error, expected %v, got %v", cg.ID(), cgDTO.ID)
 			}
 
-			if postgres.UnFlattenBoard(cgDTO.Board) != cg.Board() {
+			if game2.UnFlattenBoard(cgDTO.Board) != cg.Board() {
 				t.Errorf("Board error, expected %v, got %v", cg.ID(), cgDTO.Board)
 			}
 

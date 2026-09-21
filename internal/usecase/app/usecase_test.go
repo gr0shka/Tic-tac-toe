@@ -1,4 +1,4 @@
-package usecase_test
+package app_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
 )
 
 type mockGameService struct {
@@ -83,7 +83,7 @@ func TestAppService_CreateGame(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := usecase.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo)
 
 			gotCg, err := as.CreateGame(context.Background())
 
@@ -137,7 +137,7 @@ func TestAppService_GetGame(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := usecase.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo)
 
 			gotCg, err := as.GetGame(context.Background(), tc.id)
 
@@ -200,7 +200,7 @@ func TestAppService_GameIsEnded(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := usecase.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo)
 
 			winner, ended := as.GameIsEnded(context.Background(), tc.id)
 
@@ -272,7 +272,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := usecase.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo)
 
 			gotCg, err := as.ProcessPlayerMove(context.Background(), tc.id, [3][3]int{})
 
