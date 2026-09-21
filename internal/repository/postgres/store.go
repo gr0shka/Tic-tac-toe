@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,11 +20,30 @@ func New(db *pgxpool.Pool) *repository {
 }
 
 func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
+	dto := DomainToDTO(*cg)
+	query := "INSERT INTO current_game (id, player1_id, player1_real, player2_id, player2_real, board, number_of_turn, is_ended, winner) " +
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+
+	_, err := m.db.Exec(ctx, query, dto.ID, dto.Player1ID, dto.Player1Real, dto.Player2ID, dto.Player2Real, dto.Board, dto.NumberOfTurn, dto.IsEnded, dto.Winner)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+	rows, err := m.db.Query(ctx, "SELECT * FROM current_game WHERE id=$1", id)
+	if err != nil {
+		return nil, game.ErrNotFound
+	}
 
-	return nil, nil
+	dto, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[CurrentGameDTO])
+	if err != nil {
+		return nil, game.ErrNotFound
+	}
+
+	cg := DTOToDomain(dto)
+
+	return cg, nil
 }

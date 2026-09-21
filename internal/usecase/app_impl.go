@@ -21,7 +21,7 @@ func NewAppService(gameService service.GameService, rep Repository) *appService 
 }
 
 func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
-	cg, err := a.repository.Get(id)
+	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return 0, false
 	}
@@ -31,13 +31,13 @@ func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
 
 func (a appService) CreateGame(ctx context.Context) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
-	player := game.NewPlayer(game.FirstPlayer, true)
-	computer := game.NewPlayer(game.SecondPlayer, false)
+	player := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	computer := game.NewPlayer(uuid.New(), game.SecondPlayer, false)
 	gb.AddPlayers(*player, *computer)
 
 	cg := game.NewCurrentGame(gb)
 
-	if err := a.repository.Save(cg); err != nil {
+	if err := a.repository.Save(ctx, cg); err != nil {
 		return nil, err
 	}
 
@@ -50,7 +50,7 @@ func (a appService) ProcessPlayerMove(
 	board [game.BoardSize][game.BoardSize]int,
 ) (*game.CurrentGame, error) {
 
-	current, err := a.repository.Get(id)
+	current, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (a appService) ProcessPlayerMove(
 	nextCg.SetIsEnded(ended)
 
 	if ended {
-		if err = a.repository.Save(nextCg); err != nil {
+		if err = a.repository.Save(ctx, nextCg); err != nil {
 			return nil, err
 		}
 		return nextCg, nil
@@ -90,7 +90,7 @@ func (a appService) ProcessPlayerMove(
 	nextCg.SetWinner(winner)
 	nextCg.SetIsEnded(ended)
 
-	if err = a.repository.Save(nextCg); err != nil {
+	if err = a.repository.Save(ctx, nextCg); err != nil {
 		return nil, err
 	}
 
@@ -98,7 +98,7 @@ func (a appService) ProcessPlayerMove(
 }
 
 func (a appService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
-	cg, err := a.repository.Get(id)
+	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}

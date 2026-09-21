@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
 )
@@ -13,8 +14,8 @@ func createGameService(board [game.BoardSize][game.BoardSize]int, numberOfTurn i
 	gb := game.NewGameBoard()
 	gb.SetBoard(board)
 
-	playerReal := game.NewPlayer(0, true)
-	playerBot := game.NewPlayer(1, false)
+	playerReal := game.NewPlayer(uuid.New(), 0, true)
+	playerBot := game.NewPlayer(uuid.New(), 1, false)
 
 	gb.AddPlayers(*playerReal, *playerBot)
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
@@ -18,7 +19,12 @@ import (
 func CreateApp() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			postgres.NewStorage,
+			context.Background,
+			config.Load,
+			func(conf *config.Config) config.Postgres {
+				return conf.Postgres
+			},
+			postgres.NewClient,
 			fx.Annotate(
 				postgres.New,
 				fx.As(new(usecase.Repository)),

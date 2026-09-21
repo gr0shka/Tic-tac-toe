@@ -50,20 +50,22 @@ func Load() (*Config, error) {
 	switch {
 	case postgres.User == "":
 		log.Print("No POSTGRES_USER found")
-		panic(ErrUserNotFound)
+		return nil, ErrUserNotFound
 	case postgres.Password == "":
 		log.Print("No POSTGRES_PASSWORD found")
-		panic(ErrPasswordNotFound)
+		return nil, ErrPasswordNotFound
 	case postgres.Host == "":
 		log.Print("No POSTGRES_HOST found")
-		panic(ErrHostNotFound)
+		return nil, ErrHostNotFound
 	case postgres.Port == "":
 		log.Print("No POSTGRES_PORT found")
-		panic(ErrPortNotFound)
+		return nil, ErrPortNotFound
 	case postgres.Database == "":
 		log.Print("No POSTGRES_DATABASE found")
-		panic(ErrDatabaseNotFound)
+		return nil, ErrDatabaseNotFound
 	}
+
+	log.Print("Config successfully loaded")
 
 	return &Config{
 		Postgres: postgres,

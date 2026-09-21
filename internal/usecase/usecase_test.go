@@ -34,11 +34,11 @@ type mockRepository struct {
 	err error
 }
 
-func (m mockRepository) Save(cg *game.CurrentGame) error {
+func (m mockRepository) Save(ctx context.Context, cg *game.CurrentGame) error {
 	return m.err
 }
 
-func (m mockRepository) Get(id uuid.UUID) (*game.CurrentGame, error) {
+func (m mockRepository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	return m.cg, m.err
 }
 

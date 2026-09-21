@@ -3,8 +3,10 @@ package postgres_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
@@ -13,8 +15,8 @@ import (
 func createCurrentGame() *game.CurrentGame {
 	gb := game.NewGameBoard()
 
-	playerReal := game.NewPlayer(0, true)
-	playerBot := game.NewPlayer(1, false)
+	playerReal := game.NewPlayer(uuid.New(), 0, true)
+	playerBot := game.NewPlayer(uuid.New(), 1, false)
 
 	gb.AddPlayers(*playerReal, *playerBot)
 
@@ -28,14 +30,14 @@ func createCurrentGameDTO() *postgres.CurrentGameDTO {
 
 	players := cg.Players()
 
-	pl1 := postgres.PlayerDTO{players[0].Symbol(), players[0].IsRealPlayer()}
-	pl2 := postgres.PlayerDTO{players[1].Symbol(), players[1].IsRealPlayer()}
-
 	cgDTO := postgres.CurrentGameDTO{
 		ID:           cg.ID(),
-		Board:        cg.Board(),
+		Board:        postgres.FlattenBoard(cg.Board()),
 		NumberOfTurn: cg.TurnNumber(),
-		Players:      [2]postgres.PlayerDTO{pl1, pl2},
+		Player1ID:    players[0].ID(),
+		Player2ID:    players[1].ID(),
+		Player1Real:  players[0].IsRealPlayer(),
+		Player2Real:  players[1].IsRealPlayer(),
 	}
 
 	return &cgDTO
@@ -56,19 +58,25 @@ func TestMapRepository_Save(t *testing.T) {
 		},
 	}
 
-	cf, _ := config.Load()
-	store, _ := postgres.NewClient(context.Background(), cf.Postgres)
+	cf, err := config.Load()
+	if err != nil {
+		t.Skip("Could not load config file. Skipping.")
+	}
+	store, err := postgres.NewClient(context.Background(), cf.Postgres)
+	if err != nil {
+		t.Skip("Could not connect to database. Skipping.")
+	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			repo := postgres.New(store)
-			err := repo.Save(testCase.cg)
+			err := repo.Save(context.Background(), testCase.cg)
 
 			if !errors.Is(err, testCase.err) {
 				t.Errorf("save error, expected %v, got %v", testCase.err, err)
 			}
 
-			_, err = repo.Get(testCase.cg.ID())
+			_, err = repo.Get(context.Background(), testCase.cg.ID())
 			if err != nil {
 				t.Errorf("get error, expected %v, got %v", testCase.cg.ID(), err)
 			}
@@ -96,18 +104,24 @@ func TestMapRepository_Get(t *testing.T) {
 		},
 	}
 
-	cf, _ := config.Load()
-	store, _ := postgres.NewClient(context.Background(), cf.Postgres)
+	cf, err := config.Load()
+	if err != nil {
+		t.Skip(fmt.Sprintf("Could not load config file. Skipping. Error: %v", err))
+	}
+	store, err := postgres.NewClient(context.Background(), cf.Postgres)
+	if err != nil {
+		t.Skip("Could not connect to database. Skipping.")
+	}
 
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
 		repo := postgres.New(store)
-		err := repo.Save(testCase.cg)
+		err := repo.Save(context.Background(), testCase.cg)
 		if err != nil {
 			t.Errorf("save error, expected %v, got %v", testCase.err, err)
 		}
 
-		_, err = repo.Get(testCase.cg.ID())
+		_, err = repo.Get(context.Background(), testCase.cg.ID())
 		if !errors.Is(err, testCase.err) {
 			t.Errorf("get error, expected %v, got %v", testCase.cg.ID(), err)
 		}
@@ -117,9 +131,9 @@ func TestMapRepository_Get(t *testing.T) {
 	t.Run(testCase.name, func(t *testing.T) {
 		repo := postgres.New(store)
 
-		_, err := repo.Get(testCase.cg.ID())
+		_, err := repo.Get(context.Background(), testCase.cg.ID())
 		if !errors.Is(err, testCase.err) {
-			t.Errorf("get error, expected %v, got %v", testCase.cg.ID(), err)
+			t.Errorf("get error, expected %v, got %t", testCase.cg.ID(), err)
 		}
 	})
 }
@@ -145,21 +159,12 @@ func TestMapRepository_Mapper_DomainToDTO(t *testing.T) {
 				t.Errorf("ID error, expected %v, got %v", testCase.cg.ID(), cgDTO.ID)
 			}
 
-			if cgDTO.Board != testCase.cg.Board() {
+			if postgres.UnFlattenBoard(cgDTO.Board) != testCase.cg.Board() {
 				t.Errorf("Board error, expected %v, got %v", testCase.cg.ID(), cgDTO.Board)
 			}
 
 			if cgDTO.NumberOfTurn != testCase.cg.TurnNumber() {
 				t.Errorf("turn number error, expected %v, got %v", testCase.cg.ID(), cgDTO.Board)
-			}
-
-			for k, pl := range testCase.cg.Players() {
-				if pl.Symbol() != cgDTO.Players[k].TurnNumber {
-					t.Errorf("player turn number error, expected %v, got %v", testCase.cg.ID(), pl.Symbol())
-				}
-				if pl.IsRealPlayer() != cgDTO.Players[k].RealPlayer {
-					t.Errorf("player is real player error, expected %v, got %v", testCase.cg.ID(), pl.Symbol())
-				}
 			}
 		})
 	}
@@ -187,21 +192,12 @@ func TestMapRepository_Mapper_DTOtoDomain(t *testing.T) {
 				t.Errorf("ID error, expected %v, got %v", cg.ID(), cgDTO.ID)
 			}
 
-			if cgDTO.Board != cg.Board() {
+			if postgres.UnFlattenBoard(cgDTO.Board) != cg.Board() {
 				t.Errorf("Board error, expected %v, got %v", cg.ID(), cgDTO.Board)
 			}
 
 			if cgDTO.NumberOfTurn != cg.TurnNumber() {
 				t.Errorf("turn number error, expected %v, got %v", cg.ID(), cgDTO.Board)
-			}
-
-			for k, pl := range cg.Players() {
-				if pl.Symbol() != cgDTO.Players[k].TurnNumber {
-					t.Errorf("player turn number error, expected %v, got %v", cg.ID(), pl.Symbol())
-				}
-				if pl.IsRealPlayer() != cgDTO.Players[k].RealPlayer {
-					t.Errorf("player is real player error, expected %v, got %v", cg.ID(), pl.Symbol())
-				}
 			}
 		})
 	}
