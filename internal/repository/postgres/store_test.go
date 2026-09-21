@@ -43,7 +43,7 @@ func createCurrentGameDTO() *postgres.CurrentGameDTO {
 	return &cgDTO
 }
 
-func TestMapRepository_Save(t *testing.T) {
+func TestRepository_Save(t *testing.T) {
 	type useCases struct {
 		name string
 		cg   *game.CurrentGame
@@ -84,7 +84,7 @@ func TestMapRepository_Save(t *testing.T) {
 	}
 }
 
-func TestMapRepository_Get(t *testing.T) {
+func TestRepository_Get(t *testing.T) {
 	type useCases struct {
 		name string
 		cg   *game.CurrentGame
@@ -138,7 +138,7 @@ func TestMapRepository_Get(t *testing.T) {
 	})
 }
 
-func TestMapRepository_Mapper_DomainToDTO(t *testing.T) {
+func TestRepository_Mapper_DomainToDTO(t *testing.T) {
 	type useCases struct {
 		name string
 		cg   *game.CurrentGame
@@ -170,7 +170,7 @@ func TestMapRepository_Mapper_DomainToDTO(t *testing.T) {
 	}
 }
 
-func TestMapRepository_Mapper_DTOtoDomain(t *testing.T) {
+func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 	type useCases struct {
 		name string
 		cg   *postgres.CurrentGameDTO
