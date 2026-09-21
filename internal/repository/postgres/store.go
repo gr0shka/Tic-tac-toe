@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,11 +18,12 @@ func New(db *pgxpool.Pool) *repository {
 	}
 }
 
-func (m *repository) Save(cg *game.CurrentGame) error {
+func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
+
 	return nil
 }
 
-func (m *repository) Get(id uuid.UUID) (*game.CurrentGame, error) {
+func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 
 	return nil, nil
 }
