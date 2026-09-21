@@ -12,3 +12,9 @@ CREATE TABLE current_game (
     is_ended bool,
     winner integer
 );
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    login varchar(32) unique NOT NULL,
+    password varchar(32) NOT NULL
+);
