@@ -33,7 +33,7 @@ func (a appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*
 	cg.SetActivePlayer(turnPlayer)
 	cg.SetStatus(game.StatusPlayerTurn)
 
-	if err = a.repository.Save(ctx, cg); err != nil {
+	if err = a.repository.Update(ctx, cg); err != nil {
 		return nil, err
 	}
 
