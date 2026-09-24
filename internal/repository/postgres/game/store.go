@@ -14,7 +14,7 @@ type repository struct {
 }
 
 func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
-	query := `SELECT * FROM current_games WHERE player2_id IS NULL`
+	query := `SELECT * FROM current_game WHERE player2_id IS NULL`
 
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
@@ -44,7 +44,7 @@ func New(db *pgxpool.Pool) *repository {
 func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 	dto := DomainToDTO(*cg)
 
-	query := `INSERT INTO current_game (id, player1_id, player1_real, player2_id, player2_real, board, number_of_turn, stauts, winner)
+	query := `INSERT INTO current_game (id, player1_id, player1_real, player2_id, player2_real, board, number_of_turn, status, winner)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	_, err := m.db.Exec(ctx, query, dto.ID, dto.Player1ID, dto.Player1Real, dto.Player2ID, dto.Player2Real, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
@@ -75,10 +75,10 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 	dto := DomainToDTO(*cg)
 
 	query := `UPDATE current_game
-				SET board = $2, number_of_turn = $3, status = $4, winner = $5
+				SET player2_id = $2, player2_real = $3 board = $4, number_of_turn = $5, status = $6, winner = $7
 				WHERE id = $1`
 
-	_, err := m.db.Exec(ctx, query, dto.ID, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
+	_, err := m.db.Exec(ctx, query, dto.Player2ID, dto.Player2Real, dto.ID, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
 	if err != nil {
 		return err
 	}
