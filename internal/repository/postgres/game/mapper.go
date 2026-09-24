@@ -35,7 +35,8 @@ func DTOToDomain(cgd CurrentGameDTO) *game.CurrentGame {
 		1,
 		cgd.Player2Real,
 	)
-	gameBoard.AddPlayers(*player1, *player2)
+	gameBoard.AddPlayer(player1)
+	gameBoard.AddPlayer(player2)
 
 	cg := game.NewCurrentGameWithID(cgd.ID, gameBoard)
 

@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,33 +14,39 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 )
 
 type mockAppService struct {
-	cg     *game.CurrentGame
-	outErr error
-	winner int
-	isEnd  bool
+	cg      *game.CurrentGame
+	sliceCG []*game.CurrentGame
+	outErr  error
+	winner  int
+	status  game.GameStatus
 }
 
-func (m mockAppService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (m mockAppService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
 
-func (m mockAppService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (m mockAppService) ProcessPlayerMove(ctx context.Context, playerID, gameID uuid.UUID, board [3][3]int) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
 
-func (m mockAppService) ProcessPlayerMove(ctx context.Context, id uuid.UUID, board [3][3]int) (*game.CurrentGame, error) {
+func (m mockAppService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
+	return m.winner, m.status
+}
+
+func (m mockAppService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
+}
+
+func (m mockAppService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
+	return m.sliceCG, m.outErr
 }
 
 func (m mockAppService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
-}
-
-func (m mockAppService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
-	return m.winner, m.isEnd
 }
 
 func TestHandler_GetGame_Success(t *testing.T) {
@@ -52,7 +59,7 @@ func TestHandler_GetGame_Success(t *testing.T) {
 
 	gb := game.NewGameBoard()
 	mockGame := game.NewCurrentGame(gb)
-	mockApp := mockAppService{mockGame, nil, 0, false}
+	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusPlayerTurn}
 
 	h := handler.NewGameHandler(mockApp)
 
@@ -87,7 +94,7 @@ func TestHandler_GetGame_NotFound(t *testing.T) {
 
 	gb := game.NewGameBoard()
 	mockGame := game.NewCurrentGame(gb)
-	mockApp := mockAppService{mockGame, game.ErrNotFound, 0, false}
+	mockApp := mockAppService{mockGame, nil, game.ErrNotFound, 0, game.StatusWaitingForPlayers}
 
 	h := handler.NewGameHandler(mockApp)
 
@@ -105,12 +112,17 @@ func TestHandler_GetGame_NotFound(t *testing.T) {
 func TestHandler_NewGame(t *testing.T) {
 	w := httptest.NewRecorder()
 
+	jsonBody := fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot)
+
 	url := "/games"
-	req, _ := http.NewRequest("POST", url, nil)
+	req, _ := http.NewRequest("POST", url, strings.NewReader(string(jsonBody)))
+
+	ctx := context.WithValue(context.Background(), middleware.UserIDContextName, uuid.New())
+	req = req.WithContext(ctx)
 
 	gb := game.NewGameBoard()
 	mockGame := game.NewCurrentGame(gb)
-	mockApp := mockAppService{mockGame, nil, 0, false}
+	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusWaitingForPlayers}
 
 	h := handler.NewGameHandler(mockApp)
 
@@ -146,9 +158,12 @@ func TestHandler_NextTurn(t *testing.T) {
 	req, _ := http.NewRequest("POST", url, strings.NewReader(jsonBody))
 	req.SetPathValue("uuid", gameID.String())
 
+	ctx := context.WithValue(context.Background(), middleware.UserIDContextName, uuid.New())
+	req = req.WithContext(ctx)
+
 	gb := game.NewGameBoard()
 	mockGame := game.NewCurrentGame(gb)
-	mockApp := mockAppService{mockGame, nil, 0, false}
+	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusPlayerTurn}
 
 	h := handler.NewGameHandler(mockApp)
 

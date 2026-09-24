@@ -17,7 +17,8 @@ func createGameService(board [game.BoardSize][game.BoardSize]int, numberOfTurn i
 	playerReal := game.NewPlayer(uuid.New(), 0, true)
 	playerBot := game.NewPlayer(uuid.New(), 1, false)
 
-	gb.AddPlayers(*playerReal, *playerBot)
+	gb.AddPlayer(playerReal)
+	gb.AddPlayer(playerBot)
 
 	gb.SetTurnNumber(numberOfTurn)
 

@@ -13,6 +13,28 @@ type repository struct {
 	db *pgxpool.Pool
 }
 
+func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
+	query := `SELECT * FROM current_games WHERE player2_id IS NULL`
+
+	rows, err := m.db.Query(ctx, query)
+	if err != nil {
+		return nil, game.ErrNotFound
+	}
+	defer rows.Close()
+
+	dto, err := pgx.CollectRows(rows, pgx.RowToStructByName[CurrentGameDTO])
+	if err != nil {
+		return nil, game.ErrNotFound
+	}
+
+	result := make([]*game.CurrentGame, len(dto))
+	for i, d := range dto {
+		result[i] = DTOToDomain(d)
+	}
+
+	return result, nil
+}
+
 func New(db *pgxpool.Pool) *repository {
 	return &repository{
 		db: db,

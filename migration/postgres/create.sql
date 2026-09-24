@@ -4,7 +4,7 @@ CREATE TABLE current_game (
     player1_id UUID NOT NULL,
     player1_real bool,
 
-    player2_id UUID NOT NULL,
+    player2_id UUID,
     player2_real bool,
 
     board integer[],

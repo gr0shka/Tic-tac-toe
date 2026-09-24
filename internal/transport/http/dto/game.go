@@ -15,3 +15,7 @@ type GameBoardResponse struct {
 	Winner int                                 `json:"winner"`
 	Board  [game.BoardSize][game.BoardSize]int `json:"board"`
 }
+
+type CreateGameRequest struct {
+	Mode string `json:"mode"`
+}

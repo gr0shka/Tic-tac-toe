@@ -30,8 +30,13 @@ func (m mockGameService) IsEnded(board [3][3]int) (int, game.GameStatus) {
 }
 
 type mockRepository struct {
-	cg  *game.CurrentGame
-	err error
+	cg      *game.CurrentGame
+	sliceCG []*game.CurrentGame
+	err     error
+}
+
+func (m mockRepository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
+	return m.sliceCG, m.err
 }
 
 func (m mockRepository) Save(ctx context.Context, cg *game.CurrentGame) error {
@@ -85,7 +90,7 @@ func TestAppService_CreateGame(t *testing.T) {
 
 			as := app.NewAppService(gs, repo)
 
-			gotCg, err := as.CreateGameWithBot(context.Background())
+			gotCg, err := as.CreateGameWithBot(context.Background(), uuid.New())
 
 			if !errors.Is(err, tc.err) {
 				t.Errorf("CreateGameWithBot() error = %v, wantErr %v", err, tc.err)
@@ -266,7 +271,14 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 				gb:     gb,
 			}
 
+			player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+			_ = gb.AddPlayer(player1)
+
+			player2 := game.NewPlayer(uuid.New(), game.FirstPlayer, false)
+			_ = gb.AddPlayer(player2)
+
 			cg := game.NewCurrentGame(gb)
+			cg.SetActivePlayer(player1)
 			repo := mockRepository{
 				cg:  cg,
 				err: tc.repoErr,
@@ -274,7 +286,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 
 			as := app.NewAppService(gs, repo)
 
-			gotCg, err := as.ProcessPlayerMove(context.Background(), tc.id, [3][3]int{})
+			gotCg, err := as.ProcessPlayerMove(context.Background(), player1.ID(), tc.id, [3][3]int{})
 
 			if !errors.Is(err, tc.err) {
 				t.Errorf("GameIsEnded() error = %v, wantErr %v", err, tc.err)

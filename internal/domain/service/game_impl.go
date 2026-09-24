@@ -42,8 +42,8 @@ func (g gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.
 			}
 
 			tempGb := gb.Clone()
-			p, ok := tempGb.NextPlayer()
-			if !ok {
+			p, err := tempGb.NextPlayer()
+			if err != nil {
 				continue
 			}
 			tempGb.Set(i, j, p.Symbol())
@@ -59,8 +59,8 @@ func (g gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.
 		}
 	}
 
-	np, ok := gb.NextPlayer()
-	if !ok {
+	np, err := gb.NextPlayer()
+	if err != nil {
 		return nil
 	}
 
@@ -75,8 +75,8 @@ func (g gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.
 }
 
 func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, depth int) int {
-	current, ok := gb.NextPlayer()
-	if !ok {
+	current, err := gb.NextPlayer()
+	if err != nil {
 		return 0
 	}
 
@@ -111,8 +111,8 @@ func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, de
 			}
 
 			branch := gb.Clone()
-			cp, ok := branch.NextPlayer()
-			if !ok {
+			cp, err := branch.NextPlayer()
+			if err != nil {
 				continue
 			}
 
@@ -138,8 +138,8 @@ func (g gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 	newBoard := newB.Board()
 	oldBoard := oldB.Board()
 
-	player, ok := oldB.NextPlayer()
-	if !ok {
+	player, err := oldB.NextPlayer()
+	if err != nil {
 		return game.ErrInvalidTurn
 	}
 

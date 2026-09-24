@@ -12,7 +12,7 @@ const (
 type GameBoard struct {
 	board        [BoardSize][BoardSize]int
 	numberOfTurn int
-	players      [CountPlayers]*Player
+	players      []*Player
 }
 
 func NewGameBoard() *GameBoard {
@@ -27,6 +27,7 @@ func NewGameBoard() *GameBoard {
 	return &GameBoard{
 		board:        board,
 		numberOfTurn: 0,
+		players:      make([]*Player, 0, CountPlayers),
 	}
 }
 
@@ -39,9 +40,13 @@ func (gb *GameBoard) Clone() *GameBoard {
 	return clone
 }
 
-func (gb *GameBoard) AddPlayers(player1, player2 *Player) {
-	gb.players[FirstPlayer] = player1
-	gb.players[SecondPlayer] = player2
+func (gb *GameBoard) AddPlayer(player *Player) error {
+	if len(gb.players) >= CountPlayers {
+		return ErrMaxCountOfPlayers
+	}
+
+	gb.players = append(gb.players, player)
+	return nil
 }
 
 func (gb *GameBoard) SetTurnNumber(turnNumber int) {
@@ -60,18 +65,18 @@ func (gb *GameBoard) Board() [BoardSize][BoardSize]int {
 	return gb.board
 }
 
-func (gb *GameBoard) Players() [CountPlayers]*Player {
+func (gb *GameBoard) Players() []*Player {
 	return gb.players
 }
 
-func (gb *GameBoard) NextPlayer() (*Player, bool) {
+func (gb *GameBoard) NextPlayer() (*Player, error) {
 	turnNumber := gb.numberOfTurn % CountPlayers
 
 	if turnNumber >= len(gb.players) {
-		return nil, false
+		return nil, ErrFailedCalculateNextPlayer
 	}
 
-	return gb.players[gb.numberOfTurn%CountPlayers], true
+	return gb.players[gb.numberOfTurn%CountPlayers], nil
 }
 
 func (gb *GameBoard) NextTurn() {

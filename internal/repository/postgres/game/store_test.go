@@ -19,7 +19,8 @@ func createCurrentGame() *game.CurrentGame {
 	playerReal := game.NewPlayer(uuid.New(), 0, true)
 	playerBot := game.NewPlayer(uuid.New(), 1, false)
 
-	gb.AddPlayers(*playerReal, *playerBot)
+	gb.AddPlayer(playerReal)
+	gb.AddPlayer(playerBot)
 
 	cg := game.NewCurrentGame(gb)
 

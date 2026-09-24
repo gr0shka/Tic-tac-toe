@@ -13,6 +13,13 @@ const (
 	StatusPlayerWins        GameStatus = "player_wins"
 )
 
+type GameMode string
+
+const (
+	GameModePlayerVSPlayer GameMode = "player_vs_player"
+	GameModePlayerVSBot    GameMode = "player_vs_bot"
+)
+
 type CurrentGame struct {
 	id uuid.UUID
 	*GameBoard
