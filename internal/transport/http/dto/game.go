@@ -10,8 +10,8 @@ type GameBoardRequest struct {
 }
 
 type GameBoardResponse struct {
-	ID          uuid.UUID                           `json:"id"`
-	GameIsEnded bool                                `json:"game_is_ended"`
-	Winner      int                                 `json:"winner"`
-	Board       [game.BoardSize][game.BoardSize]int `json:"board"`
+	ID     uuid.UUID                           `json:"id"`
+	Status string                              `json:"status"`
+	Winner int                                 `json:"winner"`
+	Board  [game.BoardSize][game.BoardSize]int `json:"board"`
 }

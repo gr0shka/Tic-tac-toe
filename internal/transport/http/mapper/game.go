@@ -7,9 +7,9 @@ import (
 
 func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
 	return dto.GameBoardResponse{
-		ID:          cg.ID(),
-		GameIsEnded: cg.IsEnded(),
-		Winner:      cg.Winner(),
-		Board:       cg.Board(),
+		ID:     cg.ID(),
+		Status: string(cg.Status()),
+		Winner: cg.Winner(),
+		Board:  cg.Board(),
 	}
 }
