@@ -1,11 +1,19 @@
 package game
 
 import (
+	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
 func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 	cgPlayers := cg.Players()
+
+	var p2ID uuid.UUID
+	var p2Real bool
+	if len(cgPlayers) > 1 && cgPlayers[1] != nil {
+		p2ID = cgPlayers[1].ID()
+		p2Real = cgPlayers[1].IsRealPlayer()
+	}
 
 	return CurrentGameDTO{
 		ID:           cg.ID(),
@@ -13,8 +21,8 @@ func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 		NumberOfTurn: cg.TurnNumber(),
 		Player1ID:    cgPlayers[0].ID(),
 		Player1Real:  cgPlayers[0].IsRealPlayer(),
-		Player2ID:    cgPlayers[1].ID(),
-		Player2Real:  cgPlayers[1].IsRealPlayer(),
+		Player2ID:    p2ID,
+		Player2Real:  p2Real,
 		Status:       string(cg.Status()),
 		Winner:       cg.Winner(),
 	}
