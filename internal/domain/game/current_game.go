@@ -62,3 +62,11 @@ func (c *CurrentGame) SetStatus(gs GameStatus) {
 func (c *CurrentGame) SetWinner(winner int) {
 	c.winner = winner
 }
+
+func (c *CurrentGame) SetActiveID(id uuid.UUID) {
+	c.activeID = id
+}
+
+func (c *CurrentGame) ActiveID() uuid.UUID {
+	return c.activeID
+}
