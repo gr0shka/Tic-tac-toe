@@ -1,0 +1,7 @@
+.env*
+.gitignore
+.git
+.task.md
+tic-tac-toy.html
+README.md
+Dockerfile
