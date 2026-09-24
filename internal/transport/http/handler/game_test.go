@@ -22,7 +22,11 @@ type mockAppService struct {
 	isEnd  bool
 }
 
-func (m mockAppService) CreateGame(ctx context.Context) (*game.CurrentGame, error) {
+func (m mockAppService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+	return m.cg, m.outErr
+}
+
+func (m mockAppService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
 

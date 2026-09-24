@@ -85,14 +85,14 @@ func TestAppService_CreateGame(t *testing.T) {
 
 			as := app.NewAppService(gs, repo)
 
-			gotCg, err := as.CreateGame(context.Background())
+			gotCg, err := as.CreateGameWithBot(context.Background())
 
 			if !errors.Is(err, tc.err) {
-				t.Errorf("CreateGame() error = %v, wantErr %v", err, tc.err)
+				t.Errorf("CreateGameWithBot() error = %v, wantErr %v", err, tc.err)
 			}
 
 			if tc.err == nil && gotCg == nil {
-				t.Errorf("CreateGame() gotCg = <nil>, want <not nil>")
+				t.Errorf("CreateGameWithBot() gotCg = <nil>, want <not nil>")
 			}
 		})
 	}

@@ -29,13 +29,33 @@ func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.Ga
 	return a.gameService.IsEnded(cg.Board())
 }
 
-func (a appService) CreateGame(ctx context.Context) (*game.CurrentGame, error) {
+func (a appService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
-	player := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	player := game.NewPlayer(id, game.FirstPlayer, true)
 	computer := game.NewPlayer(uuid.New(), game.SecondPlayer, false)
-	gb.AddPlayers(*player, *computer)
+	gb.AddPlayers(player, computer)
 
 	cg := game.NewCurrentGame(gb)
+
+	cg.SetActivePlayer(player)
+	cg.SetStatus(game.StatusPlayerTurn)
+
+	if err := a.repository.Save(ctx, cg); err != nil {
+		return nil, err
+	}
+
+	return cg, nil
+}
+
+func (a appService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+	gb := game.NewGameBoard()
+	player := game.NewPlayer(id, game.FirstPlayer, true)
+	gb.AddPlayers(player, nil)
+
+	cg := game.NewCurrentGame(gb)
+
+	cg.SetActivePlayer(nil)
+	cg.SetStatus(game.StatusWaitingForPlayers)
 
 	if err := a.repository.Save(ctx, cg); err != nil {
 		return nil, err
@@ -73,28 +93,51 @@ func (a appService) ProcessPlayerMove(
 	nextCg.SetWinner(winner)
 	nextCg.SetStatus(ended)
 
-	if ended == game.StatusPlayerWins || ended == game.StatusDraw {
-		if err = a.repository.Update(ctx, nextCg); err != nil {
+	nextCg = a.checkTurn(nextCg)
+
+	if nextCg.ActivePlayer() != nil && !nextCg.ActivePlayer().IsRealPlayer() {
+		if nextCg, err = a.BotTurn(ctx, nextCg); err != nil {
 			return nil, err
 		}
-		return nextCg, nil
-	}
 
-	next = a.gameService.GetNextTurn(ctx, nextCg.GameBoard)
-	if next == nil {
-		return nil, game.ErrFailedCalculateNextTurn
+		nextCg = a.checkTurn(nextCg)
 	}
-	nextCg.GameBoard = next
-
-	winner, ended = a.gameService.IsEnded(nextCg.Board())
-	nextCg.SetWinner(winner)
-	nextCg.SetStatus(ended)
 
 	if err = a.repository.Update(ctx, nextCg); err != nil {
 		return nil, err
 	}
 
 	return nextCg, nil
+}
+
+func (a appService) checkTurn(cg *game.CurrentGame) *game.CurrentGame {
+	if cg.IsEnded() {
+		if cg.Status() == game.StatusDraw {
+			cg.SetActivePlayer(nil)
+		}
+
+		return cg
+	}
+
+	if player, ok := cg.NextPlayer(); ok {
+		cg.SetActivePlayer(player)
+	}
+
+	return cg
+}
+
+func (a appService) BotTurn(ctx context.Context, cg *game.CurrentGame) (*game.CurrentGame, error) {
+	next := a.gameService.GetNextTurn(ctx, cg.GameBoard)
+	if next == nil {
+		return nil, game.ErrFailedCalculateNextTurn
+	}
+	cg.GameBoard = next
+
+	winner, ended := a.gameService.IsEnded(cg.Board())
+	cg.SetWinner(winner)
+	cg.SetStatus(ended)
+
+	return cg, nil
 }
 
 func (a appService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {

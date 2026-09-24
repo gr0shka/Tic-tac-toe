@@ -11,4 +11,5 @@ var (
 	ErrWrongPlayerMove         = errors.New("wrong player move")
 	ErrNotFound                = errors.New("not found")
 	ErrFailedCalculateNextTurn = errors.New("failed to calculate next turn")
+	ErrMaxCountOfPlayers       = errors.New("max count of players")
 )

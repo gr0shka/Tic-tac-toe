@@ -8,7 +8,8 @@ import (
 )
 
 type AppService interface {
-	CreateGame(ctx context.Context) (*game.CurrentGame, error)
+	CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error)
+	CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error)
 	ProcessPlayerMove(
 		ctx context.Context,
 		id uuid.UUID,

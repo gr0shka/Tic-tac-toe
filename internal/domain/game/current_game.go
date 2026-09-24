@@ -16,26 +16,28 @@ const (
 type CurrentGame struct {
 	id uuid.UUID
 	*GameBoard
-	status   GameStatus
-	activeID uuid.UUID
-	winner   int
+	status       GameStatus
+	activePlayer *Player
+	winner       int
 }
 
 func NewCurrentGame(gb *GameBoard) *CurrentGame {
 	return &CurrentGame{
-		id:        uuid.New(),
-		GameBoard: gb,
-		status:    StatusWaitingForPlayers,
-		winner:    -1,
+		id:           uuid.New(),
+		GameBoard:    gb,
+		status:       StatusWaitingForPlayers,
+		winner:       -1,
+		activePlayer: nil,
 	}
 }
 
 func NewCurrentGameWithID(id uuid.UUID, gb *GameBoard) *CurrentGame {
 	return &CurrentGame{
-		id:        id,
-		GameBoard: gb,
-		status:    StatusWaitingForPlayers,
-		winner:    -1,
+		id:           id,
+		GameBoard:    gb,
+		status:       StatusWaitingForPlayers,
+		winner:       -1,
+		activePlayer: nil,
 	}
 }
 
@@ -63,10 +65,10 @@ func (c *CurrentGame) SetWinner(winner int) {
 	c.winner = winner
 }
 
-func (c *CurrentGame) SetActiveID(id uuid.UUID) {
-	c.activeID = id
+func (c *CurrentGame) SetActivePlayer(p *Player) {
+	c.activePlayer = p
 }
 
-func (c *CurrentGame) ActiveID() uuid.UUID {
-	return c.activeID
+func (c *CurrentGame) ActivePlayer() *Player {
+	return c.activePlayer
 }
