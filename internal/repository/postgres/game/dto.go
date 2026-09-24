@@ -18,6 +18,6 @@ type CurrentGameDTO struct {
 	Player1Real  bool      `db:"player1_real"`
 	Player2ID    uuid.UUID `db:"player2_id"`
 	Player2Real  bool      `db:"player2_real"`
-	IsEnded      bool      `db:"is_ended"`
+	Status       string    `db:"status"`
 	Winner       int       `db:"winner"`
 }

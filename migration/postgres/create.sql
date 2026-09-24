@@ -9,7 +9,7 @@ CREATE TABLE current_game (
 
     board integer[],
     number_of_turn integer,
-    is_ended bool,
+    status varchar(32),
     winner integer
 );
 

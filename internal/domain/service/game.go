@@ -9,5 +9,5 @@ import (
 type GameService interface {
 	GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.GameBoard
 	ValidateBoard(oldB, newB *game.GameBoard) error
-	IsEnded(board [game.BoardSize][game.BoardSize]int) (int, bool)
+	IsEnded(board [game.BoardSize][game.BoardSize]int) (int, game.GameStatus)
 }

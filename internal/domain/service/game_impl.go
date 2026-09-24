@@ -86,7 +86,8 @@ func (g gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, de
 	}
 
 	p, end := g.IsEnded(gb.Board())
-	if end {
+	if end == game.StatusDraw || end == game.StatusPlayerWins {
+
 		if p == Draw {
 			return 0
 		}
@@ -171,20 +172,26 @@ func (g gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 	return nil
 }
 
-func (g gameService) IsEnded(board [game.BoardSize][game.BoardSize]int) (int, bool) {
+func (g gameService) IsEnded(board [game.BoardSize][game.BoardSize]int) (int, game.GameStatus) {
 
-	checkBoard := func(board [game.BoardSize][game.BoardSize]int, fns ...func([game.BoardSize][game.BoardSize]int) (int, bool)) (int, bool) {
+	checkBoard := func(board [game.BoardSize][game.BoardSize]int, fns ...func([game.BoardSize][game.BoardSize]int) (int, bool)) (int, game.GameStatus) {
 		for _, fn := range fns {
 			cellType, ok := fn(board)
 			if ok {
-				return cellType, true
+				return cellType, game.StatusPlayerWins
 			}
 		}
 
-		return Draw, false
+		return Draw, game.StatusPlayerTurn
 	}
 
-	return checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck, allCellOccupied)
+	winner, status := checkBoard(board, horizontalCheck, verticalCheck, diagonalsCheck)
+
+	if _, ok := allCellOccupied(board); ok && status != game.StatusPlayerWins {
+		return Draw, game.StatusDraw
+	}
+
+	return winner, status
 }
 
 func horizontalCheck(board [game.BoardSize][game.BoardSize]int) (int, bool) {

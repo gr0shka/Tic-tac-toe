@@ -15,7 +15,7 @@ func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 		Player1Real:  cgPlayers[0].IsRealPlayer(),
 		Player2ID:    cgPlayers[1].ID(),
 		Player2Real:  cgPlayers[1].IsRealPlayer(),
-		IsEnded:      cg.IsEnded(),
+		Status:       string(cg.Status()),
 		Winner:       cg.Winner(),
 	}
 }
@@ -39,7 +39,7 @@ func DTOToDomain(cgd CurrentGameDTO) *game.CurrentGame {
 
 	cg := game.NewCurrentGameWithID(cgd.ID, gameBoard)
 
-	cg.SetIsEnded(cgd.IsEnded)
+	cg.SetStatus(game.GameStatus(cgd.Status))
 	cg.SetWinner(cgd.Winner)
 
 	return cg

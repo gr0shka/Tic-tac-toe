@@ -221,7 +221,7 @@ func TestGameService_IsEnded(t *testing.T) {
 		name   string
 		board  [game.BoardSize][game.BoardSize]int
 		winner int
-		ended  bool
+		ended  game.GameStatus
 	}
 
 	testCases := []testCase{
@@ -232,7 +232,7 @@ func TestGameService_IsEnded(t *testing.T) {
 				{-1, -1, -1},
 				{-1, -1, -1}},
 			winner: gameService.Draw,
-			ended:  false,
+			ended:  game.StatusPlayerTurn,
 		},
 		{
 			name: "game is ended with draw",
@@ -241,7 +241,7 @@ func TestGameService_IsEnded(t *testing.T) {
 				{0, 0, 1},
 				{1, 1, 0}},
 			winner: gameService.Draw,
-			ended:  true,
+			ended:  game.StatusDraw,
 		},
 		{
 			name: "game is ended with 1 player win",
@@ -250,7 +250,7 @@ func TestGameService_IsEnded(t *testing.T) {
 				{0, 0, 1},
 				{1, 1, 0}},
 			winner: game.FirstPlayer,
-			ended:  true,
+			ended:  game.StatusPlayerWins,
 		},
 		{
 			name: "game is ended with 1 player win",
@@ -259,7 +259,7 @@ func TestGameService_IsEnded(t *testing.T) {
 				{1, 1, 0},
 				{0, 0, 1}},
 			winner: game.SecondPlayer,
-			ended:  true,
+			ended:  game.StatusPlayerWins,
 		},
 	}
 
@@ -267,12 +267,12 @@ func TestGameService_IsEnded(t *testing.T) {
 		t.Run(ts.name, func(t *testing.T) {
 			gs := gameService.NewGameService()
 
-			gotWinner, gotBool := gs.IsEnded(ts.board)
+			gotWinner, gotStatus := gs.IsEnded(ts.board)
 			if gotWinner != ts.winner {
 				t.Errorf("Expected winner %d, got %d", ts.winner, gotWinner)
 			}
-			if gotBool != ts.ended {
-				t.Errorf("Expected ended %t, got %t", ts.ended, gotBool)
+			if gotStatus != ts.ended {
+				t.Errorf("Expected ended %v, got %v", ts.ended, gotStatus)
 			}
 		})
 	}

@@ -20,10 +20,10 @@ func NewAppService(gameService service.GameService, rep GameRepository) *appServ
 	}
 }
 
-func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, bool) {
+func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
 	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
-		return 0, false
+		return 0, game.StatusDraw
 	}
 
 	return a.gameService.IsEnded(cg.Board())
@@ -71,9 +71,9 @@ func (a appService) ProcessPlayerMove(
 
 	winner, ended := a.gameService.IsEnded(nextCg.Board())
 	nextCg.SetWinner(winner)
-	nextCg.SetIsEnded(ended)
+	nextCg.SetStatus(ended)
 
-	if ended {
+	if ended == game.StatusPlayerWins || ended == game.StatusDraw {
 		if err = a.repository.Update(ctx, nextCg); err != nil {
 			return nil, err
 		}
@@ -88,7 +88,7 @@ func (a appService) ProcessPlayerMove(
 
 	winner, ended = a.gameService.IsEnded(nextCg.Board())
 	nextCg.SetWinner(winner)
-	nextCg.SetIsEnded(ended)
+	nextCg.SetStatus(ended)
 
 	if err = a.repository.Update(ctx, nextCg); err != nil {
 		return nil, err

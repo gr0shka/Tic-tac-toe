@@ -11,10 +11,10 @@ import (
 )
 
 type mockGameService struct {
-	gb      *game.GameBoard
-	err     error
-	winner  int
-	isEnded bool
+	gb     *game.GameBoard
+	err    error
+	winner int
+	status game.GameStatus
 }
 
 func (m mockGameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.GameBoard {
@@ -25,8 +25,8 @@ func (m mockGameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 	return m.err
 }
 
-func (m mockGameService) IsEnded(board [3][3]int) (int, bool) {
-	return m.winner, m.isEnded
+func (m mockGameService) IsEnded(board [3][3]int) (int, game.GameStatus) {
+	return m.winner, m.status
 }
 
 type mockRepository struct {
@@ -53,7 +53,7 @@ func TestAppService_CreateGame(t *testing.T) {
 		repoErr error
 		gameErr error
 		winner  int
-		isEnded bool
+		status  game.GameStatus
 	}
 
 	testCases := []testCase{
@@ -63,7 +63,7 @@ func TestAppService_CreateGame(t *testing.T) {
 			repoErr: nil,
 			gameErr: nil,
 			winner:  -1,
-			isEnded: false,
+			status:  game.StatusPlayerWins,
 		},
 	}
 
@@ -71,10 +71,10 @@ func TestAppService_CreateGame(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gb := game.NewGameBoard()
 			gs := mockGameService{
-				err:     tc.gameErr,
-				winner:  tc.winner,
-				isEnded: tc.isEnded,
-				gb:      gb,
+				err:    tc.gameErr,
+				winner: tc.winner,
+				status: tc.status,
+				gb:     gb,
 			}
 
 			cg := game.NewCurrentGame(gb)
@@ -106,7 +106,7 @@ func TestAppService_GetGame(t *testing.T) {
 		repoErr error
 		gameErr error
 		winner  int
-		isEnded bool
+		isEnded game.GameStatus
 	}
 
 	testCases := []testCase{
@@ -117,7 +117,7 @@ func TestAppService_GetGame(t *testing.T) {
 			repoErr: nil,
 			gameErr: nil,
 			winner:  -1,
-			isEnded: false,
+			isEnded: game.StatusPlayerWins,
 		},
 	}
 
@@ -125,10 +125,10 @@ func TestAppService_GetGame(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gb := game.NewGameBoard()
 			gs := mockGameService{
-				err:     tc.gameErr,
-				winner:  tc.winner,
-				isEnded: tc.isEnded,
-				gb:      gb,
+				err:    tc.gameErr,
+				winner: tc.winner,
+				status: tc.isEnded,
+				gb:     gb,
 			}
 
 			cg := game.NewCurrentGame(gb)
@@ -160,7 +160,7 @@ func TestAppService_GameIsEnded(t *testing.T) {
 		repoErr error
 		gameErr error
 		winner  int
-		isEnded bool
+		status  game.GameStatus
 	}
 
 	testCases := []testCase{
@@ -171,7 +171,7 @@ func TestAppService_GameIsEnded(t *testing.T) {
 			repoErr: nil,
 			gameErr: nil,
 			winner:  -1,
-			isEnded: false,
+			status:  game.StatusWaitingForPlayers,
 		},
 		{
 			name:    "game not found",
@@ -180,7 +180,7 @@ func TestAppService_GameIsEnded(t *testing.T) {
 			repoErr: game.ErrNotFound,
 			gameErr: nil,
 			winner:  0,
-			isEnded: false,
+			status:  game.StatusDraw,
 		},
 	}
 
@@ -188,10 +188,10 @@ func TestAppService_GameIsEnded(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gb := game.NewGameBoard()
 			gs := mockGameService{
-				err:     tc.gameErr,
-				winner:  tc.winner,
-				isEnded: tc.isEnded,
-				gb:      gb,
+				err:    tc.gameErr,
+				winner: tc.winner,
+				status: tc.status,
+				gb:     gb,
 			}
 
 			cg := game.NewCurrentGame(gb)
@@ -208,8 +208,8 @@ func TestAppService_GameIsEnded(t *testing.T) {
 				t.Errorf("GameIsEnded() winner = %v, want %v", winner, tc.winner)
 			}
 
-			if ended != tc.isEnded {
-				t.Errorf("GameIsEnded() ended = %v, want %v", ended, tc.isEnded)
+			if ended != tc.status {
+				t.Errorf("GameIsEnded() ended = %v, want %v", ended, tc.status)
 			}
 		})
 	}
@@ -223,7 +223,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 		repoErr error
 		gameErr error
 		winner  int
-		isEnded bool
+		status  game.GameStatus
 	}
 
 	testCases := []testCase{
@@ -234,7 +234,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 			repoErr: nil,
 			gameErr: nil,
 			winner:  -1,
-			isEnded: false,
+			status:  game.StatusPlayerTurn,
 		},
 		{
 			name:    "success move, game ended, bot wins",
@@ -243,7 +243,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 			repoErr: nil,
 			gameErr: nil,
 			winner:  1,
-			isEnded: true,
+			status:  game.StatusPlayerWins,
 		},
 		{
 			name:    "success move, game ended, draw",
@@ -252,7 +252,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 			repoErr: nil,
 			gameErr: nil,
 			winner:  -1,
-			isEnded: true,
+			status:  game.StatusDraw,
 		},
 	}
 
@@ -260,10 +260,10 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gb := game.NewGameBoard()
 			gs := mockGameService{
-				err:     tc.gameErr,
-				winner:  tc.winner,
-				isEnded: tc.isEnded,
-				gb:      gb,
+				err:    tc.gameErr,
+				winner: tc.winner,
+				status: tc.status,
+				gb:     gb,
 			}
 
 			cg := game.NewCurrentGame(gb)
@@ -289,8 +289,8 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 				t.Errorf("GameIsEnded() winner = %v, want %v", gotCg.Winner(), tc.winner)
 			}
 
-			if gotCg.IsEnded() != tc.isEnded {
-				t.Errorf("GameIsEnded() ended = %v, want %v", gotCg.IsEnded(), tc.isEnded)
+			if gotCg.Status() != tc.status {
+				t.Errorf("GameIsEnded() ended = %v, want %v", gotCg.IsEnded(), tc.status)
 			}
 		})
 	}
