@@ -13,6 +13,15 @@ type userService struct {
 	repo UserRepository
 }
 
+func (s *userService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+	u, err := s.repo.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func NewUserService(repo UserRepository) *userService {
 	return &userService{repo: repo}
 }

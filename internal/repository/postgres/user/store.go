@@ -19,6 +19,22 @@ func New(db *pgxpool.Pool) *repository {
 	}
 }
 
+func (r repository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+	query := `SELECT id, login FROM users WHERE id = $1`
+
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
+	if err != nil {
+		return nil, err
+	}
+
+	return DTOtoDomain(user), nil
+}
+
 func (r repository) Save(ctx context.Context, user *user.User) error {
 	query := "INSERT INTO users(id, login, password) VALUES($1, $2, $3)"
 
@@ -40,7 +56,7 @@ func (r repository) Get(ctx context.Context, id uuid.UUID) (*user.User, error) {
 		return nil, err
 	}
 
-	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[DTO])
+	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +72,7 @@ func (r repository) GetByLogin(ctx context.Context, login string) (*user.User, e
 		return nil, err
 	}
 
-	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[DTO])
+	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
 	if err != nil {
 		return nil, err
 	}
