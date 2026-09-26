@@ -75,10 +75,10 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 	dto := DomainToDTO(*cg)
 
 	query := `UPDATE current_game
-				SET player2_id = $2, player2_real = $3 board = $4, number_of_turn = $5, status = $6, winner = $7
+				SET player2_id = $2, player2_real = $3, board = $4, number_of_turn = $5, status = $6, winner = $7
 				WHERE id = $1`
 
-	_, err := m.db.Exec(ctx, query, dto.Player2ID, dto.Player2Real, dto.ID, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
+	_, err := m.db.Exec(ctx, query, dto.ID, dto.Player2ID, dto.Player2Real, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
 	if err != nil {
 		return err
 	}
