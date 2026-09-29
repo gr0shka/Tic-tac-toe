@@ -8,21 +8,35 @@ import (
 func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 	cgPlayers := cg.Players()
 
-	var p2ID uuid.UUID
-	var p2Real bool
-	if len(cgPlayers) > 1 && cgPlayers[1] != nil {
-		p2ID = cgPlayers[1].ID()
-		p2Real = cgPlayers[1].IsRealPlayer()
+	var p2ID *uuid.UUID
+	var p2Real *bool
+	var p2Symbol *int
+	if len(cgPlayers) > 1 && cgPlayers[game.SecondPlayer] != nil {
+		p2ID = ptr(cgPlayers[game.SecondPlayer].ID())
+		p2Real = ptr(cgPlayers[game.SecondPlayer].IsRealPlayer())
+		p2Symbol = ptr(cgPlayers[game.SecondPlayer].Symbol())
+	}
+
+	var activePlayerID *uuid.UUID
+	if cg.ActivePlayer() != nil {
+		activePlayerID = ptr(cg.ActivePlayer().ID())
 	}
 
 	return CurrentGameDTO{
-		ID:           cg.ID(),
+		ID: cg.ID(),
+
+		Player1ID:     cgPlayers[game.FirstPlayer].ID(),
+		Player1Real:   cgPlayers[game.FirstPlayer].IsRealPlayer(),
+		Player1Symbol: cgPlayers[game.FirstPlayer].Symbol(),
+
+		Player2ID:     p2ID,
+		Player2Real:   p2Real,
+		Player2Symbol: p2Symbol,
+
+		ActivePlayerID: activePlayerID,
+
 		Board:        FlattenBoard(cg.Board()),
 		NumberOfTurn: cg.TurnNumber(),
-		Player1ID:    cgPlayers[0].ID(),
-		Player1Real:  cgPlayers[0].IsRealPlayer(),
-		Player2ID:    p2ID,
-		Player2Real:  p2Real,
 		Status:       string(cg.Status()),
 		Winner:       cg.Winner(),
 	}
@@ -33,20 +47,35 @@ func DTOToDomain(cgd CurrentGameDTO) *game.CurrentGame {
 	gameBoard.SetBoard(UnFlattenBoard(cgd.Board))
 	gameBoard.SetTurnNumber(cgd.NumberOfTurn)
 
+	var activePlayer *game.Player
+
 	player1 := game.NewPlayer(
 		cgd.Player1ID,
-		0,
+		cgd.Player1Symbol,
 		cgd.Player1Real,
 	)
-	player2 := game.NewPlayer(
-		cgd.Player2ID,
-		1,
-		cgd.Player2Real,
-	)
 	gameBoard.AddPlayer(player1)
-	gameBoard.AddPlayer(player2)
+
+	if cgd.ActivePlayerID != nil && *cgd.ActivePlayerID == player1.ID() {
+		activePlayer = player1
+	}
+
+	if cgd.Player2ID != nil {
+		player2 := game.NewPlayer(
+			*cgd.Player2ID,
+			*cgd.Player2Symbol,
+			*cgd.Player2Real,
+		)
+		gameBoard.AddPlayer(player2)
+
+		if cgd.ActivePlayerID != nil && *cgd.ActivePlayerID == player2.ID() {
+			activePlayer = player2
+		}
+	}
 
 	cg := game.NewCurrentGameWithID(cgd.ID, gameBoard)
+
+	cg.SetActivePlayer(activePlayer)
 
 	cg.SetStatus(game.GameStatus(cgd.Status))
 	cg.SetWinner(cgd.Winner)
@@ -78,4 +107,8 @@ func UnFlattenBoard(b []int) [game.BoardSize][game.BoardSize]int {
 	}
 
 	return res
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
