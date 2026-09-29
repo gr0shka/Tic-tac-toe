@@ -19,9 +19,13 @@ func NewUserAuthenticator(service user.UserService) *UserAuthenticator {
 
 func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		req := r.Header.Get("Authorization")
+		login, pass, ok := r.BasicAuth()
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-		u, err := ua.service.Authenticate(r.Context(), req)
+		u, err := ua.service.Authenticate(r.Context(), login, pass)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
