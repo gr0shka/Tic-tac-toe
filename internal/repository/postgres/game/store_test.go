@@ -11,6 +11,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	game2 "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
+	"github.com/gr0shka/Tic-tac-toe/internal/utils"
 )
 
 func createCurrentGame() *game.CurrentGame {
@@ -36,9 +37,9 @@ func createCurrentGameDTO() *game2.CurrentGameDTO {
 	var p2Real *bool
 	var p2Symbol *int
 	if len(players) > 1 && players[game.SecondPlayer] != nil {
-		p2ID = ptr(players[game.SecondPlayer].ID())
-		p2Real = ptr(players[game.SecondPlayer].IsRealPlayer())
-		p2Symbol = ptr(players[game.SecondPlayer].Symbol())
+		p2ID = utils.Ptr(players[game.SecondPlayer].ID())
+		p2Real = utils.Ptr(players[game.SecondPlayer].IsRealPlayer())
+		p2Symbol = utils.Ptr(players[game.SecondPlayer].Symbol())
 	}
 
 	var activePlayerID uuid.UUID
@@ -224,8 +225,4 @@ func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 			}
 		})
 	}
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
