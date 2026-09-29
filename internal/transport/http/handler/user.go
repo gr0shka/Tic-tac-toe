@@ -55,7 +55,7 @@ func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, err := uuid.Parse(r.URL.Query().Get("uuid"))
+	userID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
