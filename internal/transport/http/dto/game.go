@@ -10,10 +10,13 @@ type GameBoardRequest struct {
 }
 
 type GameBoardResponse struct {
-	ID     uuid.UUID                           `json:"id"`
-	Status string                              `json:"status"`
-	Winner int                                 `json:"winner"`
-	Board  [game.BoardSize][game.BoardSize]int `json:"board"`
+	ID            uuid.UUID                           `json:"id"`
+	Status        string                              `json:"status"`
+	ActivePlayer  uuid.UUID                           `json:"active_player"`
+	Player1Symbol int                                 `json:"player1_symbol"`
+	Player2Symbol int                                 `json:"player2_symbol"`
+	Winner        int                                 `json:"winner"`
+	Board         [game.BoardSize][game.BoardSize]int `json:"board"`
 }
 
 type CreateGameRequest struct {

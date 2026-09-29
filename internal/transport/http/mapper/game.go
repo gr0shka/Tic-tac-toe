@@ -7,9 +7,12 @@ import (
 
 func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
 	return dto.GameBoardResponse{
-		ID:     cg.ID(),
-		Status: string(cg.Status()),
-		Winner: cg.Winner(),
-		Board:  cg.Board(),
+		ID:            cg.ID(),
+		Status:        string(cg.Status()),
+		ActivePlayer:  cg.ActivePlayer().ID(),
+		Player1Symbol: cg.Players()[game.FirstPlayer].Symbol(),
+		Player2Symbol: cg.Players()[game.SecondPlayer].Symbol(),
+		Winner:        cg.Winner(),
+		Board:         cg.Board(),
 	}
 }
