@@ -19,6 +19,12 @@ func (a appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*
 		return nil, err
 	}
 
+	if len(cg.Players()) > 0 && cg.Players()[game.FirstPlayer] != nil {
+		if cg.Players()[game.FirstPlayer].ID() == playerID {
+			return nil, game.ErrPlayerAlreadyExists
+		}
+	}
+
 	player := game.NewPlayer(playerID, game.SecondPlayer, true)
 
 	if err = cg.AddPlayer(player); err != nil {

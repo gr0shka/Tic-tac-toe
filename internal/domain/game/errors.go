@@ -14,4 +14,5 @@ var (
 	ErrMaxCountOfPlayers         = errors.New("max count of players")
 	ErrNonExistentMode           = errors.New("non-existent game")
 	ErrFailedCalculateNextPlayer = errors.New("failed to calculate next player")
+	ErrPlayerAlreadyExists       = errors.New("player already exists")
 )
