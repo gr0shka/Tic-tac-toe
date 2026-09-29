@@ -9,7 +9,7 @@ import (
 
 type UserService interface {
 	Register(ctx context.Context, login, password string) error
-	Authenticate(ctx context.Context, auth string) (*user.User, error)
+	Authenticate(ctx context.Context, login, password string) (*user.User, error)
 	GetByLogin(ctx context.Context, login string) (*user.User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error)
 }
