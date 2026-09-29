@@ -44,10 +44,42 @@ func New(db *pgxpool.Pool) *repository {
 func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 	dto := DomainToDTO(*cg)
 
-	query := `INSERT INTO current_game (id, player1_id, player1_real, player2_id, player2_real, board, number_of_turn, status, winner)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	query := `INSERT INTO current_game 
+    (id,
+     
+     player1_id, 
+     player1_real,
+     player1_symbol,
+     
+     player2_id, 
+     player2_real,
+     player2_symbol,
+     
+     active_player_id,
+     
+     board, 
+     number_of_turn, 
+     status, 
+     winner)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 
-	_, err := m.db.Exec(ctx, query, dto.ID, dto.Player1ID, dto.Player1Real, dto.Player2ID, dto.Player2Real, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
+	_, err := m.db.Exec(ctx, query,
+		dto.ID,
+
+		dto.Player1ID,
+		dto.Player1Real,
+		dto.Player1Symbol,
+
+		dto.Player2ID,
+		dto.Player2Real,
+		dto.Player2Symbol,
+
+		dto.ActivePlayerID,
+
+		dto.Board,
+		dto.NumberOfTurn,
+		dto.Status,
+		dto.Winner)
 	if err != nil {
 		return err
 	}
@@ -75,10 +107,32 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 	dto := DomainToDTO(*cg)
 
 	query := `UPDATE current_game
-				SET player2_id = $2, player2_real = $3, board = $4, number_of_turn = $5, status = $6, winner = $7
+				SET 
+				    player2_id = $2, 
+				    player2_real = $3,
+				    player2_symbol = $4,
+				    
+				    active_player_id = $5,
+				    
+				    board = $6, 
+				    number_of_turn = $7, 
+				    status = $8, 
+				    winner = $9
 				WHERE id = $1`
 
-	_, err := m.db.Exec(ctx, query, dto.ID, dto.Player2ID, dto.Player2Real, dto.Board, dto.NumberOfTurn, dto.Status, dto.Winner)
+	_, err := m.db.Exec(ctx, query,
+		dto.ID,
+
+		dto.Player2ID,
+		dto.Player2Real,
+		dto.Player2Symbol,
+
+		dto.ActivePlayerID,
+
+		dto.Board,
+		dto.NumberOfTurn,
+		dto.Status,
+		dto.Winner)
 	if err != nil {
 		return err
 	}
