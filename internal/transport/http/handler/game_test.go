@@ -58,6 +58,9 @@ func TestHandler_GetGame_Success(t *testing.T) {
 	req.SetPathValue("uuid", gameID.String())
 
 	gb := game.NewGameBoard()
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	gb.AddPlayer(player1)
+
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusPlayerTurn}
 
@@ -93,6 +96,9 @@ func TestHandler_GetGame_NotFound(t *testing.T) {
 	req.SetPathValue("uuid", gameID.String())
 
 	gb := game.NewGameBoard()
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	gb.AddPlayer(player1)
+
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, game.ErrNotFound, 0, game.StatusWaitingForPlayers}
 
@@ -121,6 +127,9 @@ func TestHandler_NewGame(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	gb := game.NewGameBoard()
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	gb.AddPlayer(player1)
+
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusWaitingForPlayers}
 
@@ -162,6 +171,11 @@ func TestHandler_NextTurn(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	gb := game.NewGameBoard()
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	gb.AddPlayer(player1)
+	player2 := game.NewPlayer(uuid.New(), game.SecondPlayer, false)
+	gb.AddPlayer(player2)
+
 	mockGame := game.NewCurrentGame(gb)
 	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusPlayerTurn}
 
