@@ -32,14 +32,35 @@ func createCurrentGameDTO() *game2.CurrentGameDTO {
 
 	players := cg.Players()
 
+	var p2ID *uuid.UUID
+	var p2Real *bool
+	var p2Symbol *int
+	if len(players) > 1 && players[game.SecondPlayer] != nil {
+		p2ID = ptr(players[game.SecondPlayer].ID())
+		p2Real = ptr(players[game.SecondPlayer].IsRealPlayer())
+		p2Symbol = ptr(players[game.SecondPlayer].Symbol())
+	}
+
+	var activePlayerID uuid.UUID
+	if cg.ActivePlayer() != nil {
+		activePlayerID = cg.ActivePlayer().ID()
+	}
+
 	cgDTO := game2.CurrentGameDTO{
 		ID:           cg.ID(),
 		Board:        game2.FlattenBoard(cg.Board()),
 		NumberOfTurn: cg.TurnNumber(),
-		Player1ID:    players[0].ID(),
-		Player2ID:    players[1].ID(),
-		Player1Real:  players[0].IsRealPlayer(),
-		Player2Real:  players[1].IsRealPlayer(),
+		Winner:       cg.Winner(),
+
+		Player1ID:     players[0].ID(),
+		Player1Real:   players[0].IsRealPlayer(),
+		Player1Symbol: players[0].Symbol(),
+
+		Player2ID:     p2ID,
+		Player2Real:   p2Real,
+		Player2Symbol: p2Symbol,
+
+		ActivePlayerID: &activePlayerID,
 	}
 
 	return &cgDTO
@@ -203,4 +224,8 @@ func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
