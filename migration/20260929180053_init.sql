@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE current_game (
     id UUID PRIMARY KEY,
 
@@ -22,3 +23,7 @@ CREATE TABLE users (
     login varchar(32) unique NOT NULL,
     password varchar(32) NOT NULL
 );
+
+-- +goose Down
+DROP TABLE current_game;
+DROP TABLE users;
