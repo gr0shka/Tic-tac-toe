@@ -11,13 +11,20 @@ type PlayerDTO struct {
 }
 
 type CurrentGameDTO struct {
-	ID           uuid.UUID `db:"id"`
-	Board        []int     `db:"board"`
-	NumberOfTurn int       `db:"number_of_turn"`
-	Player1ID    uuid.UUID `db:"player1_id"`
-	Player1Real  bool      `db:"player1_real"`
-	Player2ID    uuid.UUID `db:"player2_id"`
-	Player2Real  bool      `db:"player2_real"`
-	Status       string    `db:"status"`
-	Winner       int       `db:"winner"`
+	ID uuid.UUID `db:"id"`
+
+	Player1ID     uuid.UUID `db:"player1_id"`
+	Player1Real   bool      `db:"player1_real"`
+	Player1Symbol int       `db:"player1_symbol"`
+
+	Player2ID     *uuid.UUID `db:"player2_id"`
+	Player2Real   *bool      `db:"player2_real"`
+	Player2Symbol *int       `db:"player2_symbol"`
+
+	ActivePlayerID *uuid.UUID `db:"active_player_id"`
+
+	Board        []int  `db:"board"`
+	NumberOfTurn int    `db:"number_of_turn"`
+	Status       string `db:"status"`
+	Winner       int    `db:"winner"`
 }
