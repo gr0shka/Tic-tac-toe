@@ -39,9 +39,13 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	req := r.Header.Get("Authorization")
+	login, pass, ok := r.BasicAuth()
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
-	u, err := h.service.Authenticate(r.Context(), req)
+	u, err := h.service.Authenticate(r.Context(), login, pass)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
