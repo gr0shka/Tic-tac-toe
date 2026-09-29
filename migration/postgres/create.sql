@@ -2,10 +2,14 @@ CREATE TABLE current_game (
     id UUID PRIMARY KEY,
 
     player1_id UUID NOT NULL,
+    player1_symbol integer,
     player1_real bool,
 
     player2_id UUID,
+    player2_symbol integer,
     player2_real bool,
+
+    active_player_id UUID,
 
     board integer[],
     number_of_turn integer,
