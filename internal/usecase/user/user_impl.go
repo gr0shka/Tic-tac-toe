@@ -27,7 +27,7 @@ func NewUserService(repo UserRepository) *userService {
 
 func (s *userService) GetByLogin(ctx context.Context, login string) (*user.User, error) {
 	if login == "" {
-		return nil, user.ErrUserNotFound
+		return nil, user.ErrInValidLogin
 	}
 
 	u, err := s.repo.GetByLogin(ctx, login)
