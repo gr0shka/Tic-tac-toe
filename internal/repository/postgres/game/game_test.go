@@ -6,18 +6,12 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	game2 "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/testutil"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/pressly/goose/v3"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var testPool *pgxpool.Pool
@@ -25,51 +19,14 @@ var testPool *pgxpool.Pool
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	pgContainer, err := tcpostgres.Run(ctx,
-		"postgres:16-alpine",
-		tcpostgres.WithDatabase("testdb"),
-		tcpostgres.WithUsername("postgres"),
-		tcpostgres.WithPassword("postgres"),
-
-		testcontainers.WithWaitStrategy(wait.ForLog("database system is ready to accept connections").
-			WithOccurrence(2).
-			WithStartupTimeout(10*time.Second),
-		),
-	)
+	pool, cleanup, err := testutil.SetupTestDB(ctx)
 	if err != nil {
-		log.Fatalf("Failed to start postgres: %v", err)
+		log.Fatalf("failed to setup test db: %v", err)
 	}
+	defer cleanup()
 
-	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		log.Fatalf("Failed to connection string: %v", err)
-	}
-
-	testPool, err = pgxpool.New(ctx, connStr)
-	if err != nil {
-		log.Fatalf("Failed to create test pool: %v", err)
-	}
-
-	db := stdlib.OpenDBFromPool(testPool)
-	defer db.Close()
-
-	if err = goose.SetDialect("postgres"); err != nil {
-		log.Fatalf("failed to set goose dialect: %v", err)
-	}
-
-	// Накатит все *.sql файлы из папки migration
-	if err = goose.Up(db, "../../../../migration"); err != nil {
-		log.Fatalf("failed to run goose migrations: %v", err)
-	}
-
-	exitCode := m.Run()
-
-	testPool.Close()
-	if err = pgContainer.Terminate(ctx); err != nil {
-		log.Fatalf("Failed to terminate postgres container: %v", err)
-	}
-
-	os.Exit(exitCode)
+	testPool = pool
+	os.Exit(m.Run())
 }
 
 func createCurrentGame() *game.CurrentGame {
@@ -201,6 +158,133 @@ func TestRepository_Get(t *testing.T) {
 			t.Errorf("get error, expected %v, got %t", testCase.cg.ID(), err)
 		}
 	})
+}
+
+func TestRepository_AllGames(t *testing.T) {
+	type useCases struct {
+		name         string
+		cgEnded      *game.CurrentGame
+		cgWaiting    *game.CurrentGame
+		countOfGames int
+		err          error
+	}
+
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	player2 := game.NewPlayer(uuid.New(), game.SecondPlayer, true)
+
+	gbWith1Player := game.NewGameBoard()
+	gbWith1Player.AddPlayer(player1)
+
+	gbWith2Player := game.NewGameBoard()
+	gbWith2Player.AddPlayer(player1)
+	gbWith2Player.AddPlayer(player2)
+
+	cgWaiting := game.NewCurrentGame(gbWith1Player)
+	cgWaiting.SetStatus(game.StatusWaitingForPlayers)
+
+	cgEnded := game.NewCurrentGame(gbWith2Player)
+	cgEnded.SetStatus(game.StatusPlayerWins)
+
+	repo := game2.New(testPool)
+
+	repo.Save(context.Background(), cgEnded)
+	repo.Save(context.Background(), cgWaiting)
+
+	testCases := []useCases{
+		{
+			name:         "Success allGames",
+			cgEnded:      cgEnded,
+			cgWaiting:    cgWaiting,
+			countOfGames: 1,
+			err:          nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			cgGot, err := repo.AllGames(context.Background())
+
+			if !errors.Is(err, testCase.err) {
+				t.Errorf("get error, expected %v, got %v", testCase.err, err)
+			}
+
+			if err == nil {
+
+				if len(cgGot) != testCase.countOfGames {
+					t.Errorf("get error, expected %v, got %v", testCase.countOfGames, len(cgGot))
+				}
+
+				if len(cgGot) >= 1 && cgGot[0].ID() != testCase.cgWaiting.ID() {
+					t.Errorf("get error, expected %v, got %v", testCase.cgWaiting.ID(), cgGot[0].ID())
+				}
+			}
+		})
+	}
+}
+
+func TestRepository_Update(t *testing.T) {
+	type useCases struct {
+		name  string
+		cgOld *game.CurrentGame
+		cgNew *game.CurrentGame
+		err   error
+	}
+
+	gb := game.NewGameBoard()
+	gb.AddPlayer(game.NewPlayer(uuid.New(), game.FirstPlayer, true))
+	cgOld := game.NewCurrentGame(gb)
+	cgOld.SetStatus(game.StatusWaitingForPlayers)
+
+	gbNew := gb.Clone()
+	gbNew.AddPlayer(game.NewPlayer(uuid.New(), game.SecondPlayer, true))
+	cgNew := game.NewCurrentGameWithID(cgOld.ID(), gb)
+	cgNew.SetActivePlayer(cgNew.Players()[game.FirstPlayer])
+	cgNew.SetTurnNumber(12)
+
+	testCases := []useCases{
+		{
+			name:  "Success update",
+			cgNew: cgNew,
+			cgOld: cgOld,
+			err:   nil,
+		},
+	}
+
+	repo := game2.New(testPool)
+	repo.Save(context.Background(), cgOld)
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := repo.Update(context.Background(), testCase.cgNew)
+			if err != nil {
+				t.Errorf("update error, expected %v, got %v", testCase.err, err)
+			}
+
+			cgGot, err := repo.Get(context.Background(), testCase.cgNew.ID())
+			if !errors.Is(err, testCase.err) {
+				t.Errorf("get error, expected %v, got %v", testCase.err, err)
+			}
+
+			if err == nil {
+
+				if cgGot.ID() != testCase.cgNew.ID() {
+					t.Errorf("get error, expected %v, got %v", testCase.cgNew.ID(), cgGot.ID())
+				}
+
+				if cgGot.Status() != testCase.cgNew.Status() {
+					t.Errorf("get error, expected %v, got %v", testCase.cgNew.Status(), cgGot.Status())
+				}
+
+				if cgGot.ActivePlayer().ID() != testCase.cgNew.ActivePlayer().ID() {
+					t.Errorf("get error, expected %v, got %v", testCase.cgNew.Status(), cgGot.Status())
+				}
+
+				if cgGot.TurnNumber() != testCase.cgNew.TurnNumber() {
+					t.Errorf("get error, expected %v, got %v", testCase.cgNew.Status(), cgGot.Status())
+				}
+			}
+		})
+	}
 }
 
 func TestRepository_Mapper_DomainToDTO(t *testing.T) {
