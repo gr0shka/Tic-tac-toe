@@ -3,7 +3,6 @@ package game
 import (
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	"github.com/gr0shka/Tic-tac-toe/internal/utils"
 )
 
 func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
@@ -13,14 +12,14 @@ func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 	var p2Real *bool
 	var p2Symbol *int
 	if len(cgPlayers) > 1 && cgPlayers[game.SecondPlayer] != nil {
-		p2ID = utils.Ptr(cgPlayers[game.SecondPlayer].ID())
-		p2Real = utils.Ptr(cgPlayers[game.SecondPlayer].IsRealPlayer())
-		p2Symbol = utils.Ptr(cgPlayers[game.SecondPlayer].Symbol())
+		p2ID = new(cgPlayers[game.SecondPlayer].ID())
+		p2Real = new(cgPlayers[game.SecondPlayer].IsRealPlayer())
+		p2Symbol = new(cgPlayers[game.SecondPlayer].Symbol())
 	}
 
 	var activePlayerID *uuid.UUID
 	if cg.ActivePlayer() != nil {
-		activePlayerID = utils.Ptr(cg.ActivePlayer().ID())
+		activePlayerID = new(cg.ActivePlayer().ID())
 	}
 
 	return CurrentGameDTO{
