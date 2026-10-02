@@ -3,16 +3,74 @@ package game_test
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	game2 "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
-	"github.com/gr0shka/Tic-tac-toe/internal/utils"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
+
+	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
+
+var testPool *pgxpool.Pool
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+
+	pgContainer, err := tcpostgres.Run(ctx,
+		"postgres:16-alpine",
+		tcpostgres.WithDatabase("testdb"),
+		tcpostgres.WithUsername("postgres"),
+		tcpostgres.WithPassword("postgres"),
+
+		testcontainers.WithWaitStrategy(wait.ForLog("database system is ready to accept connections").
+			WithOccurrence(2).
+			WithStartupTimeout(10*time.Second),
+		),
+	)
+	if err != nil {
+		log.Fatalf("Failed to start postgres: %v", err)
+	}
+
+	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		log.Fatalf("Failed to connection string: %v", err)
+	}
+
+	testPool, err = pgxpool.New(ctx, connStr)
+	if err != nil {
+		log.Fatalf("Failed to create test pool: %v", err)
+	}
+
+	db := stdlib.OpenDBFromPool(testPool)
+	defer db.Close()
+
+	if err = goose.SetDialect("postgres"); err != nil {
+		log.Fatalf("failed to set goose dialect: %v", err)
+	}
+
+	// Накатит все *.sql файлы из папки migration
+	if err = goose.Up(db, "../../../../migration"); err != nil {
+		log.Fatalf("failed to run goose migrations: %v", err)
+	}
+
+	exitCode := m.Run()
+
+	testPool.Close()
+	if err = pgContainer.Terminate(ctx); err != nil {
+		log.Fatalf("Failed to terminate postgres container: %v", err)
+	}
+
+	os.Exit(exitCode)
+}
 
 func createCurrentGame() *game.CurrentGame {
 	gb := game.NewGameBoard()
@@ -37,9 +95,9 @@ func createCurrentGameDTO() *game2.CurrentGameDTO {
 	var p2Real *bool
 	var p2Symbol *int
 	if len(players) > 1 && players[game.SecondPlayer] != nil {
-		p2ID = utils.Ptr(players[game.SecondPlayer].ID())
-		p2Real = utils.Ptr(players[game.SecondPlayer].IsRealPlayer())
-		p2Symbol = utils.Ptr(players[game.SecondPlayer].Symbol())
+		p2ID = new(players[game.SecondPlayer].ID())
+		p2Real = new(players[game.SecondPlayer].IsRealPlayer())
+		p2Symbol = new(players[game.SecondPlayer].Symbol())
 	}
 
 	var activePlayerID uuid.UUID
@@ -82,18 +140,10 @@ func TestRepository_Save(t *testing.T) {
 		},
 	}
 
-	cf, err := config.Load()
-	if err != nil {
-		t.Skip("Could not load config file. Skipping.")
-	}
-	store, err := postgres.NewClient(context.Background(), cf.Postgres)
-	if err != nil {
-		t.Skip("Could not connect to database. Skipping.")
-	}
+	repo := game2.New(testPool)
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			repo := game2.New(store)
 			err := repo.Save(context.Background(), testCase.cg)
 
 			if !errors.Is(err, testCase.err) {
@@ -128,18 +178,10 @@ func TestRepository_Get(t *testing.T) {
 		},
 	}
 
-	cf, err := config.Load()
-	if err != nil {
-		t.Skip(fmt.Sprintf("Could not load config file. Skipping. Error: %v", err))
-	}
-	store, err := postgres.NewClient(context.Background(), cf.Postgres)
-	if err != nil {
-		t.Skip("Could not connect to database. Skipping.")
-	}
+	repo := game2.New(testPool)
 
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
-		repo := game2.New(store)
 		err := repo.Save(context.Background(), testCase.cg)
 		if err != nil {
 			t.Errorf("save error, expected %v, got %v", testCase.err, err)
@@ -153,7 +195,6 @@ func TestRepository_Get(t *testing.T) {
 
 	testCase = testCases[1]
 	t.Run(testCase.name, func(t *testing.T) {
-		repo := game2.New(store)
 
 		_, err := repo.Get(context.Background(), testCase.cg.ID())
 		if !errors.Is(err, testCase.err) {
