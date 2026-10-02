@@ -289,20 +289,96 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 			gotCg, err := as.ProcessPlayerMove(context.Background(), player1.ID(), tc.id, [3][3]int{})
 
 			if !errors.Is(err, tc.err) {
-				t.Errorf("GameIsEnded() error = %v, wantErr %v", err, tc.err)
+				t.Errorf("ProcessPlayerMove() error = %v, wantErr %v", err, tc.err)
 
 			}
 
 			if tc.err == nil && gotCg == nil {
-				t.Errorf("GameIsEnded() gotCg = <nil>, want <not nil>")
+				t.Errorf("ProcessPlayerMove() gotCg = <nil>, want <not nil>")
 			}
 
-			if gotCg.Winner() != tc.winner {
-				t.Errorf("GameIsEnded() winner = %v, want %v", gotCg.Winner(), tc.winner)
+			if tc.err == nil && gotCg.Winner() != tc.winner {
+				t.Errorf("ProcessPlayerMove() winner = %v, want %v", gotCg.Winner(), tc.winner)
 			}
 
-			if gotCg.Status() != tc.status {
-				t.Errorf("GameIsEnded() ended = %v, want %v", gotCg.IsEnded(), tc.status)
+			if tc.err == nil && gotCg.Status() != tc.status {
+				t.Errorf("ProcessPlayerMove() ended = %v, want %v", gotCg.IsEnded(), tc.status)
+			}
+		})
+	}
+}
+
+func TestAppService_JoinGame(t *testing.T) {
+	type testCase struct {
+		name     string
+		cg       *game.CurrentGame
+		gb       *game.GameBoard
+		gameID   uuid.UUID
+		playerID uuid.UUID
+		err      error
+	}
+
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	player2 := game.NewPlayer(uuid.New(), game.SecondPlayer, true)
+
+	gbWith1Player := game.NewGameBoard()
+	gbWith1Player.AddPlayer(player1)
+
+	gbWith2Player := game.NewGameBoard()
+	gbWith2Player.AddPlayer(player1)
+	gbWith2Player.AddPlayer(player2)
+
+	gameID := uuid.New()
+	userID := uuid.New()
+
+	testCases := []testCase{
+		{
+			name:     "success join game",
+			cg:       game.NewCurrentGameWithID(gameID, gbWith1Player),
+			gb:       gbWith1Player,
+			gameID:   gameID,
+			playerID: userID,
+			err:      nil,
+		},
+		{
+			name:     "failed join game, game is full",
+			cg:       game.NewCurrentGameWithID(gameID, gbWith2Player),
+			gb:       gbWith2Player,
+			gameID:   gameID,
+			playerID: userID,
+			err:      game.ErrMaxCountOfPlayers,
+		},
+		{
+			name:     "failed join game, player already exists",
+			cg:       game.NewCurrentGameWithID(gameID, gbWith1Player),
+			gb:       gbWith1Player,
+			gameID:   gameID,
+			playerID: gbWith1Player.Players()[game.FirstPlayer].ID(),
+			err:      game.ErrPlayerAlreadyExists,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepository{tc.cg, nil, nil}
+			gs := mockGameService{tc.gb, nil, 0, game.StatusWaitingForPlayers}
+			as := app.NewAppService(gs, repo)
+
+			cg, err := as.JoinGame(context.Background(), tc.gameID, tc.playerID)
+
+			if !errors.Is(err, tc.err) {
+				t.Errorf("JoinGame() error = %v, wantErr %v", err, tc.err)
+			}
+
+			if err == nil {
+
+				if len(cg.Players()) != game.CountPlayers {
+					t.Errorf("JoinGame() count players got = %v, want = %v", len(cg.Players()), game.CountPlayers)
+				}
+
+				if len(cg.Players()) > 2 && cg.Players()[game.SecondPlayer] == tc.cg.Players()[game.SecondPlayer] {
+					t.Errorf("JoinGame() second player got = %v want >= %v", cg.Players()[game.SecondPlayer], tc.cg.Players()[game.SecondPlayer])
+				}
 			}
 		})
 	}
