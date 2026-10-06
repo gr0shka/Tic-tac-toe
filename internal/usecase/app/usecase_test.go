@@ -376,7 +376,7 @@ func TestAppService_JoinGame(t *testing.T) {
 					t.Errorf("JoinGame() count players got = %v, want = %v", len(cg.Players()), game.CountPlayers)
 				}
 
-				if len(cg.Players()) > 2 && cg.Players()[game.SecondPlayer] == tc.cg.Players()[game.SecondPlayer] {
+				if len(cg.Players()) == 2 && cg.Players()[game.SecondPlayer] == tc.cg.Players()[game.SecondPlayer] {
 					t.Errorf("JoinGame() second player got = %v want >= %v", cg.Players()[game.SecondPlayer], tc.cg.Players()[game.SecondPlayer])
 				}
 			}
