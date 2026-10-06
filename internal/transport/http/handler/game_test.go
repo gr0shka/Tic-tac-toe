@@ -201,3 +201,94 @@ func TestHandler_NextTurn(t *testing.T) {
 		t.Fatalf("failed to unmarshal response body: %v", err)
 	}
 }
+
+func TestHandler_JoinGame(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	gameID := uuid.New()
+	url := "/games/" + gameID.String() + "/join"
+
+	ctx := context.WithValue(context.Background(), middleware.UserIDContextName, uuid.New())
+
+	req, _ := http.NewRequest("POST", url, nil)
+	req.SetPathValue("uuid", gameID.String())
+	req = req.WithContext(ctx)
+
+	gb := game.NewGameBoard()
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	gb.AddPlayer(player1)
+
+	mockGame := game.NewCurrentGame(gb)
+	mockGame.SetStatus(game.StatusWaitingForPlayers)
+	mockApp := mockAppService{mockGame, nil, nil, 0, game.StatusWaitingForPlayers}
+
+	h := handler.NewGameHandler(mockApp)
+
+	h.JoinGame(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200 OK, got %d", res.StatusCode)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("failed to read response body: %v", err)
+	}
+
+	var actualResponse dto.GameBoardResponse
+	err = json.Unmarshal(body, &actualResponse)
+	if err != nil {
+		t.Fatalf("failed to unmarshal response body: %v", err)
+	}
+}
+
+func TestHandler_AllGames(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "/games", nil)
+
+	gb1 := game.NewGameBoard()
+	gb2 := game.NewGameBoard()
+
+	player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+	player2 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
+
+	gb1.AddPlayer(player1)
+	gb2.AddPlayer(player2)
+
+	mockGame1 := game.NewCurrentGame(gb1)
+	mockGame2 := game.NewCurrentGame(gb2)
+
+	mockGame1.SetStatus(game.StatusWaitingForPlayers)
+	mockGame2.SetStatus(game.StatusWaitingForPlayers)
+
+	mockCGSlice := make([]*game.CurrentGame, 0, 2)
+	mockCGSlice = append(mockCGSlice, mockGame1)
+	mockCGSlice = append(mockCGSlice, mockGame2)
+
+	mockAS := mockAppService{nil, mockCGSlice, nil, 0, game.StatusPlayerTurn}
+
+	h := handler.NewGameHandler(mockAS)
+
+	h.AllGames(w, req)
+	res := w.Result()
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200 OK, got %d", res.StatusCode)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("failed to read response body: %v", err)
+	}
+
+	var actualResponse []dto.GameBoardResponse
+	err = json.Unmarshal(body, &actualResponse)
+	if err != nil {
+		t.Fatalf("failed to unmarshal response body: %v", err)
+	}
+}
