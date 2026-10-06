@@ -20,19 +20,19 @@ func New(db *pgxpool.Pool) *repository {
 }
 
 func (r repository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
-	query := `SELECT id, login FROM users WHERE id = $1`
+	query := `SELECT * FROM users WHERE id = $1`
 
 	rows, err := r.db.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
+	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
 	if err != nil {
 		return nil, err
 	}
 
-	return DTOtoDomain(user), nil
+	return DTOtoDomain(u), nil
 }
 
 func (r repository) Save(ctx context.Context, user *user.User) error {
