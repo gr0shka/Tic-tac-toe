@@ -48,22 +48,6 @@ func (r repository) Save(ctx context.Context, user *user.User) error {
 	return nil
 }
 
-func (r repository) Get(ctx context.Context, id uuid.UUID) (*user.User, error) {
-	query := "SELECT * FROM users WHERE id = $1"
-
-	rows, err := r.db.Query(ctx, query, id)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
-	if err != nil {
-		return nil, err
-	}
-
-	return DTOtoDomain(u), nil
-}
-
 func (r repository) GetByLogin(ctx context.Context, login string) (*user.User, error) {
 	query := "SELECT * FROM users WHERE login = $1"
 

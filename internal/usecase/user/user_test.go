@@ -20,10 +20,6 @@ func (m MockUserRepository) Save(ctx context.Context, user *user.User) error {
 	return m.err
 }
 
-func (m MockUserRepository) Get(ctx context.Context, id uuid.UUID) (*user.User, error) {
-	return m.user, m.err
-}
-
 func (m MockUserRepository) GetByLogin(ctx context.Context, login string) (*user.User, error) {
 	return m.user, m.err
 }
