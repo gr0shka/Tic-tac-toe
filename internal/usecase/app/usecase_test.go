@@ -376,8 +376,22 @@ func TestAppService_JoinGame(t *testing.T) {
 					t.Errorf("JoinGame() count players got = %v, want = %v", len(cg.Players()), game.CountPlayers)
 				}
 
-				if len(cg.Players()) == 2 && cg.Players()[game.SecondPlayer] == tc.cg.Players()[game.SecondPlayer] {
-					t.Errorf("JoinGame() second player got = %v want >= %v", cg.Players()[game.SecondPlayer], tc.cg.Players()[game.SecondPlayer])
+				if len(cg.Players()) == game.CountPlayers {
+
+					if cg.Players()[game.SecondPlayer].ID() != tc.cg.Players()[game.SecondPlayer].ID() {
+						t.Errorf("JoinGame() second player_id got = %v want = %v",
+							cg.Players()[game.SecondPlayer].ID(), tc.cg.Players()[game.SecondPlayer].ID())
+					}
+
+					if cg.Players()[game.SecondPlayer].IsRealPlayer() != tc.cg.Players()[game.SecondPlayer].IsRealPlayer() {
+						t.Errorf("JoinGame() second player_isRealPlayer got = %v want = %v",
+							cg.Players()[game.SecondPlayer].IsRealPlayer(), tc.cg.Players()[game.SecondPlayer].IsRealPlayer())
+					}
+
+					if cg.Players()[game.SecondPlayer].Symbol() != tc.cg.Players()[game.SecondPlayer].Symbol() {
+						t.Errorf("JoinGame() second player_symbol got = %v want = %v",
+							cg.Players()[game.SecondPlayer].Symbol(), tc.cg.Players()[game.SecondPlayer].Symbol())
+					}
 				}
 			}
 		})
