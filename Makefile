@@ -17,9 +17,9 @@ test-cover:
 	go test -coverprofile=covarage.out ./...
 
 test-cover-html: test-cover
-	go tool cover -html=covarage.out
+	go tool cover -html=covarage.out -o covarage.html
 
 clean:
-	rm covarage.out
+	rm covarage.*
 
 .PHONY: test test-cover test-cover-html
