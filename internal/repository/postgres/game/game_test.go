@@ -29,6 +29,14 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func truncateGames(t *testing.T) {
+	t.Helper()
+	_, err := testPool.Exec(context.Background(), "TRUNCATE current_game CASCADE")
+	if err != nil {
+		t.Fatalf("failed to truncate users: %v", err)
+	}
+}
+
 func createCurrentGame() *game.CurrentGame {
 	gb := game.NewGameBoard()
 
@@ -83,6 +91,8 @@ func createCurrentGameDTO() *game2.CurrentGameDTO {
 }
 
 func TestRepository_Save(t *testing.T) {
+	truncateGames(t)
+
 	type useCases struct {
 		name string
 		cg   *game.CurrentGame
@@ -116,6 +126,8 @@ func TestRepository_Save(t *testing.T) {
 }
 
 func TestRepository_Get(t *testing.T) {
+	truncateGames(t)
+
 	type useCases struct {
 		name string
 		cg   *game.CurrentGame
@@ -161,6 +173,8 @@ func TestRepository_Get(t *testing.T) {
 }
 
 func TestRepository_AllGames(t *testing.T) {
+	truncateGames(t)
+
 	type useCases struct {
 		name         string
 		cgEnded      *game.CurrentGame
@@ -223,6 +237,8 @@ func TestRepository_AllGames(t *testing.T) {
 }
 
 func TestRepository_Update(t *testing.T) {
+	truncateGames(t)
+
 	type useCases struct {
 		name  string
 		cgOld *game.CurrentGame
