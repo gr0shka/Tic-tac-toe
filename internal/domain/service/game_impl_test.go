@@ -172,7 +172,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 			err: game.ErrWrongNumberOfTurns,
 		},
 		{
-			name: "no move",
+			name: "alter previous move",
 			gb1: createGameService(
 				[3][3]int{
 					{0, -1, -1},
@@ -254,7 +254,7 @@ func TestGameService_IsEnded(t *testing.T) {
 			ended:  game.StatusPlayerWins,
 		},
 		{
-			name: "game is ended with 1 player win",
+			name: "game is ended with 2 player win",
 			board: [3][3]int{
 				{1, 0, 1},
 				{1, 1, 0},
