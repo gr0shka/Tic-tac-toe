@@ -163,7 +163,6 @@ func TestAppService_GameIsEnded(t *testing.T) {
 		id      uuid.UUID
 		err     error
 		repoErr error
-		gameErr error
 		winner  int
 		status  game.GameStatus
 	}
@@ -174,7 +173,6 @@ func TestAppService_GameIsEnded(t *testing.T) {
 			id:      uuid.New(),
 			err:     nil,
 			repoErr: nil,
-			gameErr: nil,
 			winner:  -1,
 			status:  game.StatusWaitingForPlayers,
 		},
@@ -183,7 +181,6 @@ func TestAppService_GameIsEnded(t *testing.T) {
 			id:      uuid.New(),
 			err:     game.ErrNotFound,
 			repoErr: game.ErrNotFound,
-			gameErr: nil,
 			winner:  0,
 			status:  game.StatusDraw,
 		},
@@ -193,7 +190,6 @@ func TestAppService_GameIsEnded(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gb := game.NewGameBoard()
 			gs := mockGameService{
-				err:    tc.gameErr,
 				winner: tc.winner,
 				status: tc.status,
 				gb:     gb,
@@ -274,7 +270,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 			player1 := game.NewPlayer(uuid.New(), game.FirstPlayer, true)
 			_ = gb.AddPlayer(player1)
 
-			player2 := game.NewPlayer(uuid.New(), game.FirstPlayer, false)
+			player2 := game.NewPlayer(uuid.New(), game.SecondPlayer, false)
 			_ = gb.AddPlayer(player2)
 
 			cg := game.NewCurrentGame(gb)
@@ -378,9 +374,9 @@ func TestAppService_JoinGame(t *testing.T) {
 
 				if len(cg.Players()) == game.CountPlayers {
 
-					if cg.Players()[game.SecondPlayer].ID() != tc.cg.Players()[game.SecondPlayer].ID() {
+					if cg.Players()[game.SecondPlayer].ID() != tc.playerID {
 						t.Errorf("JoinGame() second player_id got = %v want = %v",
-							cg.Players()[game.SecondPlayer].ID(), tc.cg.Players()[game.SecondPlayer].ID())
+							cg.Players()[game.SecondPlayer].ID(), tc.playerID)
 					}
 
 					if cg.Players()[game.SecondPlayer].IsRealPlayer() != tc.cg.Players()[game.SecondPlayer].IsRealPlayer() {
