@@ -3,23 +3,29 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tic-tac-toe API tester</title>
+    <title>Tic-tac-toe API Tester</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 760px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            max-width: 800px;
             margin: 24px auto;
             padding: 0 16px;
             background: #f6f8fa;
-            color: #222;
+            color: #24292f;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
         }
 
         .card {
             background: #fff;
             border: 1px solid #d0d7de;
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 16px;
             margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .row {
@@ -27,80 +33,120 @@
             gap: 12px;
             flex-wrap: wrap;
             margin-bottom: 12px;
+            align-items: flex-end;
         }
 
         .field {
             flex: 1;
-            min-width: 220px;
+            min-width: 180px;
         }
 
         label {
             display: block;
             margin-bottom: 6px;
             font-size: 13px;
+            font-weight: 600;
             color: #57606a;
         }
 
-        input {
+        input, select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 1px solid #d0d7de;
-            border-radius: 8px;
+            border-radius: 6px;
             font: inherit;
+            font-size: 14px;
             box-sizing: border-box;
+            background: #fff;
         }
 
         button {
-            border: none;
-            border-radius: 8px;
-            padding: 10px 14px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 8px 14px;
             font: inherit;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
             background: #0969da;
             color: white;
+            transition: background .15s;
         }
 
-        button.secondary { background: #57606a; }
-        button.danger { background: #d1242f; }
-        button:disabled { opacity: .6; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #0856b3; }
+        button.secondary { background: #6e7781; }
+        button.secondary:hover:not(:disabled) { background: #57606a; }
+        button.success { background: #1a7f37; }
+        button.success:hover:not(:disabled) { background: #14632a; }
+        button.danger { background: #cf222e; }
+        button.danger:hover:not(:disabled) { background: #a40e26; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
 
-        .status {
-            padding: 10px 12px;
-            border-radius: 8px;
+        .status-box {
+            padding: 10px 14px;
+            border-radius: 6px;
             background: #f3f4f6;
-            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            border-left: 4px solid #0969da;
         }
 
-        .meta {
-            margin-top: 12px;
-            padding: 12px;
-            border-radius: 10px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+        .status-box.error {
+            background: #ffebe9;
+            border-left-color: #cf222e;
+            color: #cf222e;
+        }
+
+        .status-box.success {
+            background: #dafbe1;
+            border-left-color: #1a7f37;
+            color: #1a7f37;
+        }
+
+        .meta-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .meta-item {
+            background: #f6f8fa;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #eaeef2;
+        }
+
+        .meta-item b { color: #57606a; display: block; font-size: 11px; text-transform: uppercase; }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
+            grid-template-columns: repeat(3, 90px);
+            grid-template-rows: repeat(3, 90px);
             gap: 8px;
-            margin-top: 12px;
         }
 
         .cell {
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             border: 2px solid #d0d7de;
-            border-radius: 12px;
-            background: white;
+            border-radius: 10px;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 42px;
+            font-size: 38px;
             font-weight: 700;
-            color: #111;
-            line-height: 1;
+            color: #24292f;
+            cursor: pointer;
+            transition: all .15s;
         }
 
         .cell:hover:not(:disabled) {
@@ -108,283 +154,409 @@
             border-color: #0969da;
         }
 
+        .cell.x { color: #0969da; }
+        .cell.o { color: #cf222e; }
+
         pre {
             margin: 0;
             padding: 12px;
-            border-radius: 12px;
-            background: #0b1020;
-            color: #d6e7ff;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-            min-height: 100px;
-        }
-
-        code {
-            background: #eef2ff;
-            padding: 2px 6px;
             border-radius: 6px;
+            background: #24292e;
+            color: #f6f8fa;
+            font-size: 13px;
+            overflow-x: auto;
+            max-height: 250px;
         }
     </style>
 </head>
 <body>
-<h1>Крестики-нолики — API тестер</h1>
+<h1>Крестики-нолики (Интерактивный тестер API)</h1>
 
+<!-- 1. Настройки подключения и аутентификация -->
 <div class="card">
     <div class="row">
-        <div class="field">
-            <label for="apiBase">API base URL</label>
+        <div class="field" style="flex: 2;">
+            <label for="apiBase">URL бэкенда</label>
             <input id="apiBase" value="http://localhost:8080" />
         </div>
         <div class="field">
+            <label for="login">Логин</label>
+            <input id="login" value="player1" />
+        </div>
+        <div class="field">
+            <label for="password">Пароль</label>
+            <input id="password" type="password" value="password" />
+        </div>
+        <div>
+            <button id="registerBtn" class="success" title="POST /user/register">Регистрация</button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Управление игрой -->
+<div class="card">
+    <div class="row">
+        <div class="field" style="max-width: 180px;">
+            <label for="gameMode">Режим</label>
+            <select id="gameMode">
+                <option value="player_vs_bot">Против бота</option>
+                <option value="player_vs_player">2 игрока (PvP)</option>
+            </select>
+        </div>
+        <div class="field" style="flex: 2;">
             <label for="gameId">Game UUID</label>
             <input id="gameId" placeholder="UUID игры" />
+        </div>
+        <div class="field" style="max-width: 140px;">
+            <label for="playerSymbol">Мой символ</label>
+            <select id="playerSymbol">
+                <option value="0">X (Ход 1)</option>
+                <option value="1">O (Ход 2)</option>
+            </select>
         </div>
     </div>
 
     <div class="row">
-        <button id="createBtn">Create</button>
-        <button id="loadBtn" class="secondary">Load</button>
-        <button id="resetBtn" class="danger">Reset</button>
+        <button id="createBtn">Создать (POST /games)</button>
+        <button id="loadBtn" class="secondary">Загрузить (GET)</button>
+        <button id="joinBtn" class="secondary">Присоединиться (Join)</button>
+        <button id="listBtn" class="secondary">Список игр (GET /games)</button>
+        <button id="resetLocalBtn" class="danger">Сброс поля</button>
     </div>
 
-    <div id="status" class="status">Готов</div>
+    <div id="statusBox" class="status-box">Готов к работе</div>
 
-    <div class="meta">
-        <div><b>Игра завершена:</b> <span id="endedValue">—</span></div>
-        <div><b>Победитель:</b> <span id="winnerValue">—</span></div>
+    <div class="meta-grid">
+        <div class="meta-item"><b>Статус игры</b><span id="metaStatus">—</span></div>
+        <div class="meta-item"><b>Победитель</b><span id="metaWinner">—</span></div>
+        <div class="meta-item"><b>Активный игрок</b><span id="metaActivePlayer">—</span></div>
+        <div class="meta-item"><b>Символ 1 (X) / Символ 2 (O)</b><span id="metaSymbols">—</span></div>
     </div>
 </div>
 
+<!-- 3. Игровое поле -->
 <div class="card">
-    <h2 style="margin-top:0;">Поле</h2>
-    <div id="board" class="board"></div>
+    <div class="board-container">
+        <div id="board" class="board"></div>
+    </div>
 </div>
 
+<!-- 4. Сырой ответ сервера -->
 <div class="card">
-    <h2 style="margin-top:0;">Ответ сервера</h2>
-    <pre id="response">{}</pre>
+    <label>Ответ сервера (JSON)</label>
+    <pre id="responseJson">{}</pre>
 </div>
 
 <script>
     const apiBaseEl = document.getElementById('apiBase');
+    const loginEl = document.getElementById('login');
+    const passwordEl = document.getElementById('password');
+    const registerBtn = document.getElementById('registerBtn');
+
+    const gameModeEl = document.getElementById('gameMode');
     const gameIdEl = document.getElementById('gameId');
-    const statusEl = document.getElementById('status');
-    const responseEl = document.getElementById('response');
-    const boardEl = document.getElementById('board');
-    const endedValueEl = document.getElementById('endedValue');
-    const winnerValueEl = document.getElementById('winnerValue');
+    const playerSymbolEl = document.getElementById('playerSymbol');
 
     const createBtn = document.getElementById('createBtn');
     const loadBtn = document.getElementById('loadBtn');
-    const resetBtn = document.getElementById('resetBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const listBtn = document.getElementById('listBtn');
+    const resetLocalBtn = document.getElementById('resetLocalBtn');
 
-    let board = emptyBoard();
-    let busy = false;
+    const statusBoxEl = document.getElementById('statusBox');
+    const metaStatusEl = document.getElementById('metaStatus');
+    const metaWinnerEl = document.getElementById('metaWinner');
+    const metaActivePlayerEl = document.getElementById('metaActivePlayer');
+    const metaSymbolsEl = document.getElementById('metaSymbols');
+
+    const boardEl = document.getElementById('board');
+    const responseJsonEl = document.getElementById('responseJson');
+
+    let currentBoard = emptyBoard();
+    let isGameOver = false;
+    let isBusy = false;
 
     function emptyBoard() {
-        return Array.from({ length: 3 }, () => Array(3).fill(-1));
+        return [
+            [-1, -1, -1],
+            [-1, -1, -1],
+            [-1, -1, -1]
+        ];
     }
 
     function cloneBoard(b) {
         return b.map(row => [...row]);
     }
 
-    function symbol(v) {
-        if (v === 0) return 'X';
-        if (v === 1) return 'O';
-        return '';
-    }
-
-    function winnerText(v) {
-        if (v === 0) return 'X';
-        if (v === 1) return 'O';
-        if (v === -1) return 'Ничья';
-        return '—';
-    }
-
-    function setStatus(text) {
-        statusEl.textContent = text;
-    }
-
-    function apiBase() {
+    function getBaseUrl() {
         return apiBaseEl.value.trim().replace(/\/$/, '');
     }
 
-    function extractBoard(data) {
-        if (Array.isArray(data)) return data;
-        if (data && Array.isArray(data.board)) return data.board;
-        if (data && Array.isArray(data.Board)) return data.Board;
-        return null;
+    function getAuthHeader() {
+        const login = loginEl.value.trim();
+        const password = passwordEl.value;
+        return 'Basic ' + btoa(login + ':' + password);
     }
 
-    function extractEnded(data) {
-        if (!data || typeof data !== 'object') return null;
-        if (typeof data.game_is_ended === 'boolean') return data.game_is_ended;
-        if (typeof data.GameIsEnded === 'boolean') return data.GameIsEnded;
-        return null;
+    function setStatus(text, type = 'info') {
+        statusBoxEl.textContent = text;
+        statusBoxEl.className = 'status-box';
+        if (type === 'error') statusBoxEl.classList.add('error');
+        if (type === 'success') statusBoxEl.classList.add('success');
     }
 
-    function extractWinner(data) {
-        if (!data || typeof data !== 'object') return null;
-        if (typeof data.winner === 'number') return data.winner;
-        if (typeof data.Winner === 'number') return data.Winner;
-        return null;
+    function symbolToChar(val) {
+        if (val === 0) return 'X';
+        if (val === 1) return 'O';
+        return '';
     }
 
-    function extractGameId(data) {
-        if (!data || typeof data !== 'object') return null;
-        if (data.id) return data.id;
-        if (data.Id) return data.Id;
-        return null;
+    function formatStatus(status) {
+        switch (status) {
+            case 'waiting_for_players': return 'Ожидание игроков';
+            case 'player_turn': return 'Идет игра (ход игрока)';
+            case 'player_wins': return 'Игра окончена (победа)';
+            case 'draw': return 'Игра окончена (ничья)';
+            default: return status || '—';
+        }
     }
 
-    function renderMeta(data) {
-        const ended = extractEnded(data);
-        const winner = extractWinner(data);
-
-        endedValueEl.textContent = ended === null ? '—' : (ended ? 'Да' : 'Нет');
-        winnerValueEl.textContent = winner === null ? '—' : winnerText(winner);
+    function formatWinner(winner, status) {
+        if (status === 'draw' || winner === -1) {
+            return status === 'draw' ? 'Ничья' : 'Нет';
+        }
+        if (winner === 0) return 'Игрок 1 (X)';
+        if (winner === 1) return 'Игрок 2 / Бот (O)';
+        return String(winner);
     }
 
     function renderBoard() {
         boardEl.innerHTML = '';
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const cellVal = currentBoard[r][c];
                 const btn = document.createElement('button');
                 btn.className = 'cell';
-                btn.textContent = symbol(board[i][j]);
-                btn.disabled = busy || board[i][j] !== -1;
-                btn.addEventListener('click', () => makeMove(i, j));
+                const char = symbolToChar(cellVal);
+                btn.textContent = char;
+                if (char === 'X') btn.classList.add('x');
+                if (char === 'O') btn.classList.add('o');
+
+                btn.disabled = isBusy || isGameOver || cellVal !== -1;
+                btn.addEventListener('click', () => onCellClick(r, c));
                 boardEl.appendChild(btn);
             }
         }
     }
 
-    function updateBoard(newBoard) {
-        board = cloneBoard(newBoard);
+    function updateFromResponse(data) {
+        responseJsonEl.textContent = JSON.stringify(data, null, 2);
+
+        if (!data || typeof data !== 'object') return;
+
+        if (data.id) {
+            gameIdEl.value = data.id;
+        }
+
+        metaStatusEl.textContent = formatStatus(data.status);
+        metaWinnerEl.textContent = formatWinner(data.winner, data.status);
+        metaActivePlayerEl.textContent = data.active_player ? data.active_player.slice(0, 8) + '...' : '—';
+        metaSymbolsEl.textContent = `P1=${data.player1_symbol ?? '—'}, P2=${data.player2_symbol ?? '—'}`;
+
+        isGameOver = (data.status === 'player_wins' || data.status === 'draw');
+
+        if (Array.isArray(data.board)) {
+            currentBoard = cloneBoard(data.board);
+        }
+
         renderBoard();
     }
 
-    function applyServerResponse(data) {
-        responseEl.textContent = JSON.stringify(data, null, 2);
-        renderMeta(data);
+    async function safeFetch(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers['Authorization'] = getAuthHeader();
 
-        const b = extractBoard(data);
-        if (b) updateBoard(b);
-    }
-
-    async function safeParseJSON(res) {
+        const res = await fetch(url, options);
         const text = await res.text();
+        let json;
         try {
-            return JSON.parse(text);
+            json = JSON.parse(text);
         } catch {
-            return { error: text || `HTTP ${res.status} ${res.statusText}` };
+            json = text ? { raw: text } : {};
         }
+
+        if (!res.ok) {
+            const errMsg = json.error || json.raw || `HTTP ${res.status}`;
+            throw new Error(errMsg);
+        }
+
+        return json;
     }
 
-    async function createGame() {
+    // Регистрация пользователя
+    registerBtn.addEventListener('click', async () => {
+        const login = loginEl.value.trim();
+        const password = passwordEl.value;
+        if (!login || !password) {
+            setStatus('Укажите логин и пароль', 'error');
+            return;
+        }
+
         try {
-            const res = await fetch(`${apiBase()}/games`, {
+            const res = await fetch(`${getBaseUrl()}/user/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ login, password })
+            });
+
+            const text = await res.text();
+            if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+
+            setStatus(`Успешная регистрация: ${text}`, 'success');
+            responseJsonEl.textContent = text;
+        } catch (e) {
+            setStatus(`Ошибка регистрации: ${e.message}`, 'error');
+            responseJsonEl.textContent = String(e);
+        }
+    });
+
+    // Создать игру
+    createBtn.addEventListener('click', async () => {
+        setStatus('Создание игры...');
+        try {
+            const mode = gameModeEl.value;
+            const data = await safeFetch(`${getBaseUrl()}/games`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+
+            playerSymbolEl.value = "0"; // создатель всегда 0 (X)
+            updateFromResponse(data);
+            setStatus(`Игра создана (${mode})`, 'success');
+        } catch (e) {
+            setStatus(`Ошибка создания игры: ${e.message}`, 'error');
+            responseJsonEl.textContent = String(e);
+        }
+    });
+
+    // Загрузить игру
+    loadBtn.addEventListener('click', async () => {
+        const id = gameIdEl.value.trim();
+        if (!id) {
+            setStatus('Введите UUID игры', 'error');
+            return;
+        }
+
+        setStatus('Загрузка игры...');
+        try {
+            const data = await safeFetch(`${getBaseUrl()}/games/${id}`, {
+                method: 'GET'
+            });
+
+            updateFromResponse(data);
+            setStatus('Игра успешно загружена', 'success');
+        } catch (e) {
+            setStatus(`Ошибка загрузки игры: ${e.message}`, 'error');
+            responseJsonEl.textContent = String(e);
+        }
+    });
+
+    // Присоединиться к игре (Join)
+    joinBtn.addEventListener('click', async () => {
+        const id = gameIdEl.value.trim();
+        if (!id) {
+            setStatus('Введите UUID игры для присоединения', 'error');
+            return;
+        }
+
+        setStatus('Присоединение к игре...');
+        try {
+            const data = await safeFetch(`${getBaseUrl()}/games/${id}/join`, {
                 method: 'POST'
             });
-            const data = await safeParseJSON(res);
-            applyServerResponse(data);
 
-            if (!res.ok) {
-                setStatus(`Ошибка create: ${data.error || res.status}`);
-                return;
-            }
+            playerSymbolEl.value = "1"; // присоединившийся - 1 (O)
+            updateFromResponse(data);
+            setStatus('Вы успешно присоединились к игре!', 'success');
+        } catch (e) {
+            setStatus(`Ошибка Join: ${e.message}`, 'error');
+            responseJsonEl.textContent = String(e);
+        }
+    });
 
-            const gameId = extractGameId(data);
-            if (gameId) {
-                gameIdEl.value = gameId;
-                setStatus('Игра создана');
+    // Список открытых игр
+    listBtn.addEventListener('click', async () => {
+        setStatus('Получение списка игр...');
+        try {
+            const data = await safeFetch(`${getBaseUrl()}/games`, {
+                method: 'GET'
+            });
+
+            responseJsonEl.textContent = JSON.stringify(data, null, 2);
+            if (Array.isArray(data) && data.length > 0) {
+                gameIdEl.value = data[0].id;
+                setStatus(`Найдено ${data.length} открытых игр. Выбран первый ID.`, 'success');
             } else {
-                setStatus('Не удалось получить ID игры');
+                setStatus('Открытых игр не найдено', 'info');
             }
         } catch (e) {
-            setStatus('Ошибка create');
-            responseEl.textContent = String(e);
+            setStatus(`Ошибка получения списка игр: ${e.message}`, 'error');
+            responseJsonEl.textContent = String(e);
         }
-    }
+    });
 
-    async function loadGame() {
+    // Сделать ход
+    async function onCellClick(row, col) {
         const id = gameIdEl.value.trim();
         if (!id) {
-            setStatus('Введите UUID');
+            setStatus('Сначала создайте или загрузите игру', 'error');
             return;
         }
 
-        try {
-            const res = await fetch(`${apiBase()}/games/${id}`);
-            const data = await safeParseJSON(res);
-            applyServerResponse(data);
+        const symbol = parseInt(playerSymbolEl.value, 10);
+        const nextBoard = cloneBoard(currentBoard);
+        nextBoard[row][col] = symbol;
 
-            if (!res.ok) {
-                setStatus(`Ошибка load: ${data.error || res.status}`);
-                return;
-            }
-
-            setStatus('Игра загружена');
-        } catch (e) {
-            setStatus('Ошибка load');
-            responseEl.textContent = String(e);
-        }
-    }
-
-    async function makeMove(x, y) {
-        const id = gameIdEl.value.trim();
-        if (!id) {
-            setStatus('Сначала создайте игру');
-            return;
-        }
-        if (busy || board[x][y] !== -1) return;
-
-        const nextBoard = cloneBoard(board);
-        nextBoard[x][y] = 0;
-
-        busy = true;
-        renderBoard();
-        setStatus('Отправляю ход...');
+        isBusy = true;
+        setStatus('Отправка хода...');
 
         try {
-            const res = await fetch(`${apiBase()}/game/${id}`, {
+            const data = await safeFetch(`${getBaseUrl()}/game/${id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ board: nextBoard })
             });
 
-            const data = await safeParseJSON(res);
-            applyServerResponse(data);
-
-            if (!res.ok) {
-                setStatus(`Ошибка move: ${data.error || res.status}`);
-                return;
+            updateFromResponse(data);
+            if (isGameOver) {
+                setStatus(`Игра окончена! ${metaWinnerEl.textContent}`, 'success');
+            } else {
+                setStatus('Ход принят', 'success');
             }
-
-            setStatus('Ход принят');
         } catch (e) {
-            setStatus('Ошибка move');
-            responseEl.textContent = String(e);
+            setStatus(`Ошибка хода: ${e.message}`, 'error');
+            responseJsonEl.textContent = String(e);
         } finally {
-            busy = false;
+            isBusy = false;
             renderBoard();
         }
     }
 
-    function resetLocal() {
-        board = emptyBoard();
+    // Локальный сброс
+    resetLocalBtn.addEventListener('click', () => {
+        currentBoard = emptyBoard();
+        isGameOver = false;
+        isBusy = false;
+        gameIdEl.value = '';
+        metaStatusEl.textContent = '—';
+        metaWinnerEl.textContent = '—';
+        metaActivePlayerEl.textContent = '—';
+        metaSymbolsEl.textContent = '—';
+        responseJsonEl.textContent = '{}';
         renderBoard();
-        responseEl.textContent = '{}';
-        endedValueEl.textContent = '—';
-        winnerValueEl.textContent = '—';
-        setStatus('Локальная доска сброшена');
-    }
-
-    createBtn.addEventListener('click', createGame);
-    loadBtn.addEventListener('click', loadGame);
-    resetBtn.addEventListener('click', resetLocal);
+        setStatus('Локальное состояние сброшено');
+    });
 
     renderBoard();
 </script>
