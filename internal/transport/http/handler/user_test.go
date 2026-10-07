@@ -38,11 +38,10 @@ func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 
 func TestHandler_Register(t *testing.T) {
 	type testCase struct {
-		name           string
-		body           dto.SignUpRequest
-		mockErr        error
-		expectedCode   int
-		expectedErrMsg string
+		name         string
+		body         dto.SignUpRequest
+		mockErr      error
+		expectedCode int
 	}
 
 	testCases := []testCase{
