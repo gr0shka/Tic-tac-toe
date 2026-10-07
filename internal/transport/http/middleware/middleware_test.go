@@ -39,6 +39,7 @@ func TestAuthenticator(t *testing.T) {
 		mockErr       error
 		authHeader    string
 		handlerCalled bool
+		expectedCode  int
 	}
 
 	testCases := []testCase{
@@ -47,18 +48,21 @@ func TestAuthenticator(t *testing.T) {
 			mockErr:       nil,
 			authHeader:    "Basic " + base64.StdEncoding.EncodeToString([]byte("login:password")),
 			handlerCalled: true,
+			expectedCode:  http.StatusOK,
 		},
 		{
 			name:          "invalid auth header",
 			mockErr:       nil,
 			authHeader:    "Basic " + base64.StdEncoding.EncodeToString([]byte("login")),
 			handlerCalled: false,
+			expectedCode:  http.StatusUnauthorized,
 		},
 		{
 			name:          "user not exist",
 			mockErr:       user.ErrUserNotFound,
 			authHeader:    "Basic " + base64.StdEncoding.EncodeToString([]byte("login:password")),
 			handlerCalled: false,
+			expectedCode:  http.StatusUnauthorized,
 		},
 	}
 
@@ -72,10 +76,10 @@ func TestAuthenticator(t *testing.T) {
 
 			var (
 				gotHandlerCalled bool
-				recivedCtx       context.Context
+				receivedCtx      context.Context
 			)
 			handle := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				recivedCtx = r.Context()
+				receivedCtx = r.Context()
 				gotHandlerCalled = true
 			})
 
@@ -87,15 +91,19 @@ func TestAuthenticator(t *testing.T) {
 
 			handleWithMiddleware.ServeHTTP(w, r)
 
-			if tc.handlerCalled != tc.handlerCalled {
+			if tc.handlerCalled != gotHandlerCalled {
 				t.Errorf("expected handler to be called %v got %v", tc.handlerCalled, tc.handlerCalled)
+			}
+
+			if tc.expectedCode != w.Code {
+				t.Errorf("expected status code to be %d got %d", tc.expectedCode, w.Code)
 			}
 
 			if gotHandlerCalled {
 
-				userStrID, ok := recivedCtx.Value(middleware.UserIDContextName).(string)
+				userStrID, ok := receivedCtx.Value(middleware.UserIDContextName).(string)
 				if !ok {
-					t.Errorf("expected user id to be a string got %v", recivedCtx.Value(middleware.UserIDContextName))
+					t.Errorf("expected user id to be a string got %v", receivedCtx.Value(middleware.UserIDContextName))
 				}
 
 				userID, err := uuid.Parse(userStrID)
