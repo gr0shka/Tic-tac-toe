@@ -29,8 +29,14 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := r.Context().Value(middleware.UserIDContextName).(uuid.UUID)
+	userStrID, ok := r.Context().Value(middleware.UserIDContextName).(string)
 	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userID, err := uuid.Parse(userStrID)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -61,8 +67,14 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, ok := r.Context().Value(middleware.UserIDContextName).(uuid.UUID)
+	userStrID, ok := r.Context().Value(middleware.UserIDContextName).(string)
 	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userID, err := uuid.Parse(userStrID)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -90,8 +102,14 @@ func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 func (h *GameHandler) JoinGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userID, ok := r.Context().Value(middleware.UserIDContextName).(uuid.UUID)
+	userStrID, ok := r.Context().Value(middleware.UserIDContextName).(string)
 	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userID, err := uuid.Parse(userStrID)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
