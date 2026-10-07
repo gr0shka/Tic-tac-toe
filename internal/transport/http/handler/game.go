@@ -94,7 +94,7 @@ func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 
 	data := mapper.ToGameBoardResponse(cg)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	encoder := json.NewEncoder(w)
 	encoder.Encode(data)
 }
