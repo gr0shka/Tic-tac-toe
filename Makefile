@@ -20,6 +20,6 @@ test-cover-html: test-cover
 	go tool cover -html=covarage.out -o covarage.html
 
 clean:
-	rm covarage.*
+	rm covarage.* main
 
 .PHONY: test test-cover test-cover-html
