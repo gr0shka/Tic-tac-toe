@@ -160,11 +160,11 @@ func TestRepository_GetUserByLogin(t *testing.T) {
 
 			u, err := repo.GetByLogin(context.Background(), tc.u.Login())
 			if err != nil {
-				t.Errorf("failed to get user by id: %v", err)
+				t.Errorf("failed to get user by login: %v", err)
 			}
 
 			if u == nil {
-				t.Errorf("failed to get user by id")
+				t.Errorf("failed to get user by login")
 			}
 
 			if !errors.Is(err, tc.err) {
