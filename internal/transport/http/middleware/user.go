@@ -31,7 +31,7 @@ func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), UserIDContextName, u.ID()))
+		r = r.WithContext(context.WithValue(r.Context(), UserIDContextName, u.ID().String()))
 		next.ServeHTTP(w, r)
 	})
 }
