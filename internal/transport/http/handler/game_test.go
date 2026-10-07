@@ -347,7 +347,7 @@ func TestHandler_JoinGame(t *testing.T) {
 			expectedCode:   http.StatusBadRequest,
 		},
 		{
-			name:           "success game uuid",
+			name:           "invalid game uuid",
 			mockPlayerUUID: newPlayerUUID.String(),
 			mockGameUUID:   "",
 			mockErr:        nil,
@@ -480,7 +480,7 @@ func TestHandler_AllGames(t *testing.T) {
 
 				for i, d := range dtoSlice {
 
-					if len(mockCGSlice) < i {
+					if i < len(mockCGSlice) {
 						cmpFieldGameBoardResponse(mockCGSlice[i], t, d)
 					}
 				}
