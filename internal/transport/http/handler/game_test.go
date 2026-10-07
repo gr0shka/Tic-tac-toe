@@ -142,7 +142,7 @@ func TestHandler_NewGame(t *testing.T) {
 		{
 			name:           "success new game",
 			mockBody:       fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot),
-			expectedCode:   http.StatusOK,
+			expectedCode:   http.StatusCreated,
 			mockPlayerUUID: newUUID.String(),
 		},
 		{
