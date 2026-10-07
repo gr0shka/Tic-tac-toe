@@ -237,7 +237,7 @@ func TestRepository_Update(t *testing.T) {
 
 	gbNew := gb.Clone()
 	gbNew.AddPlayer(game.NewPlayer(uuid.New(), game.SecondPlayer, true))
-	cgNew := game.NewCurrentGameWithID(cgOld.ID(), gb)
+	cgNew := game.NewCurrentGameWithID(cgOld.ID(), gbNew)
 	cgNew.SetActivePlayer(cgNew.Players()[game.FirstPlayer])
 	cgNew.SetTurnNumber(12)
 
@@ -276,11 +276,12 @@ func TestRepository_Update(t *testing.T) {
 				}
 
 				if cgGot.ActivePlayer().ID() != testCase.cgNew.ActivePlayer().ID() {
-					t.Errorf("get error, expected %v, got %v", testCase.cgNew.Status(), cgGot.Status())
+					t.Errorf("get error, expected %v, got %v",
+						testCase.cgNew.ActivePlayer().ID(), cgGot.ActivePlayer().ID())
 				}
 
 				if cgGot.TurnNumber() != testCase.cgNew.TurnNumber() {
-					t.Errorf("get error, expected %v, got %v", testCase.cgNew.Status(), cgGot.Status())
+					t.Errorf("get error, expected %v, got %v", testCase.cgNew.TurnNumber(), cgGot.TurnNumber())
 				}
 			}
 		})
@@ -309,11 +310,11 @@ func TestRepository_Mapper_DomainToDTO(t *testing.T) {
 			}
 
 			if game2.UnFlattenBoard(cgDTO.Board) != testCase.cg.Board() {
-				t.Errorf("Board error, expected %v, got %v", testCase.cg.ID(), cgDTO.Board)
+				t.Errorf("Board error, expected %v, got %v", testCase.cg.Board(), game2.UnFlattenBoard(cgDTO.Board))
 			}
 
 			if cgDTO.NumberOfTurn != testCase.cg.TurnNumber() {
-				t.Errorf("turn number error, expected %v, got %v", testCase.cg.ID(), cgDTO.Board)
+				t.Errorf("turn number error, expected %v, got %v", testCase.cg.TurnNumber(), cgDTO.NumberOfTurn)
 			}
 		})
 	}
@@ -342,11 +343,13 @@ func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 			}
 
 			if game2.UnFlattenBoard(cgDTO.Board) != cg.Board() {
-				t.Errorf("Board error, expected %v, got %v", cg.ID(), cgDTO.Board)
+				t.Errorf("Board error, expected %v, got %v",
+					cg.Board(), game2.UnFlattenBoard(cgDTO.Board))
 			}
 
 			if cgDTO.NumberOfTurn != cg.TurnNumber() {
-				t.Errorf("turn number error, expected %v, got %v", cg.ID(), cgDTO.Board)
+				t.Errorf("turn number error, expected %v, got %v",
+					cg.TurnNumber(), cgDTO.NumberOfTurn)
 			}
 		})
 	}
