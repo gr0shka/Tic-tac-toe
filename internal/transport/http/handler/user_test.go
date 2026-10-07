@@ -145,7 +145,7 @@ func TestHandler_Authenticate(t *testing.T) {
 		{
 			name:         "password incorrect",
 			mockUser:     u,
-			authHeader:   base64.StdEncoding.EncodeToString([]byte(u.Password())),
+			authHeader:   "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Login()+":"+u.Password())),
 			expectedCode: http.StatusUnauthorized,
 			mockErr:      user.ErrPasswordNotMatch,
 		},
