@@ -67,7 +67,7 @@ func TestUserService_Authenticate(t *testing.T) {
 			err:      user.ErrInValidPassword,
 		},
 		{
-			name:     "Error authentication invalid password",
+			name:     "Error authentication password not match",
 			login:    "testLogin",
 			password: "testPasswordErr",
 			user:     testUser,
