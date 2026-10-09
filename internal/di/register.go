@@ -12,6 +12,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
 	userRepo "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/transactor"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
@@ -40,6 +41,10 @@ func CreateApp() fx.Option {
 			fx.Annotate(
 				gameService.NewGameService,
 				fx.As(new(gameService.GameService)),
+			),
+			fx.Annotate(
+				transactor.NewTransactor,
+				fx.As(new(usecase.Transactor)),
 			),
 			fx.Annotate(
 				app.NewAppService,
