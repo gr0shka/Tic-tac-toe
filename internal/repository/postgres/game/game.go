@@ -60,8 +60,9 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
      board, 
      number_of_turn, 
      status, 
-     winner)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+     winner,
+     winner_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	_, err := m.db.Exec(ctx, query,
 		dto.ID,
@@ -79,7 +80,8 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 		dto.Board,
 		dto.NumberOfTurn,
 		dto.Status,
-		dto.Winner)
+		dto.Winner,
+		dto.WinnerID)
 	if err != nil {
 		return err
 	}
@@ -117,7 +119,8 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 				    board = $6, 
 				    number_of_turn = $7, 
 				    status = $8, 
-				    winner = $9
+				    winner = $9,
+				    winner_id = $10
 				WHERE id = $1`
 
 	_, err := m.db.Exec(ctx, query,
@@ -132,7 +135,8 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 		dto.Board,
 		dto.NumberOfTurn,
 		dto.Status,
-		dto.Winner)
+		dto.Winner,
+		dto.WinnerID)
 	if err != nil {
 		return err
 	}

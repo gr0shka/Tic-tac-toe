@@ -22,6 +22,12 @@ func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 		activePlayerID = new(cg.ActivePlayer().ID())
 	}
 
+	var winnerID *uuid.UUID
+	if cg.Status() == game.StatusPlayerWins &&
+		cg.Winner() > 0 && len(cg.Players()) > cg.Winner() {
+		winnerID = new(cg.Players()[cg.Winner()].ID())
+	}
+
 	return CurrentGameDTO{
 		ID: cg.ID(),
 
@@ -39,6 +45,8 @@ func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 		NumberOfTurn: cg.TurnNumber(),
 		Status:       string(cg.Status()),
 		Winner:       cg.Winner(),
+
+		WinnerID: winnerID,
 	}
 }
 

@@ -27,4 +27,6 @@ type CurrentGameDTO struct {
 	NumberOfTurn int    `db:"number_of_turn"`
 	Status       string `db:"status"`
 	Winner       int    `db:"winner"`
+
+	WinnerID *uuid.UUID `db:"winner_id"`
 }

@@ -16,6 +16,7 @@ type GameBoardResponse struct {
 	Player1Symbol int                                 `json:"player1_symbol"`
 	Player2Symbol *int                                `json:"player2_symbol"`
 	Winner        int                                 `json:"winner"`
+	WinnerID      *uuid.UUID                          `json:"winner_id"`
 	Board         [game.BoardSize][game.BoardSize]int `json:"board"`
 }
 
