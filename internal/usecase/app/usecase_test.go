@@ -51,6 +51,12 @@ func (m mockRepository) Update(ctx context.Context, cg *game.CurrentGame) error 
 	return m.err
 }
 
+type mockTransactor struct{}
+
+func (m mockTransactor) Do(ctx context.Context, fn func(txCtx context.Context) error) error {
+	return fn(ctx)
+}
+
 func TestAppService_CreateGame(t *testing.T) {
 	type testCase struct {
 		name    string
@@ -88,7 +94,7 @@ func TestAppService_CreateGame(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := app.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo, mockTransactor{})
 
 			gotCg, err := as.CreateGameWithBot(context.Background(), uuid.New())
 
@@ -142,7 +148,7 @@ func TestAppService_GetGame(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := app.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo, mockTransactor{})
 
 			gotCg, err := as.GetGame(context.Background(), tc.id)
 
@@ -201,7 +207,7 @@ func TestAppService_GameIsEnded(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := app.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo, mockTransactor{})
 
 			winner, ended := as.GameIsEnded(context.Background(), tc.id)
 
@@ -280,7 +286,7 @@ func TestAppService_ProcessPlayerMove(t *testing.T) {
 				err: tc.repoErr,
 			}
 
-			as := app.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo, mockTransactor{})
 
 			gotCg, err := as.ProcessPlayerMove(context.Background(), player1.ID(), tc.id, [3][3]int{})
 
@@ -358,7 +364,7 @@ func TestAppService_JoinGame(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			repo := mockRepository{tc.cg, nil, nil}
 			gs := mockGameService{tc.gb, nil, 0, game.StatusWaitingForPlayers}
-			as := app.NewAppService(gs, repo)
+			as := app.NewAppService(gs, repo, mockTransactor{})
 
 			cg, err := as.JoinGame(context.Background(), tc.gameID, tc.playerID)
 
