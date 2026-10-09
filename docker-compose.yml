@@ -31,6 +31,8 @@ services:
       POSTGRES_DATABASE: ${POSTGRES_DATABASE}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      APP_HOST: 0.0.0.0
+      APP_PORT: ${APP_PORT}
     depends_on:
       postgres:
         condition: service_healthy
