@@ -18,7 +18,13 @@ var (
 )
 
 type Config struct {
+	App      App
 	Postgres Postgres
+}
+
+type App struct {
+	Port string
+	Host string
 }
 
 type Postgres struct {
@@ -39,6 +45,11 @@ func Load() (*Config, error) {
 		log.Print("No .env file found")
 	}
 
+	app := App{
+		Port: os.Getenv("APP_PORT"),
+		Host: os.Getenv("APP_HOST"),
+	}
+
 	postgres := Postgres{
 		User:     os.Getenv("POSTGRES_USER"),
 		Password: os.Getenv("POSTGRES_PASSWORD"),
@@ -48,6 +59,13 @@ func Load() (*Config, error) {
 	}
 
 	switch {
+	case app.Port == "":
+		log.Print("No APP_PORT found")
+		return nil, ErrPortNotFound
+	case app.Host == "":
+		log.Print("No APP_HOST found")
+		return nil, ErrHostNotFound
+
 	case postgres.User == "":
 		log.Print("No POSTGRES_USER found")
 		return nil, ErrUserNotFound
@@ -69,5 +87,6 @@ func Load() (*Config, error) {
 
 	return &Config{
 		Postgres: postgres,
+		App:      app,
 	}, nil
 }
