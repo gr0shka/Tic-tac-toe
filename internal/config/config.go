@@ -10,11 +10,7 @@ import (
 )
 
 var (
-	ErrUserNotFound     = errors.New("user not found")
-	ErrPasswordNotFound = errors.New("password not found")
-	ErrHostNotFound     = errors.New("host not found")
-	ErrPortNotFound     = errors.New("port not found")
-	ErrDatabaseNotFound = errors.New("database not found")
+	ErrConfigNotFound = errors.New("not found in config file")
 )
 
 type Config struct {
@@ -61,23 +57,23 @@ func Load() (*Config, error) {
 	switch {
 	case app.Port == "":
 		log.Print("No APP_PORT found")
-		return nil, ErrPortNotFound
+		return nil, fmt.Errorf("APP_PORT: %w", ErrConfigNotFound)
 	case app.Host == "":
 		log.Print("No APP_HOST found")
-		return nil, ErrHostNotFound
+		return nil, fmt.Errorf("APP_HOST: %w", ErrConfigNotFound)
 
 	case postgres.User == "":
 		log.Print("No POSTGRES_USER found")
-		return nil, ErrUserNotFound
+		return nil, fmt.Errorf("POSTGRES_USER: %w", ErrConfigNotFound)
 	case postgres.Password == "":
 		log.Print("No POSTGRES_PASSWORD found")
-		return nil, ErrPasswordNotFound
+		return nil, fmt.Errorf("POSTGRES_PASSWORD: %w", ErrConfigNotFound)
 	case postgres.Host == "":
 		log.Print("No POSTGRES_HOST found")
-		return nil, ErrHostNotFound
+		return nil, fmt.Errorf("POSTGRES_HOST: %w", ErrConfigNotFound)
 	case postgres.Port == "":
 		log.Print("No POSTGRES_PORT found")
-		return nil, ErrPortNotFound
+		return nil, fmt.Errorf("POSTGRES_PORT: %w", ErrConfigNotFound)
 	case postgres.Database == "":
 		log.Print("No POSTGRES_DATABASE found")
 		return nil, ErrDatabaseNotFound
