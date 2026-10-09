@@ -15,6 +15,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/transactor"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
@@ -86,7 +87,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
 
 	srv := &http.Server{
-		Addr:         cfg.Postgres.Host + ":" + cfg.Postgres.Port,
+		Addr:         cfg.App.Host + ":" + cfg.App.Port,
 		Handler:      muxWithMiddleware,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
