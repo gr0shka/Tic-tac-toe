@@ -9,6 +9,7 @@ import (
 
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
+	"github.com/gr0shka/Tic-tac-toe/internal/migration"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
 	userRepo "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/user"
@@ -19,6 +20,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
 )
 
@@ -70,7 +72,7 @@ func CreateApp() fx.Option {
 	)
 }
 
-func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, ah *handler.AuthHandler, m *middleware.UserAuthenticator, cfg *config.Config) {
+func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, ah *handler.AuthHandler, m *middleware.UserAuthenticator, cfg *config.Config, pool *pgxpool.Pool) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /user/register", ah.Register)
 	mux.HandleFunc("POST /user/auth", ah.Authenticate)
@@ -96,6 +98,13 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+
+			if cfg.Postgres.Migration == "true" {
+				if err := migration.Up(ctx, pool); err != nil {
+					log.Printf("Error migrating database: %s", err)
+				}
+			}
+
 			go func() {
 				if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 					log.Printf("HTTP server error: %v", err)
