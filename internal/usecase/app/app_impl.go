@@ -6,44 +6,61 @@ import (
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/service"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 )
 
 type appService struct {
 	gameService service.GameService
 	repository  GameRepository
+	tx          usecase.Transactor
+}
+
+func NewAppService(gameService service.GameService, rep GameRepository, tx usecase.Transactor) *appService {
+	return &appService{
+		gameService: gameService,
+		repository:  rep,
+		tx:          tx,
+	}
 }
 
 func (a appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
-	cg, err := a.repository.Get(ctx, gameID)
-	if err != nil {
-		return nil, err
-	}
+	var resultCG *game.CurrentGame
 
-	if len(cg.Players()) > 0 && cg.Players()[game.FirstPlayer] != nil {
-		if cg.Players()[game.FirstPlayer].ID() == playerID {
-			return nil, game.ErrPlayerAlreadyExists
+	err := a.tx.Do(ctx, func(txCtx context.Context) error {
+		cg, err := a.repository.Get(txCtx, gameID)
+		if err != nil {
+			return err
 		}
-	}
 
-	player := game.NewPlayer(playerID, game.SecondPlayer, true)
+		if len(cg.Players()) > 0 && cg.Players()[game.FirstPlayer] != nil {
+			if cg.Players()[game.FirstPlayer].ID() == playerID {
+				return game.ErrPlayerAlreadyExists
+			}
+		}
 
-	if err = cg.AddPlayer(player); err != nil {
-		return nil, err
-	}
+		player := game.NewPlayer(playerID, game.SecondPlayer, true)
 
-	turnPlayer, err := cg.NextPlayer()
-	if err != nil {
-		return nil, err
-	}
+		if err = cg.AddPlayer(player); err != nil {
+			return err
+		}
 
-	cg.SetActivePlayer(turnPlayer)
-	cg.SetStatus(game.StatusPlayerTurn)
+		turnPlayer, err := cg.NextPlayer()
+		if err != nil {
+			return err
+		}
 
-	if err = a.repository.Update(ctx, cg); err != nil {
-		return nil, err
-	}
+		cg.SetActivePlayer(turnPlayer)
+		cg.SetStatus(game.StatusPlayerTurn)
 
-	return cg, nil
+		if err = a.repository.Update(txCtx, cg); err != nil {
+			return err
+		}
+
+		resultCG = cg
+		return nil
+	})
+
+	return resultCG, err
 }
 
 func (a appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
@@ -53,13 +70,6 @@ func (a appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	}
 
 	return res, nil
-}
-
-func NewAppService(gameService service.GameService, rep GameRepository) *appService {
-	return &appService{
-		gameService: gameService,
-		repository:  rep,
-	}
 }
 
 func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
@@ -134,54 +144,63 @@ func (a appService) ProcessPlayerMove(
 	board [game.BoardSize][game.BoardSize]int,
 ) (*game.CurrentGame, error) {
 
-	current, err := a.repository.Get(ctx, gameID)
-	if err != nil {
-		return nil, err
-	}
+	var resultCG *game.CurrentGame
 
-	if current.IsEnded() {
-		return current, nil
-	}
+	err := a.tx.Do(ctx, func(txCtx context.Context) error {
 
-	if current.ActivePlayer() == nil || current.ActivePlayer().ID() != playerID {
-		return nil, game.ErrWrongPlayerMove
-	}
-
-	next := current.Clone()
-	next.SetBoard(board)
-	next.SetTurnNumber(current.TurnNumber() + 1)
-
-	if err = a.gameService.ValidateBoard(current.GameBoard, next); err != nil {
-		return nil, err
-	}
-
-	nextCg := game.NewCurrentGameWithID(gameID, next)
-
-	winner, ended := a.gameService.IsEnded(nextCg.Board())
-	nextCg.SetWinner(winner)
-	nextCg.SetStatus(ended)
-
-	nextCg, err = a.checkTurn(nextCg)
-	if err != nil {
-		return nil, err
-	}
-
-	if nextCg.ActivePlayer() != nil && !nextCg.ActivePlayer().IsRealPlayer() {
-		if nextCg, err = a.botTurn(ctx, nextCg); err != nil {
-			return nil, err
+		current, err := a.repository.Get(txCtx, gameID)
+		if err != nil {
+			return err
 		}
+
+		if current.IsEnded() {
+			resultCG = current
+			return nil
+		}
+
+		if current.ActivePlayer() == nil || current.ActivePlayer().ID() != playerID {
+			return game.ErrWrongPlayerMove
+		}
+
+		next := current.Clone()
+		next.SetBoard(board)
+		next.SetTurnNumber(current.TurnNumber() + 1)
+
+		if err = a.gameService.ValidateBoard(current.GameBoard, next); err != nil {
+			return err
+		}
+
+		nextCg := game.NewCurrentGameWithID(gameID, next)
+
+		winner, ended := a.gameService.IsEnded(nextCg.Board())
+		nextCg.SetWinner(winner)
+		nextCg.SetStatus(ended)
 
 		nextCg, err = a.checkTurn(nextCg)
 		if err != nil {
-			return nil, err
+			return err
 		}
-	}
 
-	if err = a.repository.Update(ctx, nextCg); err != nil {
-		return nil, err
-	}
+		if nextCg.ActivePlayer() != nil && !nextCg.ActivePlayer().IsRealPlayer() {
+			if nextCg, err = a.botTurn(txCtx, nextCg); err != nil {
+				return err
+			}
 
-	return nextCg, nil
+			nextCg, err = a.checkTurn(nextCg)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err = a.repository.Update(txCtx, nextCg); err != nil {
+			return err
+		}
+
+		resultCG = nextCg
+		return nil
+	})
+
+	return resultCG, err
 }
 
 func (a appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) {
