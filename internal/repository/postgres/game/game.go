@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/transactor"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -90,7 +91,15 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 }
 
 func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
-	rows, err := m.db.Query(ctx, "SELECT * FROM current_game WHERE id=$1", id)
+	query := `SELECT * FROM current_game WHERE id = $1`
+
+	db := transactor.GetExecutor(ctx, m.db)
+
+	if transactor.IsTx(ctx) {
+		query += ` FOR UPDATE`
+	}
+
+	rows, err := db.Query(ctx, query, id)
 	if err != nil {
 		return nil, game.ErrNotFound
 	}
@@ -103,6 +112,7 @@ func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, 
 	cg := DTOToDomain(dto)
 
 	return cg, nil
+
 }
 
 func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
@@ -123,7 +133,9 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 				    winner_id = $10
 				WHERE id = $1`
 
-	_, err := m.db.Exec(ctx, query,
+	db := transactor.GetExecutor(ctx, m.db)
+
+	_, err := db.Exec(ctx, query,
 		dto.ID,
 
 		dto.Player2ID,
