@@ -25,7 +25,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.Register(r.Context(), req)
+	authReq := auth.SignUpRequest{req.Login, req.Password}
+
+	err = h.service.Register(r.Context(), authReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
-	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 )
 
 type mockAuthenticateService struct {
@@ -18,7 +18,7 @@ type mockAuthenticateService struct {
 	err error
 }
 
-func (m mockAuthenticateService) Register(ctx context.Context, req dto.SignUpRequest) error {
+func (m mockAuthenticateService) Register(ctx context.Context, req auth.SignUpRequest) error {
 	return m.err
 }
 
