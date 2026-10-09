@@ -7,8 +7,10 @@ import (
 )
 
 func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
+	var p2ID *uuid.UUID
 	var p2Symbol *int
 	if len(cg.Players()) > 1 && cg.Players()[game.SecondPlayer] != nil {
+		p2ID = new(cg.Players()[game.SecondPlayer].ID())
 		p2Symbol = new(cg.Players()[game.SecondPlayer].Symbol())
 	}
 
@@ -23,13 +25,18 @@ func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
 	}
 
 	return dto.GameBoardResponse{
-		ID:            cg.ID(),
-		Status:        string(cg.Status()),
-		ActivePlayer:  activePlayer,
+		ID:           cg.ID(),
+		Status:       string(cg.Status()),
+		ActivePlayer: activePlayer,
+
+		Player1ID:     cg.Players()[game.FirstPlayer].ID(),
 		Player1Symbol: cg.Players()[game.FirstPlayer].Symbol(),
+
 		Player2Symbol: p2Symbol,
-		Winner:        cg.Winner(),
-		WinnerID:      winnerID,
-		Board:         cg.Board(),
+		Player2ID:     p2ID,
+
+		Winner:   cg.Winner(),
+		WinnerID: winnerID,
+		Board:    cg.Board(),
 	}
 }
