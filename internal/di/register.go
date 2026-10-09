@@ -64,7 +64,7 @@ func CreateApp() fx.Option {
 	)
 }
 
-func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, ah *handler.AuthHandler, m *middleware.UserAuthenticator) {
+func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, ah *handler.AuthHandler, m *middleware.UserAuthenticator, cfg *config.Config) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /user/register", ah.Register)
 	mux.HandleFunc("POST /user/auth", ah.Authenticate)
@@ -81,7 +81,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
 
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         cfg.Postgres.Host + ":" + cfg.Postgres.Port,
 		Handler:      muxWithMiddleware,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
