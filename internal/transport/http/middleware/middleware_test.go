@@ -9,34 +9,28 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 )
 
-type mockUserService struct {
-	u   *user.User
+type mockAuthenticateService struct {
+	uID *uuid.UUID
 	err error
 }
 
-func (m mockUserService) Register(ctx context.Context, login, password string) error {
+func (m mockAuthenticateService) Register(ctx context.Context, req dto.SignUpRequest) error {
 	return m.err
 }
 
-func (m mockUserService) Authenticate(ctx context.Context, login, password string) (*user.User, error) {
-	return m.u, m.err
-}
-
-func (m mockUserService) GetByLogin(ctx context.Context, login string) (*user.User, error) {
-	return m.u, m.err
-}
-
-func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
-	return m.u, m.err
+func (m mockAuthenticateService) Authenticate(ctx context.Context, login, password string) (*uuid.UUID, error) {
+	return m.uID, m.err
 }
 
 func TestAuthenticator(t *testing.T) {
 	type testCase struct {
 		name          string
 		mockErr       error
+		mockUUID      uuid.UUID
 		authHeader    string
 		handlerCalled bool
 		expectedCode  int
@@ -71,8 +65,8 @@ func TestAuthenticator(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			mockUS := mockUserService{newUser, tc.mockErr}
-			ua := middleware.NewUserAuthenticator(mockUS)
+			mockAS := &mockAuthenticateService{new(newUser.ID()), tc.mockErr}
+			ua := middleware.NewUserAuthenticator(mockAS)
 
 			var (
 				gotHandlerCalled bool

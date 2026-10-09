@@ -15,6 +15,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
 	"go.uber.org/fx"
 )
@@ -48,9 +49,14 @@ func CreateApp() fx.Option {
 				user.NewUserService,
 				fx.As(new(user.UserService)),
 			),
+			fx.Annotate(
+				auth.NewAuthenticateService,
+				fx.As(new(auth.AuthenticateService)),
+			),
 			middleware.NewUserAuthenticator,
 			handler.NewGameHandler,
 			handler.NewUserHandler,
+			handler.NewAuthHandler,
 		),
 		fx.Invoke(
 			RegisterServer,
@@ -58,10 +64,10 @@ func CreateApp() fx.Option {
 	)
 }
 
-func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, m *middleware.UserAuthenticator) {
+func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, ah *handler.AuthHandler, m *middleware.UserAuthenticator) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /user/register", uh.Register)
-	mux.HandleFunc("POST /user/auth", uh.Authenticate)
+	mux.HandleFunc("POST /user/register", ah.Register)
+	mux.HandleFunc("POST /user/auth", ah.Authenticate)
 
 	mux.Handle("GET /user/{uuid}", m.Authenticate(http.HandlerFunc(uh.GetUserByID)))
 
