@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:alpine AS builder
 
 WORKDIR /build
 
@@ -16,6 +16,7 @@ RUN adduser -D -u 10001 appuser
 WORKDIR /app
 
 COPY --from=builder /build/my-app /app/my-app
+COPY migration/ /app/migration/
 
 USER appuser
 
