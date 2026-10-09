@@ -24,11 +24,12 @@ type App struct {
 }
 
 type Postgres struct {
-	User     string
-	Password string
-	Host     string
-	Port     string
-	Database string
+	User      string
+	Password  string
+	Host      string
+	Port      string
+	Database  string
+	Migration str
 }
 
 func (p Postgres) ConnectionString() string {
@@ -47,11 +48,12 @@ func Load() (*Config, error) {
 	}
 
 	postgres := Postgres{
-		User:     os.Getenv("POSTGRES_USER"),
-		Password: os.Getenv("POSTGRES_PASSWORD"),
-		Host:     os.Getenv("POSTGRES_HOST"),
-		Port:     os.Getenv("POSTGRES_PORT"),
-		Database: os.Getenv("POSTGRES_DATABASE"),
+		User:      os.Getenv("POSTGRES_USER"),
+		Password:  os.Getenv("POSTGRES_PASSWORD"),
+		Host:      os.Getenv("POSTGRES_HOST"),
+		Port:      os.Getenv("POSTGRES_PORT"),
+		Database:  os.Getenv("POSTGRES_DATABASE"),
+		Migration: os.Getenv("MIGRATION"),
 	}
 
 	switch {
@@ -76,7 +78,10 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("POSTGRES_PORT: %w", ErrConfigNotFound)
 	case postgres.Database == "":
 		log.Print("No POSTGRES_DATABASE found")
-		return nil, ErrDatabaseNotFound
+		return nil, fmt.Errorf("POSTGRES_DATABASE: %w", ErrConfigNotFound)
+	case postgres.Migration == "":
+		log.Print("No MIGRATION found")
+		return nil, fmt.Errorf("MIGRATION: %w", ErrConfigNotFound)
 	}
 
 	log.Print("Config successfully loaded")
