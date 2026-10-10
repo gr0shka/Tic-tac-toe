@@ -8,7 +8,6 @@ type SignUpRequest struct {
 }
 
 type UserInfoResponse struct {
-	ID       uuid.UUID `json:"id"`
-	Login    string    `json:"login"`
-	Password string    `json:"password"`
+	ID    uuid.UUID `json:"id"`
+	Login string    `json:"login"`
 }
