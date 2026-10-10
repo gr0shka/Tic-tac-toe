@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
@@ -82,6 +83,10 @@ func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.Ga
 }
 
 func (a appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
+	if id == uuid.Nil {
+		return nil, fmt.Errorf("gameID is null : %w", game.ErrIsNull)
+	}
+
 	switch mode {
 	case game.GameModePlayerVSPlayer:
 		return a.CreateGameWithPlayer(ctx, id)
@@ -143,6 +148,14 @@ func (a appService) ProcessPlayerMove(
 	playerID, gameID uuid.UUID,
 	board [game.BoardSize][game.BoardSize]int,
 ) (*game.CurrentGame, error) {
+
+	if playerID == uuid.Nil {
+		return nil, fmt.Errorf("playerID is null : %w", game.ErrIsNull)
+	}
+
+	if gameID == uuid.Nil {
+		return nil, fmt.Errorf("gameID is null : %w", game.ErrIsNull)
+	}
 
 	var resultCG *game.CurrentGame
 
