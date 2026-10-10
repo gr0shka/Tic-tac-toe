@@ -29,7 +29,7 @@ type Postgres struct {
 	Host      string
 	Port      string
 	Database  string
-	Migration str
+	Migration string
 }
 
 func (p Postgres) ConnectionString() string {
