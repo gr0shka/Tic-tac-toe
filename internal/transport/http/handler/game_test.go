@@ -132,7 +132,7 @@ func TestHandler_NewGame(t *testing.T) {
 		name           string
 		mockBody       string
 		mockErr        error
-		mockPlayerUUID string
+		mockPlayerUUID uuid.UUID
 		expectedCode   int
 	}
 
@@ -143,28 +143,28 @@ func TestHandler_NewGame(t *testing.T) {
 			name:           "success new game",
 			mockBody:       fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot),
 			expectedCode:   http.StatusCreated,
-			mockPlayerUUID: newUUID.String(),
+			mockPlayerUUID: newUUID,
 		},
 		{
 			name:           "invalid uuid",
 			mockBody:       fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot),
 			expectedCode:   http.StatusBadRequest,
-			mockErr:        nil,
-			mockPlayerUUID: "",
+			mockErr:        game.ErrIsNull,
+			mockPlayerUUID: uuid.Nil,
 		},
 		{
 			name:           "empty body",
 			mockBody:       "nil",
 			expectedCode:   http.StatusBadRequest,
 			mockErr:        nil,
-			mockPlayerUUID: newUUID.String(),
+			mockPlayerUUID: newUUID,
 		},
 		{
 			name:           "error creating game",
 			mockBody:       fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot),
 			expectedCode:   http.StatusBadRequest,
 			mockErr:        errors.New("error creating game"),
-			mockPlayerUUID: newUUID.String(),
+			mockPlayerUUID: newUUID,
 		},
 	}
 
@@ -176,7 +176,7 @@ func TestHandler_NewGame(t *testing.T) {
 			url := "/games"
 			req, _ := http.NewRequest("POST", url, strings.NewReader(tc.mockBody))
 
-			ctx := context.WithValue(context.Background(), middleware.UserIDContextKey{}, tc.mockPlayerUUID)
+			ctx := middleware.ContextWithUserID(context.Background(), tc.mockPlayerUUID)
 			req = req.WithContext(ctx)
 
 			gb := game.NewGameBoard()
@@ -221,8 +221,8 @@ func TestHandler_NextTurn(t *testing.T) {
 		name           string
 		mockBody       string
 		mockErr        error
-		mockPlayerUUID string
-		mockGameUUID   string
+		mockPlayerUUID uuid.UUID
+		mockGameUUID   uuid.UUID
 		expectedCode   int
 	}
 
@@ -234,36 +234,38 @@ func TestHandler_NextTurn(t *testing.T) {
 			name:           "success next turn",
 			mockBody:       `{"board": [[1,0,0],[0,2,0],[0,0,0]]}`,
 			expectedCode:   http.StatusOK,
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   newGameUUID.String(),
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   newGameUUID,
 		},
 		{
 			name:           "invalid game uuid",
 			mockBody:       `{"board": [[1,0,0],[0,2,0],[0,0,0]]}`,
 			expectedCode:   http.StatusBadRequest,
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   "",
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   uuid.Nil,
+			mockErr:        game.ErrIsNull,
 		},
 		{
 			name:           "invalid player uuid",
 			mockBody:       `{"board": [[1,0,0],[0,2,0],[0,0,0]]}`,
 			expectedCode:   http.StatusBadRequest,
-			mockPlayerUUID: "",
-			mockGameUUID:   newGameUUID.String(),
+			mockPlayerUUID: uuid.Nil,
+			mockGameUUID:   newGameUUID,
+			mockErr:        game.ErrIsNull,
 		},
 		{
 			name:           "invalid body",
 			mockBody:       "",
 			expectedCode:   http.StatusBadRequest,
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   newGameUUID.String(),
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   newGameUUID,
 		},
 		{
 			name:           "invalid turn",
 			mockBody:       `{"board": [[1,0,0],[0,2,0],[0,0,0]]}`,
 			expectedCode:   http.StatusBadRequest,
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   newGameUUID.String(),
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   newGameUUID,
 			mockErr:        game.ErrInvalidTurn,
 		},
 	}
@@ -273,12 +275,12 @@ func TestHandler_NextTurn(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			url := "/game/" + tc.mockPlayerUUID
+			url := "/game/" + tc.mockPlayerUUID.String()
 
 			req, _ := http.NewRequest("POST", url, strings.NewReader(tc.mockBody))
-			req.SetPathValue("uuid", tc.mockGameUUID)
+			req.SetPathValue("uuid", tc.mockGameUUID.String())
 
-			ctx := context.WithValue(context.Background(), middleware.UserIDContextKey{}, tc.mockPlayerUUID)
+			ctx := middleware.ContextWithUserID(context.Background(), tc.mockPlayerUUID)
 			req = req.WithContext(ctx)
 
 			gb := game.NewGameBoard()
@@ -322,8 +324,8 @@ func TestHandler_NextTurn(t *testing.T) {
 func TestHandler_JoinGame(t *testing.T) {
 	type testCase struct {
 		name           string
-		mockPlayerUUID string
-		mockGameUUID   string
+		mockPlayerUUID uuid.UUID
+		mockGameUUID   uuid.UUID
 		mockErr        error
 		expectedCode   int
 	}
@@ -334,29 +336,29 @@ func TestHandler_JoinGame(t *testing.T) {
 	testCases := []testCase{
 		{
 			name:           "success join game",
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   newGameUUID.String(),
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   newGameUUID,
 			mockErr:        nil,
 			expectedCode:   http.StatusOK,
 		},
 		{
 			name:           "invalid user uuid",
-			mockPlayerUUID: "",
-			mockGameUUID:   newGameUUID.String(),
-			mockErr:        nil,
+			mockPlayerUUID: uuid.Nil,
+			mockGameUUID:   newGameUUID,
+			mockErr:        game.ErrIsNull,
 			expectedCode:   http.StatusBadRequest,
 		},
 		{
 			name:           "invalid game uuid",
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   "",
-			mockErr:        nil,
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   uuid.Nil,
+			mockErr:        game.ErrIsNull,
 			expectedCode:   http.StatusBadRequest,
 		},
 		{
 			name:           "invalid join game",
-			mockPlayerUUID: newPlayerUUID.String(),
-			mockGameUUID:   newGameUUID.String(),
+			mockPlayerUUID: newPlayerUUID,
+			mockGameUUID:   newGameUUID,
 			mockErr:        game.ErrMaxCountOfPlayers,
 			expectedCode:   http.StatusBadRequest,
 		},
@@ -367,12 +369,12 @@ func TestHandler_JoinGame(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			url := "/games/" + tc.mockGameUUID + "/join"
+			url := "/games/" + tc.mockGameUUID.String() + "/join"
 
-			ctx := context.WithValue(context.Background(), middleware.UserIDContextKey{}, tc.mockPlayerUUID)
+			ctx := middleware.ContextWithUserID(context.Background(), tc.mockPlayerUUID)
 
 			req, _ := http.NewRequest("POST", url, nil)
-			req.SetPathValue("uuid", tc.mockGameUUID)
+			req.SetPathValue("uuid", tc.mockGameUUID.String())
 			req = req.WithContext(ctx)
 
 			gb := game.NewGameBoard()
