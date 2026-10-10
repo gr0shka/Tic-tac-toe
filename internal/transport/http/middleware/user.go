@@ -4,10 +4,20 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 )
 
-type UserIDContextKey struct{}
+type userIDContextKey struct{}
+
+func ContextWithUserID(ctx context.Context, userID uuid.UUID) context.Context {
+	return context.WithValue(ctx, userIDContextKey{}, userID)
+}
+
+func UserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+	userID, ok := ctx.Value(userIDContextKey{}).(uuid.UUID)
+	return userID, ok
+}
 
 type UserAuthenticator struct {
 	service auth.AuthenticateService
@@ -31,7 +41,7 @@ func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), UserIDContextKey{}, uID.String()))
+		r = r.WithContext(ContextWithUserID(r.Context(), *uID))
 		next.ServeHTTP(w, r)
 	})
 }
