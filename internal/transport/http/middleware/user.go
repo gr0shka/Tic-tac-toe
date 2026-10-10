@@ -7,7 +7,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 )
 
-const UserIDContextName = "UserID"
+type UserIDContextKey struct{}
 
 type UserAuthenticator struct {
 	service auth.AuthenticateService
@@ -31,7 +31,7 @@ func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), UserIDContextName, uID.String()))
+		r = r.WithContext(context.WithValue(r.Context(), UserIDContextKey{}, uID.String()))
 		next.ServeHTTP(w, r)
 	})
 }

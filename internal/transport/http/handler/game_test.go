@@ -176,7 +176,7 @@ func TestHandler_NewGame(t *testing.T) {
 			url := "/games"
 			req, _ := http.NewRequest("POST", url, strings.NewReader(tc.mockBody))
 
-			ctx := context.WithValue(context.Background(), middleware.UserIDContextName, tc.mockPlayerUUID)
+			ctx := context.WithValue(context.Background(), middleware.UserIDContextKey{}, tc.mockPlayerUUID)
 			req = req.WithContext(ctx)
 
 			gb := game.NewGameBoard()
@@ -278,7 +278,7 @@ func TestHandler_NextTurn(t *testing.T) {
 			req, _ := http.NewRequest("POST", url, strings.NewReader(tc.mockBody))
 			req.SetPathValue("uuid", tc.mockGameUUID)
 
-			ctx := context.WithValue(context.Background(), middleware.UserIDContextName, tc.mockPlayerUUID)
+			ctx := context.WithValue(context.Background(), middleware.UserIDContextKey{}, tc.mockPlayerUUID)
 			req = req.WithContext(ctx)
 
 			gb := game.NewGameBoard()
@@ -369,7 +369,7 @@ func TestHandler_JoinGame(t *testing.T) {
 
 			url := "/games/" + tc.mockGameUUID + "/join"
 
-			ctx := context.WithValue(context.Background(), middleware.UserIDContextName, tc.mockPlayerUUID)
+			ctx := context.WithValue(context.Background(), middleware.UserIDContextKey{}, tc.mockPlayerUUID)
 
 			req, _ := http.NewRequest("POST", url, nil)
 			req.SetPathValue("uuid", tc.mockGameUUID)

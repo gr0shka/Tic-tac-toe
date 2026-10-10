@@ -29,7 +29,7 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userStrID, ok := r.Context().Value(middleware.UserIDContextName).(string)
+	userStrID, ok := r.Context().Value(middleware.UserIDContextKey{}).(string)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -67,7 +67,7 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userStrID, ok := r.Context().Value(middleware.UserIDContextName).(string)
+	userStrID, ok := r.Context().Value(middleware.UserIDContextKey{}).(string)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -102,7 +102,7 @@ func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 func (h *GameHandler) JoinGame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userStrID, ok := r.Context().Value(middleware.UserIDContextName).(string)
+	userStrID, ok := r.Context().Value(middleware.UserIDContextKey{}).(string)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
