@@ -95,18 +95,13 @@ func TestAuthenticator(t *testing.T) {
 
 			if gotHandlerCalled {
 
-				userStrID, ok := receivedCtx.Value(middleware.UserIDContextKey{}).(string)
+				userID, ok := middleware.UserIDFromContext(receivedCtx)
 				if !ok {
-					t.Errorf("expected user id to be a string got %v", receivedCtx.Value(middleware.UserIDContextKey{}))
-				}
-
-				userID, err := uuid.Parse(userStrID)
-				if err != nil {
-					t.Errorf("expected user id to be a valid uuid got %v", userStrID)
+					t.Errorf("expected user id to be a valid uuid got %v", userID)
 				}
 
 				if userID != newUser.ID() {
-					t.Errorf("expected user id to be %v got %v", newUser.ID(), userStrID)
+					t.Errorf("expected user id to be %v got %v", newUser.ID(), userID)
 				}
 			}
 		})
