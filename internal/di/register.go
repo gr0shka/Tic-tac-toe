@@ -3,7 +3,8 @@ package di
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -102,7 +103,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 
 			if cfg.Postgres.Migration {
 				if err := migration.Up(ctx, pool); err != nil {
-					log.Printf("Error migrating database: %s", err)
+					return fmt.Errorf("error migrating database: %s", err)
 				}
 			}
 
