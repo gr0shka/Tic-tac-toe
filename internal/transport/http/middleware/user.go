@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -31,17 +32,23 @@ func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		login, pass, ok := r.BasicAuth()
 		if !ok {
-			w.WriteHeader(http.StatusUnauthorized)
+			writeUnauthorizedJSON(w, "error basic auth")
 			return
 		}
 
 		uID, err := ua.service.Authenticate(r.Context(), login, pass)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			writeUnauthorizedJSON(w, err.Error())
 			return
 		}
 
 		r = r.WithContext(ContextWithUserID(r.Context(), *uID))
 		next.ServeHTTP(w, r)
 	})
+}
+
+func writeUnauthorizedJSON(w http.ResponseWriter, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
