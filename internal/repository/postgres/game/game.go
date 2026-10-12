@@ -17,7 +17,9 @@ type repository struct {
 }
 
 func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
-	query := `SELECT * FROM current_game WHERE player2_id IS NULL`
+	query := `SELECT * FROM current_game 
+         WHERE player2_id IS NULL 
+         LIMIT 50`
 
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
