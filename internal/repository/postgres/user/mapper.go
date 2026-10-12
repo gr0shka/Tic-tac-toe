@@ -7,5 +7,9 @@ func DTOtoDomain(u userDTO) *user.User {
 }
 
 func DomainToDTO(u *user.User) userDTO {
-	return userDTO{u.ID(), u.Login(), u.Password()}
+	return userDTO{
+		ID:       u.ID(),
+		Login:    u.Login(),
+		Password: u.Password(),
+	}
 }
