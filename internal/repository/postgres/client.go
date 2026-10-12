@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
