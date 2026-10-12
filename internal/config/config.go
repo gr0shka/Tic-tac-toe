@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -31,7 +32,7 @@ type Postgres struct {
 	Host      string
 	Port      string
 	Database  string
-	Migration string
+	Migration bool
 }
 
 func (p Postgres) ConnectionString() string {
@@ -49,13 +50,18 @@ func Load() (*Config, error) {
 		Host: os.Getenv("APP_HOST"),
 	}
 
+	migration, err := strconv.ParseBool(os.Getenv("MIGRATION"))
+	if err != nil {
+		slog.Error("parsing MIGRATION environment variable", "err", err)
+	}
+
 	postgres := Postgres{
 		User:      os.Getenv("POSTGRES_USER"),
 		Password:  os.Getenv("POSTGRES_PASSWORD"),
 		Host:      os.Getenv("POSTGRES_HOST"),
 		Port:      os.Getenv("POSTGRES_PORT"),
 		Database:  os.Getenv("POSTGRES_DATABASE"),
-		Migration: os.Getenv("MIGRATION"),
+		Migration: migration,
 	}
 
 	switch {
@@ -81,9 +87,6 @@ func Load() (*Config, error) {
 	case postgres.Database == "":
 		slog.Error("No POSTGRES_DATABASE found")
 		return nil, fmt.Errorf("POSTGRES_DATABASE: %w", ErrConfigNotFound)
-	case postgres.Migration == "":
-		log.Print("No MIGRATION found")
-		return nil, fmt.Errorf("MIGRATION: %w", ErrConfigNotFound)
 	}
 
 	slog.Info("Config successfully loaded")
