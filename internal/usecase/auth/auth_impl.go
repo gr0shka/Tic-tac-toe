@@ -31,7 +31,7 @@ func (as *authenticateService) Register(ctx context.Context, req SignUpRequest) 
 		return user.ErrUserAlreadyExists
 	}
 	if !errors.Is(err, user.ErrUserNotFound) {
-		return fmt.Errorf("%w: check user existence", user.ErrUserNotFound)
+		return fmt.Errorf("check user existence: %w", err)
 	}
 
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
