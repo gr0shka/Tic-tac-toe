@@ -79,7 +79,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 
 	mux.Handle("GET /user/{uuid}", m.Authenticate(http.HandlerFunc(uh.GetUserByID)))
 
-	mux.Handle("POST /game/{uuid}", m.Authenticate(http.HandlerFunc(gh.NextTurn)))
+	mux.Handle("POST /games/{uuid}/moves", m.Authenticate(http.HandlerFunc(gh.NextTurn)))
 	mux.Handle("POST /games", m.Authenticate(http.HandlerFunc(gh.NewGame)))
 	mux.Handle("GET /games/{uuid}", m.Authenticate(http.HandlerFunc(gh.GetGame)))
 	mux.Handle("POST /games/{uuid}/join", m.Authenticate(http.HandlerFunc(gh.JoinGame)))
@@ -87,6 +87,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 
 	muxWithMiddleware := middleware.CORS(mux)
 	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
+	muxWithMiddleware = middleware.RequestLogger(muxWithMiddleware)
 
 	srv := &http.Server{
 		Addr:         cfg.App.Host + ":" + cfg.App.Port,
