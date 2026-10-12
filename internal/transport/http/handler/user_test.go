@@ -68,7 +68,7 @@ func TestHandler_GetUserByID(t *testing.T) {
 			name:         "user not found",
 			mockUser:     u,
 			mockErr:      user.ErrUserNotFound,
-			expectedCode: http.StatusUnauthorized,
+			expectedCode: http.StatusNotFound,
 			pathUUID:     u.ID().String(),
 		},
 	}
