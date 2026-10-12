@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
@@ -37,7 +38,7 @@ func (s *userService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User
 
 func (s *userService) GetByLogin(ctx context.Context, login string) (*user.User, error) {
 	if login == "" {
-		return nil, user.ErrInValidLogin
+		return nil, fmt.Errorf("%w: login cannot be empty", user.ErrInvalidArgument)
 	}
 
 	u, err := s.repo.GetByLogin(ctx, login)

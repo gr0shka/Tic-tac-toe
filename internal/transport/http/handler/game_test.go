@@ -105,7 +105,7 @@ func TestHandler_GetGame(t *testing.T) {
 			defer res.Body.Close()
 
 			if res.StatusCode != tc.expectedCode {
-				t.Errorf("expected status 200 OK, got %d", res.StatusCode)
+				t.Errorf("expected status %d, got %d", tc.expectedCode, res.StatusCode)
 			}
 
 			if res.StatusCode == http.StatusOK {
@@ -149,7 +149,7 @@ func TestHandler_NewGame(t *testing.T) {
 			name:           "invalid uuid",
 			mockBody:       fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot),
 			expectedCode:   http.StatusBadRequest,
-			mockErr:        game.ErrIsNull,
+			mockErr:        game.ErrInvalidArgument,
 			mockPlayerUUID: uuid.Nil,
 		},
 		{
@@ -162,7 +162,7 @@ func TestHandler_NewGame(t *testing.T) {
 		{
 			name:           "error creating game",
 			mockBody:       fmt.Sprintf(`{"mode":"%s"}`, game.GameModePlayerVSBot),
-			expectedCode:   http.StatusBadRequest,
+			expectedCode:   http.StatusInternalServerError,
 			mockErr:        errors.New("error creating game"),
 			mockPlayerUUID: newUUID,
 		},
@@ -243,7 +243,7 @@ func TestHandler_NextTurn(t *testing.T) {
 			expectedCode:   http.StatusBadRequest,
 			mockPlayerUUID: newPlayerUUID,
 			mockGameUUID:   uuid.Nil,
-			mockErr:        game.ErrIsNull,
+			mockErr:        game.ErrInvalidArgument,
 		},
 		{
 			name:           "invalid player uuid",
@@ -251,7 +251,7 @@ func TestHandler_NextTurn(t *testing.T) {
 			expectedCode:   http.StatusBadRequest,
 			mockPlayerUUID: uuid.Nil,
 			mockGameUUID:   newGameUUID,
-			mockErr:        game.ErrIsNull,
+			mockErr:        game.ErrInvalidArgument,
 		},
 		{
 			name:           "invalid body",
@@ -266,7 +266,7 @@ func TestHandler_NextTurn(t *testing.T) {
 			expectedCode:   http.StatusBadRequest,
 			mockPlayerUUID: newPlayerUUID,
 			mockGameUUID:   newGameUUID,
-			mockErr:        game.ErrInvalidTurn,
+			mockErr:        game.ErrInvalidMove,
 		},
 	}
 
@@ -345,22 +345,22 @@ func TestHandler_JoinGame(t *testing.T) {
 			name:           "invalid user uuid",
 			mockPlayerUUID: uuid.Nil,
 			mockGameUUID:   newGameUUID,
-			mockErr:        game.ErrIsNull,
+			mockErr:        game.ErrInvalidArgument,
 			expectedCode:   http.StatusBadRequest,
 		},
 		{
 			name:           "invalid game uuid",
 			mockPlayerUUID: newPlayerUUID,
 			mockGameUUID:   uuid.Nil,
-			mockErr:        game.ErrIsNull,
+			mockErr:        game.ErrInvalidArgument,
 			expectedCode:   http.StatusBadRequest,
 		},
 		{
 			name:           "invalid join game",
 			mockPlayerUUID: newPlayerUUID,
 			mockGameUUID:   newGameUUID,
-			mockErr:        game.ErrMaxCountOfPlayers,
-			expectedCode:   http.StatusBadRequest,
+			mockErr:        game.ErrGameFull,
+			expectedCode:   http.StatusConflict,
 		},
 	}
 

@@ -61,7 +61,7 @@ func TestUserService_GetByLogin(t *testing.T) {
 			login:    "",
 			password: "testPassword",
 			user:     testUser,
-			err:      user.ErrInValidLogin,
+			err:      user.ErrInvalidArgument,
 		},
 	}
 

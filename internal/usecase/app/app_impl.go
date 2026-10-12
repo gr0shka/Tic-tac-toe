@@ -35,7 +35,7 @@ func (a *appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (
 
 		if len(cg.Players()) > 0 && cg.Players()[game.FirstPlayer] != nil {
 			if cg.Players()[game.FirstPlayer].ID() == playerID {
-				return game.ErrPlayerAlreadyExists
+				return fmt.Errorf("%w: player already exists in this game", game.ErrPlayerAlreadyInGame)
 			}
 		}
 
@@ -84,7 +84,7 @@ func (a *appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.G
 
 func (a *appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
 	if id == uuid.Nil {
-		return nil, fmt.Errorf("gameID is null : %w", game.ErrIsNull)
+		return nil, fmt.Errorf("%w: gameID is nil", game.ErrInvalidArgument)
 	}
 
 	switch mode {
@@ -94,7 +94,7 @@ func (a *appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.Gam
 		return a.CreateGameWithBot(ctx, id)
 
 	default:
-		return nil, game.ErrNonExistentMode
+		return nil, fmt.Errorf("%w: invalid mode", game.ErrInvalidArgument)
 	}
 }
 
@@ -150,11 +150,11 @@ func (a *appService) ProcessPlayerMove(
 ) (*game.CurrentGame, error) {
 
 	if playerID == uuid.Nil {
-		return nil, fmt.Errorf("playerID is null : %w", game.ErrIsNull)
+		return nil, fmt.Errorf("%w: playerID is nil", game.ErrInvalidArgument)
 	}
 
 	if gameID == uuid.Nil {
-		return nil, fmt.Errorf("gameID is null : %w", game.ErrIsNull)
+		return nil, fmt.Errorf("%w: gameID is nil", game.ErrInvalidArgument)
 	}
 
 	var resultCG *game.CurrentGame
@@ -172,7 +172,8 @@ func (a *appService) ProcessPlayerMove(
 		}
 
 		if current.ActivePlayer() == nil || current.ActivePlayer().ID() != playerID {
-			return game.ErrWrongPlayerMove
+			return fmt.Errorf("%w: wrong player move got ID = %v, need ID = %v",
+				game.ErrInvalidMove, playerID, current.ActivePlayer().ID())
 		}
 
 		next := current.Clone()
@@ -238,7 +239,7 @@ func (a *appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) 
 func (a *appService) botTurn(ctx context.Context, cg *game.CurrentGame) (*game.CurrentGame, error) {
 	next := a.gameService.GetNextTurn(ctx, cg.GameBoard)
 	if next == nil {
-		return nil, game.ErrFailedCalculateNextTurn
+		return nil, fmt.Errorf("bot turn: failed calculating next turn")
 	}
 	cg.GameBoard = next
 

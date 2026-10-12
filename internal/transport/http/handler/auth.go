@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 )
@@ -21,7 +23,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		responseError(w, fmt.Errorf("%w: error decoding request body", user.ErrInvalidArgument))
 		return
 	}
 
@@ -29,7 +31,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.Register(r.Context(), authReq)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		responseError(w, err)
 		return
 	}
 
@@ -42,13 +44,13 @@ func (h *AuthHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	login, pass, ok := r.BasicAuth()
 	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
+		responseError(w, fmt.Errorf("%w: basic auth required", user.ErrInvalidCredentials))
 		return
 	}
 
 	userID, err := h.service.Authenticate(r.Context(), login, pass)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		responseError(w, err)
 		return
 	}
 

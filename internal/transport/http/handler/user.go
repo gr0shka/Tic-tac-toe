@@ -2,9 +2,12 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	userDomain "github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
 )
@@ -22,13 +25,17 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		responseError(w, fmt.Errorf(`%w: user uuid is not valid`, userDomain.ErrInvalidArgument))
 		return
 	}
 
 	u, err := h.service.GetUserByID(r.Context(), userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		if errors.Is(err, userDomain.ErrUserNotFound) {
+			err = userDomain.ErrInvalidCredentials
+		}
+
+		responseError(w, err)
 		return
 	}
 
@@ -40,7 +47,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		responseError(w, err)
 		return
 	}
 }

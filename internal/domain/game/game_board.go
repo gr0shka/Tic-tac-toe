@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 const (
 	EmptyCell = -1
 
@@ -42,7 +44,7 @@ func (gb *GameBoard) Clone() *GameBoard {
 
 func (gb *GameBoard) AddPlayer(player *Player) error {
 	if len(gb.players) >= CountPlayers {
-		return ErrMaxCountOfPlayers
+		return fmt.Errorf("%w: player count is full", ErrGameFull)
 	}
 
 	gb.players = append(gb.players, player)
@@ -73,7 +75,7 @@ func (gb *GameBoard) NextPlayer() (*Player, error) {
 	turnNumber := gb.numberOfTurn % CountPlayers
 
 	if turnNumber >= len(gb.players) {
-		return nil, ErrFailedCalculateNextPlayer
+		return nil, fmt.Errorf("next player: out of range")
 	}
 
 	return gb.players[gb.numberOfTurn%CountPlayers], nil

@@ -348,7 +348,7 @@ func TestAppService_JoinGame(t *testing.T) {
 			gb:       gbWith2Player,
 			gameID:   gameID,
 			playerID: userID,
-			err:      game.ErrMaxCountOfPlayers,
+			err:      game.ErrGameFull,
 		},
 		{
 			name:     "failed join game, player already exists",
@@ -356,7 +356,7 @@ func TestAppService_JoinGame(t *testing.T) {
 			gb:       gbWith1Player,
 			gameID:   gameID,
 			playerID: gbWith1Player.Players()[game.FirstPlayer].ID(),
-			err:      game.ErrPlayerAlreadyExists,
+			err:      game.ErrPlayerAlreadyInGame,
 		},
 	}
 

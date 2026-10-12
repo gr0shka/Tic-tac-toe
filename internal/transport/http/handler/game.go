@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -25,27 +27,26 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, game.ErrInvalidArgument))
 		return
 	}
 
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, errors.New("user not in context"))
 		return
 	}
 
 	var gameBoard dto.GameBoardRequest
 	decoder := json.NewDecoder(r.Body)
 	if err = decoder.Decode(&gameBoard); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, fmt.Errorf(`%w: invalid request body`, game.ErrInvalidArgument))
 		return
 	}
 
 	nextCg, err := h.service.ProcessPlayerMove(r.Context(), userID, gameUUID, gameBoard.Board)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		responseError(w, err)
 		return
 	}
 
@@ -53,7 +54,7 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 
 	encoder := json.NewEncoder(w)
 	if err = encoder.Encode(gameBoardResponse); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, err)
 		return
 	}
 }
@@ -63,20 +64,19 @@ func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, errors.New("user not in context"))
 		return
 	}
 
 	var createRequest dto.CreateGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&createRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, fmt.Errorf("%w: error decoding create request", game.ErrInvalidArgument))
 		return
 	}
 
 	cg, err := h.service.CreateGame(r.Context(), userID, game.GameMode(createRequest.Mode))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		responseError(w, err)
 		return
 	}
 
@@ -92,20 +92,19 @@ func (h *GameHandler) JoinGame(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, errors.New("user not in context"))
 		return
 	}
 
 	gameID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, game.ErrInvalidArgument))
 		return
 	}
 
 	cg, err := h.service.JoinGame(r.Context(), gameID, userID)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		responseError(w, err)
 		return
 	}
 
@@ -121,13 +120,13 @@ func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, game.ErrInvalidArgument))
 		return
 	}
 
 	game, err := h.service.GetGame(r.Context(), gameUUID)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		responseError(w, err)
 		return
 	}
 
@@ -143,7 +142,7 @@ func (h *GameHandler) AllGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := h.service.AllGames(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		responseError(w, err)
 		return
 	}
 

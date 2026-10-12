@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
@@ -24,8 +26,12 @@ func (as *authenticateService) Register(ctx context.Context, req SignUpRequest) 
 		return err
 	}
 
-	if _, err := as.us.GetByLogin(ctx, req.Login); err == nil {
+	_, err := as.us.GetByLogin(ctx, req.Login)
+	if err == nil {
 		return user.ErrUserAlreadyExists
+	}
+	if errors.Is(err, user.ErrUserNotFound) {
+		return fmt.Errorf("%w: check user existence", user.ErrUserNotFound)
 	}
 
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -52,7 +58,7 @@ func (as *authenticateService) Authenticate(ctx context.Context, login, password
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(u.Password()), []byte(password)) != nil {
-		return nil, user.ErrPasswordNotMatch
+		return nil, user.ErrInvalidCredentials
 	}
 
 	return new(u.ID()), nil
@@ -60,10 +66,10 @@ func (as *authenticateService) Authenticate(ctx context.Context, login, password
 
 func validateData(login, password string) error {
 	if login == "" {
-		return user.ErrInValidLogin
+		return fmt.Errorf("%w: login cannot be empty", user.ErrInvalidArgument)
 	}
 	if password == "" {
-		return user.ErrInValidPassword
+		return fmt.Errorf("%w: password cannot be empty", user.ErrInvalidArgument)
 	}
 
 	return nil

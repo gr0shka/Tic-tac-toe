@@ -2,6 +2,8 @@ package game
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
@@ -19,13 +21,16 @@ func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) 
 
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
-		return nil, game.ErrNotFound
+		return nil, fmt.Errorf("query all games: %w", err)
 	}
 	defer rows.Close()
 
 	dto, err := pgx.CollectRows(rows, pgx.RowToStructByName[CurrentGameDTO])
 	if err != nil {
-		return nil, game.ErrNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: no waiting games", game.ErrNotFound)
+		}
+		return nil, fmt.Errorf("all games collect rows: %w", err)
 	}
 
 	result := make([]*game.CurrentGame, len(dto))
@@ -84,7 +89,7 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 		dto.Winner,
 		dto.WinnerID)
 	if err != nil {
-		return err
+		return fmt.Errorf("save game with id = %s: %w", cg.ID(), err)
 	}
 
 	return nil
@@ -101,12 +106,16 @@ func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, 
 
 	rows, err := db.Query(ctx, query, id)
 	if err != nil {
-		return nil, game.ErrNotFound
+		return nil, fmt.Errorf("get game with id = %s: %w", id, err)
 	}
 
 	dto, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[CurrentGameDTO])
 	if err != nil {
-		return nil, game.ErrNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: no game with id = %s", game.ErrNotFound, id)
+		}
+
+		return nil, fmt.Errorf("get game collect rows: %w", err)
 	}
 
 	cg := DTOToDomain(dto)
@@ -150,7 +159,7 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 		dto.Winner,
 		dto.WinnerID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update game with id = %s: %w", cg.ID(), err)
 	}
 
 	return nil

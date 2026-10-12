@@ -137,7 +137,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				1),
-			err: game.ErrNoMoveMade,
+			err: game.ErrInvalidMove,
 		},
 		{
 			name: "multiple move",
@@ -153,7 +153,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				1),
-			err: game.ErrMultipleMoves,
+			err: game.ErrInvalidMove,
 		},
 		{
 			name: "wrong number of turns",
@@ -169,7 +169,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				123),
-			err: game.ErrWrongNumberOfTurns,
+			err: game.ErrInvalidMove,
 		},
 		{
 			name: "alter previous move",
@@ -185,7 +185,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				2),
-			err: game.ErrAlteredPreviousMoves,
+			err: game.ErrInvalidMove,
 		},
 		{
 			name: "wrong player move",
@@ -201,7 +201,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				1),
-			err: game.ErrWrongPlayerMove,
+			err: game.ErrInvalidMove,
 		},
 	}
 
@@ -210,7 +210,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 			gs := gameService.NewGameService()
 
 			gotErr := gs.ValidateBoard(ts.gb1, ts.gb2)
-			if !errors.Is(ts.err, gotErr) {
+			if !errors.Is(gotErr, ts.err) {
 				t.Errorf("Expected error: %v, got: %v", ts.err, gotErr)
 			}
 		})

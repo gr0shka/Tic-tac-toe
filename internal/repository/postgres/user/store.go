@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
@@ -24,11 +26,15 @@ func (r repository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, 
 
 	rows, err := r.db.Query(ctx, query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get user with id %v: %w", id, err)
 	}
 
 	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: get user with id %v", user.ErrUserNotFound, id)
+		}
+
 		return nil, err
 	}
 
@@ -58,6 +64,9 @@ func (r repository) GetByLogin(ctx context.Context, login string) (*user.User, e
 
 	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[userDTO])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: get user with login %v", user.ErrUserNotFound, login)
+		}
 		return nil, err
 	}
 

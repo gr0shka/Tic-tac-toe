@@ -58,7 +58,7 @@ func TestHandler_Register(t *testing.T) {
 			},
 
 			expectedCode: http.StatusBadRequest,
-			mockErr:      user.ErrInValidLogin,
+			mockErr:      user.ErrInvalidArgument,
 		},
 		{
 			name: "User already exists",
@@ -68,7 +68,7 @@ func TestHandler_Register(t *testing.T) {
 				Password: "test",
 			},
 
-			expectedCode: http.StatusBadRequest,
+			expectedCode: http.StatusConflict,
 			mockErr:      user.ErrUserAlreadyExists,
 		},
 	}
@@ -140,7 +140,7 @@ func TestHandler_Authenticate(t *testing.T) {
 			mockUser:     u,
 			authHeader:   "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Login()+":"+u.Password())),
 			expectedCode: http.StatusUnauthorized,
-			mockErr:      user.ErrPasswordNotMatch,
+			mockErr:      user.ErrInvalidCredentials,
 		},
 	}
 

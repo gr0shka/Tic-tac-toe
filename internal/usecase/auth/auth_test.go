@@ -58,21 +58,21 @@ func TestAuthenticateService_Authenticate(t *testing.T) {
 			login:    "",
 			password: "testPassword",
 			user:     testUser,
-			err:      user.ErrInValidLogin,
+			err:      user.ErrInvalidArgument,
 		},
 		{
 			name:     "Error authentication invalid password",
 			login:    "testLogin",
 			password: "",
 			user:     testUser,
-			err:      user.ErrInValidPassword,
+			err:      user.ErrInvalidArgument,
 		},
 		{
 			name:     "Error authentication password not match",
 			login:    "testLogin",
 			password: "testPasswordErr",
 			user:     testUser,
-			err:      user.ErrPasswordNotMatch,
+			err:      user.ErrInvalidCredentials,
 		},
 	}
 
@@ -117,7 +117,7 @@ func TestAuthenticateService_Register(t *testing.T) {
 			login:    "",
 			password: "testPassword",
 			user:     testUser,
-			err:      user.ErrInValidLogin,
+			err:      user.ErrInvalidArgument,
 			mockErr:  nil,
 		},
 		{
@@ -125,7 +125,7 @@ func TestAuthenticateService_Register(t *testing.T) {
 			login:    "testLogin1",
 			password: "",
 			user:     testUser,
-			err:      user.ErrInValidPassword,
+			err:      user.ErrInvalidArgument,
 			mockErr:  nil,
 		},
 		{

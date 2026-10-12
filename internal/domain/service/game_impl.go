@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
@@ -132,7 +133,8 @@ func (g *gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, d
 
 func (g *gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 	if newB.TurnNumber() != oldB.TurnNumber()+1 {
-		return game.ErrWrongNumberOfTurns
+		return fmt.Errorf("%w: wrong number of turns got %d need %d",
+			game.ErrInvalidMove, newB.TurnNumber(), oldB.TurnNumber()+1)
 	}
 
 	newBoard := newB.Board()
@@ -140,7 +142,7 @@ func (g *gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 
 	player, err := oldB.NextPlayer()
 	if err != nil {
-		return game.ErrInvalidTurn
+		return fmt.Errorf("next player: %w", err)
 	}
 
 	changedX, changedY := -1, -1
@@ -149,11 +151,12 @@ func (g *gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 			if newBoard[i][j] != oldBoard[i][j] {
 
 				if oldBoard[i][j] != game.EmptyCell {
-					return game.ErrAlteredPreviousMoves
+					return fmt.Errorf("%w: cell [%d][%d] occupied",
+						game.ErrInvalidMove, i, j)
 				}
 
 				if changedX != -1 || changedY != -1 {
-					return game.ErrMultipleMoves
+					return fmt.Errorf("%w: multiple moves", game.ErrInvalidMove)
 				}
 
 				changedX, changedY = i, j
@@ -162,11 +165,12 @@ func (g *gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 	}
 
 	if changedX == -1 || changedY == -1 {
-		return game.ErrNoMoveMade
+		return fmt.Errorf("%w: no move made", game.ErrInvalidMove)
 	}
 
 	if newBoard[changedX][changedY] != player.Symbol() {
-		return game.ErrWrongPlayerMove
+		return fmt.Errorf("%w: wrong player move, got symbol = %v need symbol = %v",
+			game.ErrInvalidMove, newBoard[changedX][changedY], player.Symbol())
 	}
 
 	return nil
