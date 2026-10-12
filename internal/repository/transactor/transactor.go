@@ -21,7 +21,7 @@ func (t transactor) Do(ctx context.Context, fn func(txCtx context.Context) error
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.WithoutCancel(ctx))
 
 	txCtx := context.WithValue(ctx, TxKey{}, tx)
 
