@@ -24,7 +24,7 @@ func NewAppService(gameService service.GameService, rep GameRepository, tx useca
 	}
 }
 
-func (a appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
+func (a *appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
 	var resultCG *game.CurrentGame
 
 	err := a.tx.Do(ctx, func(txCtx context.Context) error {
@@ -64,7 +64,7 @@ func (a appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*
 	return resultCG, err
 }
 
-func (a appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
+func (a *appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	res, err := a.repository.AllGames(ctx)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (a appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	return res, nil
 }
 
-func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
+func (a *appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
 	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return 0, game.StatusDraw
@@ -82,7 +82,7 @@ func (a appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.Ga
 	return a.gameService.IsEnded(cg.Board())
 }
 
-func (a appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
+func (a *appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
 	if id == uuid.Nil {
 		return nil, fmt.Errorf("gameID is null : %w", game.ErrIsNull)
 	}
@@ -98,7 +98,7 @@ func (a appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.Game
 	}
 }
 
-func (a appService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (a *appService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
 
 	player := game.NewPlayer(id, game.FirstPlayer, true)
@@ -123,7 +123,7 @@ func (a appService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.
 	return cg, nil
 }
 
-func (a appService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (a *appService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
 
 	player := game.NewPlayer(id, game.FirstPlayer, true)
@@ -143,7 +143,7 @@ func (a appService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*ga
 	return cg, nil
 }
 
-func (a appService) ProcessPlayerMove(
+func (a *appService) ProcessPlayerMove(
 	ctx context.Context,
 	playerID, gameID uuid.UUID,
 	board [game.BoardSize][game.BoardSize]int,
@@ -216,7 +216,7 @@ func (a appService) ProcessPlayerMove(
 	return resultCG, err
 }
 
-func (a appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) {
+func (a *appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) {
 	if cg.IsEnded() {
 		if cg.Status() == game.StatusDraw {
 			cg.SetActivePlayer(nil)
@@ -235,7 +235,7 @@ func (a appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) {
 	return cg, nil
 }
 
-func (a appService) botTurn(ctx context.Context, cg *game.CurrentGame) (*game.CurrentGame, error) {
+func (a *appService) botTurn(ctx context.Context, cg *game.CurrentGame) (*game.CurrentGame, error) {
 	next := a.gameService.GetNextTurn(ctx, cg.GameBoard)
 	if next == nil {
 		return nil, game.ErrFailedCalculateNextTurn
@@ -249,7 +249,7 @@ func (a appService) botTurn(ctx context.Context, cg *game.CurrentGame) (*game.Cu
 	return cg, nil
 }
 
-func (a appService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (a *appService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return nil, err
