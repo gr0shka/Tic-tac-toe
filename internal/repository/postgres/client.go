@@ -13,5 +13,10 @@ func NewClient(ctx context.Context, cf config.Postgres) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
+	err = pool.Ping(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("connect to postgres: %w", err)
+	}
+
 	return pool, nil
 }
