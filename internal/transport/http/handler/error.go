@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
@@ -37,7 +38,12 @@ func responseError(w http.ResponseWriter, err error) {
 	case errors.Is(err, user.ErrInvalidCredentials):
 
 		status = http.StatusUnauthorized
+	default:
+
+		slog.Error("internal server error", "err", err)
 	}
+
+	slog.Warn("client error", "status", status, "err", err)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
