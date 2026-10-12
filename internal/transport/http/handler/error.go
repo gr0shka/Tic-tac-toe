@@ -45,7 +45,9 @@ func responseError(w http.ResponseWriter, err error) {
 		err = fmt.Errorf("internal server error")
 	}
 
-	slog.Warn("client error", "status", status, "err", err)
+	if status != http.StatusInternalServerError {
+		slog.Warn("client error", "status", status, "err", err)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
