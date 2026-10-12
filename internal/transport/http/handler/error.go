@@ -41,6 +41,7 @@ func responseError(w http.ResponseWriter, err error) {
 	default:
 
 		slog.Error("internal server error", "err", err)
+		err = fmt.Errorf("internal server error")
 	}
 
 	slog.Warn("client error", "status", status, "err", err)
