@@ -29,27 +29,34 @@ RESTful API сервис для игры в «Крестики-нолики» с
 ├── cmd/
 │   └── main.go                         # Точка входа в сервис (fx.New().Run())
 ├── internal/
-│   ├── config/                         # Конфигурация приложения и чтение .env
+│   ├── config/                         # Конфигурация приложения и парсинг .env
 │   ├── di/                             # Сборка графа зависимостей (Uber Fx) и запуск HTTP-сервера
 │   ├── domain/                         # Слой бизнес-сущностей и доменных правил (чистый Go)
 │   │   ├── game/                       # Сущности GameBoard, CurrentGame, Player, доменные ошибки
 │   │   ├── user/                       # Сущность User и валидация
 │   │   └── service/                    # Доменные сервисы: расчет ходов (Minimax), валидация доски
-│   ├── usecase/                        # Слой прикладных сценариев (оркестрация)
-│   │   ├── app/                        # AppService: создание игр, ходы, join, завершение игры
-│   │   └── user/                       # UserService: регистрация, аутентификация, профиль
+│   ├── migration/                      # Применение миграций схемы БД через Goose
 │   ├── repository/                     # Инфраструктурный слой доступа к данным
 │   │   ├── postgres/                   # Реализация репозиториев на базе PostgreSQL (pgx/v5)
 │   │   │   ├── game/                   # Репозиторий текущих игр и DTO-мапперы
-│   │   │   └── user/                   # Репозиторий пользователей
-│   │   └── testutil/                   # Вспомогательные утилиты для интеграционных тестов БД
-│   └── transport/                      # Слой доставки
-│       └── http/                       # HTTP-хэндлеры, DTO, CORS и Basic Auth middleware
-├── migration/                          # SQL-миграции базы данных (Goose)
-├── Dockerfile                          # Мультистейдж сборка Docker
+│   │   │   └── user/                   # Репозиторий пользователей (ON CONFLICT DO NOTHING)
+│   │   ├── testutil/                   # Вспомогательные утилиты для интеграционных тестов БД
+│   │   └── transactor/                 # Реализация контекстного транзактора и блокировок
+│   ├── transport/                      # Слой доставки
+│   │   └── http/                       # HTTP-хэндлеры, DTO, CORS и Basic Auth middleware
+│   │       ├── dto/                    # Запросы и ответы HTTP API
+│   │       ├── handler/                # Обработчики запросов (игры, пользователи, авторизация)
+│   │       ├── mapper/                 # Мапперы доменных моделей в HTTP DTO
+│   │       └── middleware/             # Middleware (CORS, RequestLogger, Basic Auth)
+│   └── usecase/                        # Слой прикладных сценариев (оркестрация)
+│       ├── app/                        # AppService: создание игр, ходы, join, завершение игры
+│       ├── auth/                       # AuthenticateService: регистрация и авторизация
+│       └── user/                       # UserService: управление пользователями
+├── migration/                          # SQL-миграции базы данных и встроенная FS (Go embed)
+├── Dockerfile                          # Мультистейдж сборка Docker (минимальный автономный образ)
 ├── docker-compose.yml                  # Сервисы приложения и PostgreSQL
 ├── Makefile                            # Команды миграций, тестов и сборки
-├── tic-tac-toe.html                    # Интерактивный веб-клиент для тестирования
+├── tic-tac-toe.html                    # Интерактивный SPA веб-клиент для тестирования
 └── .env.scheme                         # Шаблон переменных окружения
 ```
 
@@ -72,6 +79,8 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=tictactoe
+MIGRATION=true
+APP_HOST=0.0.0.0
 APP_PORT=8080
 ```
 
@@ -137,16 +146,21 @@ make test-cover-html
     "password": "secretpassword"
   }
   ```
-* **Ответ**: `201 Created` (`"User registered"`)
+* **Ответ**: `201 Created`
+  ```json
+  {
+    "message": "successfully register"
+  }
+  ```
 
 #### 2. Проверка аутентификации
 * **Метод**: `POST /user/auth`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Ответ**: `200 OK` (UUID пользователя в теле)
 
 #### 3. Получение информации о пользователе
 * **Метод**: `GET /user/{uuid}`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Ответ**: `200 OK`
   ```json
   {
@@ -154,6 +168,7 @@ make test-cover-html
     "login": "player1"
   }
   ```
+* **Ошибки**: `404 Not Found`, если пользователь не найден.
 
 ---
 
@@ -161,7 +176,7 @@ make test-cover-html
 
 #### 1. Создание новой игры
 * **Метод**: `POST /games`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Тело запроса**:
   ```json
   {
@@ -175,9 +190,12 @@ make test-cover-html
     "id": "a988d8b9-8e89-4bc2-9e8d-d790757a3e81",
     "status": "player_turn",
     "active_player": "e7b0e27a-8b1e-4c7e-97c2-550998f8045f",
+    "player1_id": "e7b0e27a-8b1e-4c7e-97c2-550998f8045f",
     "player1_symbol": 0,
+    "player2_id": "3196f7e4-23db-4e1b-bb3b-74895cae7f12",
     "player2_symbol": 1,
     "winner": -1,
+    "winner_id": null,
     "board": [
       [-1, -1, -1],
       [-1, -1, -1],
@@ -188,12 +206,12 @@ make test-cover-html
 
 #### 2. Получение состояния игры
 * **Метод**: `GET /games/{uuid}`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Ответ**: `200 OK` (объект `GameBoardResponse`) или `404 Not Found`.
 
 #### 3. Совершение хода
-* **Метод**: `POST /game/{uuid}`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Метод**: `POST /games/{uuid}/moves`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Тело запроса**:
   ```json
   {
@@ -211,12 +229,12 @@ make test-cover-html
 
 #### 4. Присоединение к открытой игре (PvP)
 * **Метод**: `POST /games/{uuid}/join`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Ответ**: `200 OK` (второй игрок регистрируется со статусом `player_turn`).
 
 #### 5. Список открытых игр
 * **Метод**: `GET /games`
-* **Авторизация**: `Authorization: Basic <base64>`
+* **Авторизация**: `Authorization: Basic <base64(login:password)>`
 * **Ответ**: `200 OK` (массив открытых игр, ожидающих второго игрока).
 
 ---
@@ -258,11 +276,13 @@ make test-cover-html
 
 ## 🛠️ Стек технологий
 
-- **Язык**: [Go](https://go.dev/) (1.25+)
+- **Язык**: [Go](https://go.dev/) (1.26+)
 - **База данных**: [PostgreSQL 16](https://www.postgresql.org/)
 - **Драйвер БД**: [jackc/pgx/v5](https://github.com/jackc/pgx) (`pgxpool`)
-- **Миграции**: [Goose](https://github.com/pressly/goose)
-- **DI-фреймворк**: [Uber Fx](https://github.com/uber-go/fx)
+- **Миграции**: [Goose](https://github.com/pressly/goose) (автономно встроены в бинарник через `//go:embed`)
+- **DI-фреймворк**: [Uber Fx](https://github.com/uber-go/fx) (управление графом зависимостей и Graceful Shutdown)
+- **Логирование**: Стандартный структурированный `log/slog`
+- **Конкурентность и транзакции**: Контекстный `Transactor` (`pgx.Tx`) с пессимистическими блокировками `SELECT ... FOR UPDATE` и защита от гонок вставки `ON CONFLICT DO NOTHING`
 - **Хеширование паролей**: `golang.org/x/crypto/bcrypt`
-- **Идентификаторы**: [google/uuid](https://github.com/google/uuid)
-- **Контейнеризация**: Docker, Docker Compose
+- **Идентификаторы**: [google/uuid](https://github.com/google/uuid) (UUIDv4)
+- **Контейнеризация**: Docker (multi-stage non-root build), Docker Compose

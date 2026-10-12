@@ -3,29 +3,144 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tic-tac-toe API Tester</title>
+    <title>Крестики-нолики API</title>
     <style>
+        :root {
+            --bg: #f6f8fa;
+            --surface: #ffffff;
+            --border: #d0d7de;
+            --text: #24292f;
+            --text-muted: #57606a;
+            --primary: #0969da;
+            --primary-hover: #0856b3;
+            --success: #1a7f37;
+            --success-hover: #14632a;
+            --danger: #cf222e;
+            --danger-hover: #a40e26;
+            --warning-bg: #fff8c5;
+            --warning-border: #d4a72c;
+            --x-color: #0969da;
+            --o-color: #cf222e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            max-width: 800px;
-            margin: 24px auto;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 920px;
+            margin: 20px auto;
             padding: 0 16px;
-            background: #f6f8fa;
-            color: #24292f;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.45;
+        }
+
+        header {
+            margin-bottom: 16px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 22px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-badge {
+            background: #e7f2ff;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid #b6d3f7;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-badge.anon {
+            background: #eaeef2;
+            color: var(--text-muted);
+            border-color: #d0d7de;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 2px;
             margin-bottom: 16px;
         }
 
+        .nav-tab {
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            transition: all .15s;
+        }
+
+        .nav-tab:hover {
+            color: var(--text);
+            background: #eaeef2;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
         .card {
-            background: #fff;
-            border: 1px solid #d0d7de;
-            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: -8px;
+            margin-bottom: 12px;
         }
 
         .row {
@@ -38,69 +153,91 @@
 
         .field {
             flex: 1;
-            min-width: 180px;
+            min-width: 170px;
         }
 
         label {
             display: block;
-            margin-bottom: 6px;
-            font-size: 13px;
+            margin-bottom: 5px;
+            font-size: 12px;
             font-weight: 600;
-            color: #57606a;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         input, select {
             width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #d0d7de;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
             border-radius: 6px;
             font: inherit;
             font-size: 14px;
-            box-sizing: border-box;
             background: #fff;
+            color: var(--text);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
         }
 
         button {
             border: 1px solid transparent;
             border-radius: 6px;
-            padding: 8px 14px;
+            padding: 7px 14px;
             font: inherit;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            background: #0969da;
+            background: var(--primary);
             color: white;
-            transition: background .15s;
+            transition: background .15s, opacity .15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
         }
 
-        button:hover:not(:disabled) { background: #0856b3; }
+        button:hover:not(:disabled) { background: var(--primary-hover); }
         button.secondary { background: #6e7781; }
         button.secondary:hover:not(:disabled) { background: #57606a; }
-        button.success { background: #1a7f37; }
-        button.success:hover:not(:disabled) { background: #14632a; }
-        button.danger { background: #cf222e; }
-        button.danger:hover:not(:disabled) { background: #a40e26; }
+        button.success { background: var(--success); }
+        button.success:hover:not(:disabled) { background: var(--success-hover); }
+        button.danger { background: var(--danger); }
+        button.danger:hover:not(:disabled) { background: var(--danger-hover); }
+        button.outline {
+            background: transparent;
+            color: var(--text);
+            border-color: var(--border);
+        }
+        button.outline:hover:not(:disabled) { background: #eaeef2; }
+        button.small { padding: 4px 8px; font-size: 12px; }
         button:disabled { opacity: .5; cursor: not-allowed; }
 
         .status-box {
             padding: 10px 14px;
             border-radius: 6px;
             background: #f3f4f6;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            border-left: 4px solid #0969da;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 12px;
+            word-break: break-word;
         }
 
         .status-box.error {
             background: #ffebe9;
-            border-left-color: #cf222e;
-            color: #cf222e;
+            border-left-color: var(--danger);
+            color: var(--danger);
         }
 
         .status-box.success {
             background: #dafbe1;
-            border-left-color: #1a7f37;
-            color: #1a7f37;
+            border-left-color: var(--success);
+            color: var(--success);
         }
 
         .meta-grid {
@@ -118,163 +255,455 @@
             border: 1px solid #eaeef2;
         }
 
-        .meta-item b { color: #57606a; display: block; font-size: 11px; text-transform: uppercase; }
+        .meta-item b {
+            color: var(--text-muted);
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.waiting { background: #fff8c5; color: #9a6700; border: 1px solid #d4a72c; }
+        .badge.turn { background: #dafbe1; color: var(--success); border: 1px solid #4ac26b; }
+        .badge.over { background: #e7f2ff; color: var(--primary); border: 1px solid #54aeff; }
 
         .board-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             margin: 16px 0;
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 90px);
-            grid-template-rows: repeat(3, 90px);
+            grid-template-columns: repeat(3, 96px);
+            grid-template-rows: repeat(3, 96px);
             gap: 8px;
+            background: #eaeef2;
+            padding: 8px;
+            border-radius: 12px;
         }
 
         .cell {
-            width: 90px;
-            height: 90px;
-            border: 2px solid #d0d7de;
-            border-radius: 10px;
+            width: 96px;
+            height: 96px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
             background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 38px;
+            font-size: 42px;
             font-weight: 700;
-            color: #24292f;
+            color: var(--text);
             cursor: pointer;
             transition: all .15s;
         }
 
         .cell:hover:not(:disabled) {
             background: #f0f7ff;
-            border-color: #0969da;
+            border-color: var(--primary);
+            transform: scale(1.02);
         }
 
-        .cell.x { color: #0969da; }
-        .cell.o { color: #cf222e; }
+        .cell.x { color: var(--x-color); }
+        .cell.o { color: var(--o-color); }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        th {
+            background: #f6f8fa;
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: #fbfcfd;
+        }
+
+        .tag-uuid {
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            background: #eaeef2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
 
         pre {
             margin: 0;
             padding: 12px;
             border-radius: 6px;
-            background: #24292e;
-            color: #f6f8fa;
-            font-size: 13px;
+            background: #1f2428;
+            color: #e1e4e8;
+            font-size: 12px;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
             overflow-x: auto;
-            max-height: 250px;
+            max-height: 220px;
+        }
+
+        .api-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #e1e4e8;
+            color: #24292f;
+            display: inline-block;
+        }
+        .api-badge.get { background: #dafbe1; color: #1a7f37; }
+        .api-badge.post { background: #ddf4ff; color: #0969da; }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
     </style>
 </head>
 <body>
-<h1>Крестики-нолики (Интерактивный тестер API)</h1>
 
-<!-- 1. Настройки подключения и аутентификация -->
-<div class="card">
-    <div class="row">
-        <div class="field" style="flex: 2;">
-            <label for="apiBase">URL бэкенда</label>
-            <input id="apiBase" value="http://localhost:8080" />
-        </div>
-        <div class="field">
-            <label for="login">Логин</label>
-            <input id="login" value="player1" />
-        </div>
-        <div class="field">
-            <label for="password">Пароль</label>
-            <input id="password" type="password" value="password" />
-        </div>
-        <div>
-            <button id="registerBtn" class="success" title="POST /user/register">Регистрация</button>
-        </div>
-    </div>
-</div>
-
-<!-- 2. Управление игрой -->
-<div class="card">
-    <div class="row">
-        <div class="field" style="max-width: 180px;">
-            <label for="gameMode">Режим</label>
-            <select id="gameMode">
-                <option value="player_vs_bot">Против бота</option>
-                <option value="player_vs_player">2 игрока (PvP)</option>
-            </select>
-        </div>
-        <div class="field" style="flex: 2;">
-            <label for="gameId">Game UUID</label>
-            <input id="gameId" placeholder="UUID игры" />
-        </div>
-        <div class="field" style="max-width: 140px;">
-            <label for="playerSymbol">Мой символ</label>
-            <select id="playerSymbol">
-                <option value="0">X (Ход 1)</option>
-                <option value="1">O (Ход 2)</option>
-            </select>
+<header>
+    <div class="header-top">
+        <h1>Крестики-нолики <span style="font-size:13px; font-weight:normal; color:var(--text-muted);">Интерактивный тестер API</span></h1>
+        <div id="currentUserBadge" class="user-badge anon">
+            <span>👤 Не авторизован</span>
         </div>
     </div>
 
-    <div class="row">
-        <button id="createBtn">Создать (POST /games)</button>
-        <button id="loadBtn" class="secondary">Загрузить (GET)</button>
-        <button id="joinBtn" class="secondary">Присоединиться (Join)</button>
-        <button id="listBtn" class="secondary">Список игр (GET /games)</button>
-        <button id="resetLocalBtn" class="danger">Сброс поля</button>
+    <!-- Общая строка подключения -->
+    <div class="card" style="padding: 10px 16px; margin-bottom: 12px;">
+        <div class="row" style="margin-bottom: 0;">
+            <div class="field" style="flex: 3;">
+                <label for="apiBase">URL бэкенда</label>
+                <input id="apiBase" value="http://localhost:8080" />
+            </div>
+            <div class="field" style="flex: 2;">
+                <label>Текущая сессия (Auth)</label>
+                <div style="font-size: 13px; font-weight: 500; padding: 7px 0;" id="authSessionText">
+                    Логин: <b id="sessionLogin">—</b> | UUID: <span id="sessionUserId" class="tag-uuid">—</span>
+                </div>
+            </div>
+            <div>
+                <button id="logoutBtn" class="outline small" title="Сбросить сессию">Сбросить сессию</button>
+            </div>
+        </div>
     </div>
 
-    <div id="statusBox" class="status-box">Готов к работе</div>
+    <!-- Навигация: 3 экрана -->
+    <nav class="nav-tabs">
+        <button class="nav-tab active" data-screen="screen-auth">1. Вход</button>
+        <button class="nav-tab" data-screen="screen-game">2. Игра</button>
+        <button class="nav-tab" data-screen="screen-lobby">3. Доступные игры</button>
+    </nav>
+</header>
 
-    <div class="meta-grid">
-        <div class="meta-item"><b>Статус игры</b><span id="metaStatus">—</span></div>
-        <div class="meta-item"><b>Победитель</b><span id="metaWinner">—</span></div>
-        <div class="meta-item"><b>Активный игрок</b><span id="metaActivePlayer">—</span></div>
-        <div class="meta-item"><b>Символ 1 (X) / Символ 2 (O)</b><span id="metaSymbols">—</span></div>
+<main>
+    <!-- ============================================================== -->
+    <!-- ЭКРАН 1: ВХОД И ПОЛЬЗОВАТЕЛИ                                   -->
+    <!-- ============================================================== -->
+    <section id="screen-auth" class="screen active">
+        <!-- Регистрация и аутентификация -->
+        <div class="card">
+            <div class="card-title">
+                <span>Аутентификация и Регистрация</span>
+                <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">
+                    POST /user/register &bull; POST /user/auth
+                </span>
+            </div>
+            <div class="card-subtitle">
+                Введите логин и пароль для регистрации или авторизации. Для тестов можно быстро выбрать пресет.
+            </div>
+
+            <div class="row">
+                <div class="field">
+                    <label for="loginInput">Логин</label>
+                    <input id="loginInput" value="player1" />
+                </div>
+                <div class="field">
+                    <label for="passwordInput">Пароль</label>
+                    <input id="passwordInput" type="password" value="password" />
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button id="quickPreset1" class="outline small" type="button" title="Заполнить player1">Тест: player1</button>
+                    <button id="quickPreset2" class="outline small" type="button" title="Заполнить player2">Тест: player2</button>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 14px;">
+                <button id="registerBtn" class="success" title="POST /user/register">
+                    <span class="api-badge post">POST</span> Регистрация (/user/register)
+                </button>
+                <button id="authBtn" title="POST /user/auth">
+                    <span class="api-badge post">POST</span> Войти (/user/auth)
+                </button>
+            </div>
+        </div>
+
+        <!-- Поиск пользователя по UUID -->
+        <div class="card">
+            <div class="card-title">
+                <span>Информация о пользователе по UUID</span>
+                <span class="api-badge get">GET /user/{uuid}</span>
+            </div>
+            <div class="card-subtitle">
+                Ручка требует Basic Auth. Позволяет узнать логин и ID любого пользователя.
+            </div>
+
+            <div class="row">
+                <div class="field" style="flex: 2;">
+                    <label for="userUuidInput">User UUID</label>
+                    <input id="userUuidInput" placeholder="Введите UUID пользователя (например, текущего)" />
+                </div>
+                <div>
+                    <button id="fillMyUuidBtn" class="outline" type="button">Мой UUID</button>
+                </div>
+                <div>
+                    <button id="getUserBtn" class="secondary">
+                        <span class="api-badge get">GET</span> Получить инфо (/user/{uuid})
+                    </button>
+                </div>
+            </div>
+
+            <div id="userInfoDisplay" style="display: none; margin-top: 10px;" class="meta-item">
+                <b>Результат поиска:</b>
+                ID: <span id="userResultId" class="tag-uuid">—</span> &bull; Логин: <b id="userResultLogin">—</b>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="outline" onclick="switchScreen('screen-lobby')">Перейти к доступным играм &rarr;</button>
+            <button onclick="switchScreen('screen-game')">Перейти к игре &rarr;</button>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ЭКРАН 2: ИГРА                                                  -->
+    <!-- ============================================================== -->
+    <section id="screen-game" class="screen">
+        <!-- Управление игрой -->
+        <div class="card">
+            <div class="card-title">
+                <span>Управление текущей игрой</span>
+                <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">
+                    POST /games &bull; GET /games/{uuid} &bull; POST /games/{uuid}/join
+                </span>
+            </div>
+
+            <div class="row">
+                <div class="field" style="max-width: 220px;">
+                    <label for="gameMode">Режим создания</label>
+                    <select id="gameMode">
+                        <option value="player_vs_bot">Против бота (player_vs_bot)</option>
+                        <option value="player_vs_player">2 игрока (player_vs_player)</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="createGameBtn" class="success" title="POST /games">
+                        <span class="api-badge post">POST</span> Создать игру (/games)
+                    </button>
+                </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #eaeef2; margin: 12px 0;" />
+
+            <div class="row">
+                <div class="field" style="flex: 2;">
+                    <label for="gameIdInput">Game UUID</label>
+                    <input id="gameIdInput" placeholder="UUID игры" />
+                </div>
+                <div class="field" style="max-width: 140px;">
+                    <label for="playerSymbolSelect">Мой символ</label>
+                    <select id="playerSymbolSelect">
+                        <option value="0">X (Ход 1 / Игрок 1)</option>
+                        <option value="1">O (Ход 2 / Игрок 2)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <button id="loadGameBtn" class="secondary" title="GET /games/{uuid}">
+                    <span class="api-badge get">GET</span> Загрузить игру (/games/{uuid})
+                </button>
+                <button id="joinGameBtn" class="secondary" title="POST /games/{uuid}/join">
+                    <span class="api-badge post">POST</span> Присоединиться (/games/{uuid}/join)
+                </button>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; margin-bottom:0; text-transform:none;">
+                    <input type="checkbox" id="autoRefreshCheckbox" style="width:auto;" />
+                    Авто-обновление (2 сек)
+                </label>
+                <button id="resetLocalBtn" class="outline danger small" style="margin-left:auto;">Сброс поля</button>
+            </div>
+
+            <!-- Метаинформация об игре -->
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <b>Статус игры</b>
+                    <span id="metaStatus">—</span>
+                </div>
+                <div class="meta-item">
+                    <b>Чей ход (Активный игрок)</b>
+                    <span id="metaActivePlayer">—</span>
+                </div>
+                <div class="meta-item">
+                    <b>Игрок 1 (X)</b>
+                    <span id="metaPlayer1" class="tag-uuid">—</span>
+                </div>
+                <div class="meta-item">
+                    <b>Игрок 2 (O)</b>
+                    <span id="metaPlayer2" class="tag-uuid">—</span>
+                </div>
+                <div class="meta-item">
+                    <b>Победитель</b>
+                    <span id="metaWinner">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Игровое поле -->
+        <div class="card">
+            <div class="card-title flex-between">
+                <span>Игровое поле 3x3</span>
+                <span class="api-badge post">POST /games/{uuid}/moves</span>
+            </div>
+            <div class="card-subtitle">
+                Кликните по свободной клетке, чтобы отправить ход на сервер.
+            </div>
+
+            <div class="board-container">
+                <div id="board" class="board"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ЭКРАН 3: ДОСТУПНЫЕ ИГРЫ (ЛОББИ)                               -->
+    <!-- ============================================================== -->
+    <section id="screen-lobby" class="screen">
+        <div class="card">
+            <div class="card-title flex-between">
+                <span>Список открытых игр</span>
+                <span class="api-badge get">GET /games</span>
+            </div>
+            <div class="card-subtitle">
+                Здесь отображаются игры, ожидающие второго игрока (player2_id IS NULL). Ручка требует Basic Auth.
+            </div>
+
+            <div class="row">
+                <button id="refreshLobbyBtn" title="GET /games">
+                    <span class="api-badge get">GET</span> Обновить список (/games)
+                </button>
+                <button id="createPvpFromLobbyBtn" class="success" title="Создать новую PvP игру">
+                    + Создать PvP игру
+                </button>
+            </div>
+
+            <div class="table-container" style="margin-top: 12px;">
+                <table id="gamesTable">
+                    <thead>
+                        <tr>
+                            <th>UUID игры</th>
+                            <th>Создатель (Игрок 1)</th>
+                            <th>Статус</th>
+                            <th style="text-align: right;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gamesTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">
+                                Нажмите "Обновить список", чтобы загрузить доступные игры
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Прямое присоединение к игре по UUID -->
+        <div class="card">
+            <div class="card-title">
+                <span>Присоединение по UUID</span>
+                <span class="api-badge post">POST /games/{uuid}/join</span>
+            </div>
+            <div class="card-subtitle">
+                Если вы знаете UUID открытой игры, можно подключиться напрямую.
+            </div>
+
+            <div class="row">
+                <div class="field" style="flex: 2;">
+                    <label for="directJoinGameId">Game UUID для подключения</label>
+                    <input id="directJoinGameId" placeholder="Введите UUID игры" />
+                </div>
+                <div>
+                    <button id="directJoinBtn" class="secondary">
+                        <span class="api-badge post">POST</span> Присоединиться и играть
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ОБЩИЙ БЛОК: СТАТУС И СЫРОЙ ОТВЕТ СЕРВЕРА (ИНСПЕКТОР API)       -->
+    <!-- ============================================================== -->
+    <div class="card">
+        <div class="card-title flex-between">
+            <span>Статус операции и ответ сервера</span>
+            <span id="lastApiInfo" style="font-size: 12px; font-weight: normal; color: var(--text-muted);">—</span>
+        </div>
+        <div id="statusBox" class="status-box">Готов к работе</div>
+        <pre id="responseJson">{}</pre>
     </div>
-</div>
-
-<!-- 3. Игровое поле -->
-<div class="card">
-    <div class="board-container">
-        <div id="board" class="board"></div>
-    </div>
-</div>
-
-<!-- 4. Сырой ответ сервера -->
-<div class="card">
-    <label>Ответ сервера (JSON)</label>
-    <pre id="responseJson">{}</pre>
-</div>
+</main>
 
 <script>
-    const apiBaseEl = document.getElementById('apiBase');
-    const loginEl = document.getElementById('login');
-    const passwordEl = document.getElementById('password');
-    const registerBtn = document.getElementById('registerBtn');
-
-    const gameModeEl = document.getElementById('gameMode');
-    const gameIdEl = document.getElementById('gameId');
-    const playerSymbolEl = document.getElementById('playerSymbol');
-
-    const createBtn = document.getElementById('createBtn');
-    const loadBtn = document.getElementById('loadBtn');
-    const joinBtn = document.getElementById('joinBtn');
-    const listBtn = document.getElementById('listBtn');
-    const resetLocalBtn = document.getElementById('resetLocalBtn');
-
-    const statusBoxEl = document.getElementById('statusBox');
-    const metaStatusEl = document.getElementById('metaStatus');
-    const metaWinnerEl = document.getElementById('metaWinner');
-    const metaActivePlayerEl = document.getElementById('metaActivePlayer');
-    const metaSymbolsEl = document.getElementById('metaSymbols');
-
-    const boardEl = document.getElementById('board');
-    const responseJsonEl = document.getElementById('responseJson');
-
-    let currentBoard = emptyBoard();
-    let isGameOver = false;
-    let isBusy = false;
+    // --- Состояние приложения ---
+    const state = {
+        apiBase: 'http://localhost:8080',
+        user: {
+            login: 'player1',
+            password: 'password',
+            id: null
+        },
+        game: {
+            id: '',
+            status: null,
+            activePlayer: null,
+            player1Id: null,
+            player1Symbol: 0,
+            player2Id: null,
+            player2Symbol: null,
+            winner: -1,
+            winnerId: null,
+            board: emptyBoard()
+        },
+        isBusy: false,
+        autoRefreshTimer: null
+    };
 
     function emptyBoard() {
         return [
@@ -288,13 +717,92 @@
         return b.map(row => [...row]);
     }
 
-    function getBaseUrl() {
+    // --- DOM Элементы ---
+    const apiBaseEl = document.getElementById('apiBase');
+    const sessionLoginEl = document.getElementById('sessionLogin');
+    const sessionUserIdEl = document.getElementById('sessionUserId');
+    const currentUserBadgeEl = document.getElementById('currentUserBadge');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Навигация
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const screens = document.querySelectorAll('.screen');
+
+    // Экран 1: Вход
+    const loginInputEl = document.getElementById('loginInput');
+    const passwordInputEl = document.getElementById('passwordInput');
+    const registerBtn = document.getElementById('registerBtn');
+    const authBtn = document.getElementById('authBtn');
+    const quickPreset1Btn = document.getElementById('quickPreset1');
+    const quickPreset2Btn = document.getElementById('quickPreset2');
+    const userUuidInputEl = document.getElementById('userUuidInput');
+    const fillMyUuidBtn = document.getElementById('fillMyUuidBtn');
+    const getUserBtn = document.getElementById('getUserBtn');
+    const userInfoDisplayEl = document.getElementById('userInfoDisplay');
+    const userResultIdEl = document.getElementById('userResultId');
+    const userResultLoginEl = document.getElementById('userResultLogin');
+
+    // Экран 2: Игра
+    const gameModeEl = document.getElementById('gameMode');
+    const createGameBtn = document.getElementById('createGameBtn');
+    const gameIdInputEl = document.getElementById('gameIdInput');
+    const playerSymbolSelectEl = document.getElementById('playerSymbolSelect');
+    const loadGameBtn = document.getElementById('loadGameBtn');
+    const joinGameBtn = document.getElementById('joinGameBtn');
+    const autoRefreshCheckbox = document.getElementById('autoRefreshCheckbox');
+    const resetLocalBtn = document.getElementById('resetLocalBtn');
+
+    const metaStatusEl = document.getElementById('metaStatus');
+    const metaActivePlayerEl = document.getElementById('metaActivePlayer');
+    const metaPlayer1El = document.getElementById('metaPlayer1');
+    const metaPlayer2El = document.getElementById('metaPlayer2');
+    const metaWinnerEl = document.getElementById('metaWinner');
+    const boardEl = document.getElementById('board');
+
+    // Экран 3: Доступные игры
+    const refreshLobbyBtn = document.getElementById('refreshLobbyBtn');
+    const createPvpFromLobbyBtn = document.getElementById('createPvpFromLobbyBtn');
+    const gamesTableBodyEl = document.getElementById('gamesTableBody');
+    const directJoinGameIdEl = document.getElementById('directJoinGameId');
+    const directJoinBtn = document.getElementById('directJoinBtn');
+
+    // Статус и JSON
+    const statusBoxEl = document.getElementById('statusBox');
+    const lastApiInfoEl = document.getElementById('lastApiInfo');
+    const responseJsonEl = document.getElementById('responseJson');
+
+    // --- Навигация по экранам ---
+    function switchScreen(screenId) {
+        screens.forEach(s => s.classList.remove('active'));
+        navTabs.forEach(t => t.classList.remove('active'));
+
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) targetScreen.classList.add('active');
+
+        const activeTab = document.querySelector(`.nav-tab[data-screen="${screenId}"]`);
+        if (activeTab) activeTab.classList.add('active');
+
+        // При переходе на лобби — автоматически обновим список
+        if (screenId === 'screen-lobby') {
+            loadAvailableGames();
+        }
+    }
+
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            switchScreen(tab.dataset.screen);
+        });
+    });
+
+    // --- Вспомогательные функции ---
+    function getApiBase() {
         return apiBaseEl.value.trim().replace(/\/$/, '');
     }
 
     function getAuthHeader() {
-        const login = loginEl.value.trim();
-        const password = passwordEl.value;
+        const login = loginInputEl.value.trim();
+        const password = passwordInputEl.value;
+        if (!login || !password) return null;
         return 'Basic ' + btoa(login + ':' + password);
     }
 
@@ -305,36 +813,272 @@
         if (type === 'success') statusBoxEl.classList.add('success');
     }
 
+    function updateSessionUI() {
+        const login = state.user.login;
+        const uid = state.user.id;
+        sessionLoginEl.textContent = login || '—';
+        sessionUserIdEl.textContent = uid ? uid : '—';
+
+        if (uid) {
+            currentUserBadgeEl.className = 'user-badge';
+            currentUserBadgeEl.innerHTML = `<span>👤 ${login}</span> <small style="opacity:0.8;">(${uid.slice(0, 8)}...)</small>`;
+        } else {
+            currentUserBadgeEl.className = 'user-badge anon';
+            currentUserBadgeEl.innerHTML = `<span>👤 Не авторизован</span>`;
+        }
+    }
+
     function symbolToChar(val) {
         if (val === 0) return 'X';
         if (val === 1) return 'O';
         return '';
     }
 
-    function formatStatus(status) {
+    function formatGameStatus(status) {
         switch (status) {
-            case 'waiting_for_players': return 'Ожидание игроков';
-            case 'player_turn': return 'Идет игра (ход игрока)';
-            case 'player_wins': return 'Игра окончена (победа)';
-            case 'draw': return 'Игра окончена (ничья)';
-            default: return status || '—';
+            case 'waiting_for_players':
+                return '<span class="badge waiting">Ожидание 2-го игрока</span>';
+            case 'player_turn':
+                return '<span class="badge turn">Идет игра</span>';
+            case 'player_wins':
+                return '<span class="badge over">Победа</span>';
+            case 'draw':
+                return '<span class="badge over">Ничья</span>';
+            default:
+                return status || '—';
         }
     }
 
-    function formatWinner(winner, status) {
-        if (status === 'draw' || winner === -1) {
-            return status === 'draw' ? 'Ничья' : 'Нет';
+    // Универсальный API-запрос
+    async function apiRequest(method, path, body = null, requireAuth = true) {
+        const url = `${getApiBase()}${path}`;
+        const headers = {};
+
+        if (requireAuth) {
+            const authHeader = getAuthHeader();
+            if (authHeader) {
+                headers['Authorization'] = authHeader;
+            }
         }
-        if (winner === 0) return 'Игрок 1 (X)';
-        if (winner === 1) return 'Игрок 2 / Бот (O)';
-        return String(winner);
+
+        const options = { method, headers };
+
+        if (body !== null) {
+            headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+
+        lastApiInfoEl.textContent = `${method} ${path}`;
+
+        let res, rawText, parsedData;
+        try {
+            res = await fetch(url, options);
+            rawText = await res.text();
+            try {
+                parsedData = JSON.parse(rawText);
+            } catch {
+                parsedData = rawText;
+            }
+        } catch (networkError) {
+            lastApiInfoEl.textContent = `${method} ${path} → Сетевая ошибка`;
+            setStatus(`Сетевая ошибка: ${networkError.message}`, 'error');
+            responseJsonEl.textContent = String(networkError);
+            throw networkError;
+        }
+
+        const statusCode = res.status;
+        lastApiInfoEl.textContent = `${method} ${path} → ${statusCode} ${res.statusText}`;
+
+        if (typeof parsedData === 'object' && parsedData !== null) {
+            responseJsonEl.textContent = JSON.stringify(parsedData, null, 2);
+        } else {
+            responseJsonEl.textContent = String(rawText);
+        }
+
+        if (!res.ok) {
+            const errMsg = (parsedData && parsedData.error) ? parsedData.error : (rawText || `HTTP ${statusCode}`);
+            const err = new Error(errMsg);
+            err.status = statusCode;
+            err.data = parsedData;
+            throw err;
+        }
+
+        return parsedData;
+    }
+
+    // --- Обработчики Экрана 1: Вход ---
+    quickPreset1Btn.addEventListener('click', () => {
+        loginInputEl.value = 'player1';
+        passwordInputEl.value = 'password';
+        state.user.login = 'player1';
+        state.user.password = 'password';
+        updateSessionUI();
+        setStatus('Выбран пресет player1');
+    });
+
+    quickPreset2Btn.addEventListener('click', () => {
+        loginInputEl.value = 'player2';
+        passwordInputEl.value = 'password';
+        state.user.login = 'player2';
+        state.user.password = 'password';
+        updateSessionUI();
+        setStatus('Выбран пресет player2');
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        state.user.id = null;
+        updateSessionUI();
+        setStatus('Сессия сброшена');
+    });
+
+    // POST /user/register
+    registerBtn.addEventListener('click', async () => {
+        const login = loginInputEl.value.trim();
+        const password = passwordInputEl.value;
+        if (!login || !password) {
+            setStatus('Укажите логин и пароль для регистрации', 'error');
+            return;
+        }
+
+        setStatus('Регистрация пользователя...');
+        try {
+            const data = await apiRequest('POST', '/user/register', { login, password }, false);
+            const msg = (data && data.message) ? data.message : (typeof data === 'string' ? data : 'OK');
+            setStatus(`Успешная регистрация: ${msg}! Теперь можно авторизоваться.`, 'success');
+        } catch (e) {
+            setStatus(`Ошибка регистрации: ${e.message}`, 'error');
+        }
+    });
+
+    // POST /user/auth
+    authBtn.addEventListener('click', async () => {
+        const login = loginInputEl.value.trim();
+        const password = passwordInputEl.value;
+        if (!login || !password) {
+            setStatus('Укажите логин и пароль для входа', 'error');
+            return;
+        }
+
+        setStatus('Авторизация пользователя (POST /user/auth)...');
+        try {
+            const uuid = await apiRequest('POST', '/user/auth', null, true);
+            const userUuid = (typeof uuid === 'string') ? uuid.replace(/"/g, '') : String(uuid);
+            state.user.id = userUuid;
+            state.user.login = login;
+            state.user.password = password;
+            userUuidInputEl.value = userUuid;
+            updateSessionUI();
+            setStatus(`Успешная авторизация! Получен UUID: ${userUuid}`, 'success');
+        } catch (e) {
+            setStatus(`Ошибка авторизации: ${e.message}`, 'error');
+        }
+    });
+
+    // GET /user/{uuid}
+    fillMyUuidBtn.addEventListener('click', () => {
+        if (state.user.id) {
+            userUuidInputEl.value = state.user.id;
+        } else {
+            setStatus('Сначала выполните вход, чтобы получить свой UUID', 'error');
+        }
+    });
+
+    getUserBtn.addEventListener('click', async () => {
+        const uuid = userUuidInputEl.value.trim();
+        if (!uuid) {
+            setStatus('Введите UUID пользователя', 'error');
+            return;
+        }
+
+        setStatus(`Запрос данных пользователя (GET /user/${uuid})...`);
+        try {
+            const data = await apiRequest('GET', `/user/${uuid}`, null, true);
+            userInfoDisplayEl.style.display = 'block';
+            userResultIdEl.textContent = data.id || '—';
+            userResultLoginEl.textContent = data.login || '—';
+            setStatus(`Пользователь найден: ${data.login} (${data.id})`, 'success');
+        } catch (e) {
+            userInfoDisplayEl.style.display = 'none';
+            setStatus(`Ошибка поиска пользователя: ${e.message}`, 'error');
+        }
+    });
+
+    // --- Обработчики Экрана 2: Игра ---
+    function updateGameUI(data) {
+        if (!data || typeof data !== 'object') return;
+
+        state.game.id = data.id || state.game.id;
+        state.game.status = data.status;
+        state.game.activePlayer = data.active_player;
+        state.game.player1Id = data.player1_id;
+        state.game.player1Symbol = data.player1_symbol ?? 0;
+        state.game.player2Id = data.player2_id;
+        state.game.player2Symbol = data.player2_symbol;
+        state.game.winner = data.winner;
+        state.game.winnerId = data.winner_id;
+
+        if (Array.isArray(data.board)) {
+            state.game.board = cloneBoard(data.board);
+        }
+
+        // Обновляем поля ввода
+        if (state.game.id) {
+            gameIdInputEl.value = state.game.id;
+        }
+
+        // Авто-определение символа текущего пользователя
+        if (state.user.id) {
+            if (state.game.player1Id && state.game.player1Id.toLowerCase() === state.user.id.toLowerCase()) {
+                playerSymbolSelectEl.value = String(state.game.player1Symbol ?? 0);
+            } else if (state.game.player2Id && state.game.player2Id.toLowerCase() === state.user.id.toLowerCase()) {
+                playerSymbolSelectEl.value = String(state.game.player2Symbol ?? 1);
+            }
+        }
+
+        // Информационные бейджи
+        metaStatusEl.innerHTML = formatGameStatus(data.status);
+
+        // Активный игрок
+        if (data.active_player) {
+            const isMe = state.user.id && (data.active_player.toLowerCase() === state.user.id.toLowerCase());
+            metaActivePlayerEl.innerHTML = `<span class="tag-uuid">${data.active_player.slice(0, 8)}...</span> ${isMe ? '<b style="color:var(--success);">(Ваш ход!)</b>' : '(соперник/бот)'}`;
+        } else {
+            metaActivePlayerEl.textContent = '—';
+        }
+
+        // Игрок 1
+        const p1IsMe = state.user.id && (data.player1_id && data.player1_id.toLowerCase() === state.user.id.toLowerCase());
+        metaPlayer1El.innerHTML = data.player1_id ? `${data.player1_id.slice(0, 8)}... ${p1IsMe ? '<b>(Вы)</b>' : ''}` : '—';
+
+        // Игрок 2
+        if (data.player2_id) {
+            const p2IsMe = state.user.id && (data.player2_id.toLowerCase() === state.user.id.toLowerCase());
+            metaPlayer2El.innerHTML = `${data.player2_id.slice(0, 8)}... ${p2IsMe ? '<b>(Вы)</b>' : ''}`;
+        } else {
+            metaPlayer2El.innerHTML = '<span style="color:#d4a72c;">Ожидает игрока...</span>';
+        }
+
+        // Победитель
+        if (data.status === 'draw') {
+            metaWinnerEl.innerHTML = '<b>Ничья</b>';
+        } else if (data.status === 'player_wins') {
+            const winnerText = data.winner === 0 ? 'Игрок 1 (X)' : (data.winner === 1 ? 'Игрок 2 (O)' : String(data.winner));
+            metaWinnerEl.innerHTML = `<b style="color:var(--success);">${winnerText}</b> ${data.winner_id ? `(${data.winner_id.slice(0, 8)}...)` : ''}`;
+        } else {
+            metaWinnerEl.textContent = '—';
+        }
+
+        renderBoard();
     }
 
     function renderBoard() {
         boardEl.innerHTML = '';
+        const isGameOver = (state.game.status === 'player_wins' || state.game.status === 'draw');
+        const isWaiting = (state.game.status === 'waiting_for_players');
+
         for (let r = 0; r < 3; r++) {
             for (let c = 0; c < 3; c++) {
-                const cellVal = currentBoard[r][c];
+                const cellVal = state.game.board[r][c];
                 const btn = document.createElement('button');
                 btn.className = 'cell';
                 const char = symbolToChar(cellVal);
@@ -342,222 +1086,256 @@
                 if (char === 'X') btn.classList.add('x');
                 if (char === 'O') btn.classList.add('o');
 
-                btn.disabled = isBusy || isGameOver || cellVal !== -1;
-                btn.addEventListener('click', () => onCellClick(r, c));
+                // Блокировка клетки:
+                // если занята, если игра окончена, если ждем игроков, или если идет запрос
+                btn.disabled = state.isBusy || isGameOver || isWaiting || cellVal !== -1;
+
+                btn.addEventListener('click', () => makeMove(r, c));
                 boardEl.appendChild(btn);
             }
         }
     }
 
-    function updateFromResponse(data) {
-        responseJsonEl.textContent = JSON.stringify(data, null, 2);
-
-        if (!data || typeof data !== 'object') return;
-
-        if (data.id) {
-            gameIdEl.value = data.id;
-        }
-
-        metaStatusEl.textContent = formatStatus(data.status);
-        metaWinnerEl.textContent = formatWinner(data.winner, data.status);
-        metaActivePlayerEl.textContent = data.active_player ? data.active_player.slice(0, 8) + '...' : '—';
-        metaSymbolsEl.textContent = `P1=${data.player1_symbol ?? '—'}, P2=${data.player2_symbol ?? '—'}`;
-
-        isGameOver = (data.status === 'player_wins' || data.status === 'draw');
-
-        if (Array.isArray(data.board)) {
-            currentBoard = cloneBoard(data.board);
-        }
-
-        renderBoard();
-    }
-
-    async function safeFetch(url, options = {}) {
-        options.headers = options.headers || {};
-        options.headers['Authorization'] = getAuthHeader();
-
-        const res = await fetch(url, options);
-        const text = await res.text();
-        let json;
+    // POST /games
+    createGameBtn.addEventListener('click', async () => {
+        const mode = gameModeEl.value;
+        setStatus(`Создание новой игры (${mode})...`);
         try {
-            json = JSON.parse(text);
-        } catch {
-            json = text ? { raw: text } : {};
-        }
-
-        if (!res.ok) {
-            const errMsg = json.error || json.raw || `HTTP ${res.status}`;
-            throw new Error(errMsg);
-        }
-
-        return json;
-    }
-
-    // Регистрация пользователя
-    registerBtn.addEventListener('click', async () => {
-        const login = loginEl.value.trim();
-        const password = passwordEl.value;
-        if (!login || !password) {
-            setStatus('Укажите логин и пароль', 'error');
-            return;
-        }
-
-        try {
-            const res = await fetch(`${getBaseUrl()}/user/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ login, password })
-            });
-
-            const text = await res.text();
-            if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
-
-            setStatus(`Успешная регистрация: ${text}`, 'success');
-            responseJsonEl.textContent = text;
-        } catch (e) {
-            setStatus(`Ошибка регистрации: ${e.message}`, 'error');
-            responseJsonEl.textContent = String(e);
-        }
-    });
-
-    // Создать игру
-    createBtn.addEventListener('click', async () => {
-        setStatus('Создание игры...');
-        try {
-            const mode = gameModeEl.value;
-            const data = await safeFetch(`${getBaseUrl()}/games`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode })
-            });
-
-            playerSymbolEl.value = "0"; // создатель всегда 0 (X)
-            updateFromResponse(data);
-            setStatus(`Игра создана (${mode})`, 'success');
+            const data = await apiRequest('POST', '/games', { mode }, true);
+            playerSymbolSelectEl.value = '0'; // Создатель всегда X (0)
+            updateGameUI(data);
+            setStatus(`Игра создана! UUID: ${data.id}`, 'success');
         } catch (e) {
             setStatus(`Ошибка создания игры: ${e.message}`, 'error');
-            responseJsonEl.textContent = String(e);
         }
     });
 
-    // Загрузить игру
-    loadBtn.addEventListener('click', async () => {
-        const id = gameIdEl.value.trim();
+    // GET /games/{uuid}
+    async function loadGame(id, silent = false) {
         if (!id) {
-            setStatus('Введите UUID игры', 'error');
+            if (!silent) setStatus('Укажите UUID игры для загрузки', 'error');
             return;
         }
 
-        setStatus('Загрузка игры...');
+        if (!silent) setStatus(`Загрузка игры ${id}...`);
         try {
-            const data = await safeFetch(`${getBaseUrl()}/games/${id}`, {
-                method: 'GET'
-            });
-
-            updateFromResponse(data);
-            setStatus('Игра успешно загружена', 'success');
+            const data = await apiRequest('GET', `/games/${id}`, null, true);
+            updateGameUI(data);
+            if (!silent) setStatus(`Игра загружена (${data.status})`, 'success');
         } catch (e) {
-            setStatus(`Ошибка загрузки игры: ${e.message}`, 'error');
-            responseJsonEl.textContent = String(e);
+            if (!silent) setStatus(`Ошибка загрузки игры: ${e.message}`, 'error');
         }
+    }
+
+    loadGameBtn.addEventListener('click', () => {
+        const id = gameIdInputEl.value.trim();
+        loadGame(id);
     });
 
-    // Присоединиться к игре (Join)
-    joinBtn.addEventListener('click', async () => {
-        const id = gameIdEl.value.trim();
+    // POST /games/{uuid}/join
+    async function joinGame(id) {
         if (!id) {
-            setStatus('Введите UUID игры для присоединения', 'error');
+            setStatus('Укажите UUID игры для присоединения', 'error');
             return;
         }
 
-        setStatus('Присоединение к игре...');
+        setStatus(`Присоединение к игре ${id}...`);
         try {
-            const data = await safeFetch(`${getBaseUrl()}/games/${id}/join`, {
-                method: 'POST'
-            });
-
-            playerSymbolEl.value = "1"; // присоединившийся - 1 (O)
-            updateFromResponse(data);
-            setStatus('Вы успешно присоединились к игре!', 'success');
+            const data = await apiRequest('POST', `/games/${id}/join`, null, true);
+            playerSymbolSelectEl.value = '1'; // Присоединившийся — всегда O (1)
+            updateGameUI(data);
+            setStatus(`Вы успешно присоединились к игре как Игрок 2 (O)!`, 'success');
         } catch (e) {
-            setStatus(`Ошибка Join: ${e.message}`, 'error');
-            responseJsonEl.textContent = String(e);
+            setStatus(`Ошибка присоединения: ${e.message}`, 'error');
         }
+    }
+
+    joinGameBtn.addEventListener('click', () => {
+        const id = gameIdInputEl.value.trim();
+        joinGame(id);
     });
 
-    // Список открытых игр
-    listBtn.addEventListener('click', async () => {
-        setStatus('Получение списка игр...');
-        try {
-            const data = await safeFetch(`${getBaseUrl()}/games`, {
-                method: 'GET'
-            });
-
-            responseJsonEl.textContent = JSON.stringify(data, null, 2);
-            if (Array.isArray(data) && data.length > 0) {
-                gameIdEl.value = data[0].id;
-                setStatus(`Найдено ${data.length} открытых игр. Выбран первый ID.`, 'success');
-            } else {
-                setStatus('Открытых игр не найдено', 'info');
-            }
-        } catch (e) {
-            setStatus(`Ошибка получения списка игр: ${e.message}`, 'error');
-            responseJsonEl.textContent = String(e);
-        }
-    });
-
-    // Сделать ход
-    async function onCellClick(row, col) {
-        const id = gameIdEl.value.trim();
+    // POST /games/{uuid}/moves
+    async function makeMove(row, col) {
+        const id = gameIdInputEl.value.trim();
         if (!id) {
             setStatus('Сначала создайте или загрузите игру', 'error');
             return;
         }
 
-        const symbol = parseInt(playerSymbolEl.value, 10);
-        const nextBoard = cloneBoard(currentBoard);
+        const symbol = parseInt(playerSymbolSelectEl.value, 10);
+        const nextBoard = cloneBoard(state.game.board);
         nextBoard[row][col] = symbol;
 
-        isBusy = true;
-        setStatus('Отправка хода...');
+        state.isBusy = true;
+        renderBoard();
+        setStatus(`Отправка хода в клетку [${row}, ${col}] (символ: ${symbolToChar(symbol)})...`);
 
         try {
-            const data = await safeFetch(`${getBaseUrl()}/game/${id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ board: nextBoard })
-            });
+            const data = await apiRequest('POST', `/games/${id}/moves`, { board: nextBoard }, true);
+            updateGameUI(data);
 
-            updateFromResponse(data);
-            if (isGameOver) {
-                setStatus(`Игра окончена! ${metaWinnerEl.textContent}`, 'success');
+            if (data.status === 'player_wins') {
+                setStatus(`Игра окончена! Победа: ${metaWinnerEl.textContent}`, 'success');
+            } else if (data.status === 'draw') {
+                setStatus('Игра окончена вничью!', 'info');
             } else {
-                setStatus('Ход принят', 'success');
+                setStatus('Ход принят сервером!', 'success');
             }
         } catch (e) {
-            setStatus(`Ошибка хода: ${e.message}`, 'error');
-            responseJsonEl.textContent = String(e);
+            setStatus(`Ошибка совершения хода: ${e.message}`, 'error');
         } finally {
-            isBusy = false;
+            state.isBusy = false;
             renderBoard();
         }
     }
 
-    // Локальный сброс
+    // Сброс локального поля
     resetLocalBtn.addEventListener('click', () => {
-        currentBoard = emptyBoard();
-        isGameOver = false;
-        isBusy = false;
-        gameIdEl.value = '';
+        state.game = {
+            id: '',
+            status: null,
+            activePlayer: null,
+            player1Id: null,
+            player1Symbol: 0,
+            player2Id: null,
+            player2Symbol: null,
+            winner: -1,
+            winnerId: null,
+            board: emptyBoard()
+        };
+        gameIdInputEl.value = '';
         metaStatusEl.textContent = '—';
-        metaWinnerEl.textContent = '—';
         metaActivePlayerEl.textContent = '—';
-        metaSymbolsEl.textContent = '—';
-        responseJsonEl.textContent = '{}';
+        metaPlayer1El.textContent = '—';
+        metaPlayer2El.textContent = '—';
+        metaWinnerEl.textContent = '—';
         renderBoard();
         setStatus('Локальное состояние сброшено');
     });
 
+    // Авто-обновление игры
+    autoRefreshCheckbox.addEventListener('change', () => {
+        if (autoRefreshCheckbox.checked) {
+            state.autoRefreshTimer = setInterval(() => {
+                const id = gameIdInputEl.value.trim();
+                if (id) {
+                    loadGame(id, true);
+                }
+            }, 2000);
+            setStatus('Авто-обновление включено (каждые 2 сек)');
+        } else {
+            clearInterval(state.autoRefreshTimer);
+            state.autoRefreshTimer = null;
+            setStatus('Авто-обновление выключено');
+        }
+    });
+
+    // --- Обработчики Экрана 3: Доступные игры (Лобби) ---
+    async function loadAvailableGames() {
+        setStatus('Запрос списка доступных игр (GET /games)...');
+        gamesTableBodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Загрузка списка...</td></tr>`;
+
+        try {
+            const data = await apiRequest('GET', '/games', null, true);
+
+            if (!Array.isArray(data) || data.length === 0) {
+                gamesTableBodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Нет открытых игр для подключения</td></tr>`;
+                setStatus('Открытых игр не найдено', 'info');
+                return;
+            }
+
+            gamesTableBodyEl.innerHTML = '';
+            data.forEach(g => {
+                const tr = document.createElement('tr');
+
+                const tdId = document.createElement('td');
+                tdId.innerHTML = `<span class="tag-uuid">${g.id}</span>`;
+
+                const tdP1 = document.createElement('td');
+                tdP1.innerHTML = `<span class="tag-uuid">${g.player1_id ? g.player1_id.slice(0, 8) + '...' : '—'}</span>`;
+
+                const tdStatus = document.createElement('td');
+                tdStatus.innerHTML = formatGameStatus(g.status);
+
+                const tdActions = document.createElement('td');
+                tdActions.style.textAlign = 'right';
+
+                // Кнопка Join
+                const joinBtn = document.createElement('button');
+                joinBtn.className = 'small';
+                joinBtn.textContent = 'Присоединиться';
+                joinBtn.style.marginRight = '6px';
+                joinBtn.addEventListener('click', async () => {
+                    gameIdInputEl.value = g.id;
+                    switchScreen('screen-game');
+                    await joinGame(g.id);
+                });
+
+                // Кнопка Открыть/Смотреть
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'outline small';
+                viewBtn.textContent = 'Открыть';
+                viewBtn.addEventListener('click', async () => {
+                    gameIdInputEl.value = g.id;
+                    switchScreen('screen-game');
+                    await loadGame(g.id);
+                });
+
+                tdActions.appendChild(joinBtn);
+                tdActions.appendChild(viewBtn);
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdP1);
+                tr.appendChild(tdStatus);
+                tr.appendChild(tdActions);
+
+                gamesTableBodyEl.appendChild(tr);
+            });
+
+            setStatus(`Найдено открытых игр: ${data.length}`, 'success');
+        } catch (e) {
+            // Если бэкенд возвращает 404 (not found: no waiting games)
+            if (e.status === 404) {
+                gamesTableBodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Нет открытых игр для подключения</td></tr>`;
+                setStatus('Нет открытых игр (сервер вернул 404 no waiting games)', 'info');
+            } else {
+                gamesTableBodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--danger); padding:20px;">Ошибка: ${e.message}</td></tr>`;
+                setStatus(`Ошибка получения списка игр: ${e.message}`, 'error');
+            }
+        }
+    }
+
+    refreshLobbyBtn.addEventListener('click', loadAvailableGames);
+
+    // Создать PvP игру прямо из лобби
+    createPvpFromLobbyBtn.addEventListener('click', async () => {
+        setStatus('Создание новой PvP игры...');
+        try {
+            const data = await apiRequest('POST', '/games', { mode: 'player_vs_player' }, true);
+            playerSymbolSelectEl.value = '0';
+            updateGameUI(data);
+            switchScreen('screen-game');
+            setStatus(`PvP игра создана! Ожидаем подключения второго игрока. UUID: ${data.id}`, 'success');
+        } catch (e) {
+            setStatus(`Ошибка создания игры: ${e.message}`, 'error');
+        }
+    });
+
+    // Прямой join по инпуту
+    directJoinBtn.addEventListener('click', async () => {
+        const id = directJoinGameIdEl.value.trim();
+        if (!id) {
+            setStatus('Введите UUID игры для подключения', 'error');
+            return;
+        }
+        gameIdInputEl.value = id;
+        switchScreen('screen-game');
+        await joinGame(id);
+    });
+
+    // --- Начальная инициализация ---
+    updateSessionUI();
     renderBoard();
 </script>
 </body>
