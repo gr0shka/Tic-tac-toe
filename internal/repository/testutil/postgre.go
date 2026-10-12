@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gr0shka/Tic-tac-toe/migration"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -43,11 +44,13 @@ func SetupTestDB(ctx context.Context) (*pgxpool.Pool, func(), error) {
 	db := stdlib.OpenDBFromPool(testPool)
 	defer db.Close()
 
+	goose.SetBaseFS(migration.FS)
+
 	if err = goose.SetDialect("postgres"); err != nil {
 		return nil, nil, fmt.Errorf("failed to set goose dialect: %v", err)
 	}
 
-	if err = goose.Up(db, "../../../../migration"); err != nil {
+	if err = goose.Up(db, "."); err != nil {
 		return nil, nil, fmt.Errorf("failed to run goose migrations: %v", err)
 	}
 
