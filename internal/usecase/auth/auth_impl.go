@@ -30,7 +30,7 @@ func (as *authenticateService) Register(ctx context.Context, req SignUpRequest) 
 	if err == nil {
 		return user.ErrUserAlreadyExists
 	}
-	if errors.Is(err, user.ErrUserNotFound) {
+	if !errors.Is(err, user.ErrUserNotFound) {
 		return fmt.Errorf("%w: check user existence", user.ErrUserNotFound)
 	}
 
