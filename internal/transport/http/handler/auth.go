@@ -29,7 +29,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authReq := auth.SignUpRequest{req.Login, req.Password}
+	authReq := auth.SignUpRequest{
+		Login:    req.Login,
+		Password: req.Password,
+	}
 
 	err = h.service.Register(r.Context(), authReq)
 	if err != nil {
