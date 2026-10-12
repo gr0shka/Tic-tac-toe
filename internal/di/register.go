@@ -109,7 +109,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 
 			go func() {
 				if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					log.Printf("HTTP server error: %v", err)
+					slog.Error("HTTP server error", "err", err)
 				}
 			}()
 
