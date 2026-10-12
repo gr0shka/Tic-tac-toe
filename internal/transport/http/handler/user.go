@@ -31,10 +31,6 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.service.GetUserByID(r.Context(), userID)
 	if err != nil {
-		if errors.Is(err, userDomain.ErrUserNotFound) {
-			err = userDomain.ErrInvalidCredentials
-		}
-
 		responseError(w, err)
 		return
 	}
