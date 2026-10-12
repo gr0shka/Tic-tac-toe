@@ -100,7 +100,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 
-			if cfg.Postgres.Migration == "true" {
+			if cfg.Postgres.Migration {
 				if err := migration.Up(ctx, pool); err != nil {
 					log.Printf("Error migrating database: %s", err)
 				}
