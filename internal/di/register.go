@@ -116,9 +116,11 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
+			err := srv.Shutdown(ctx)
+
 			pool.Close()
 
-			return srv.Shutdown(ctx)
+			return err
 		},
 	})
 }
