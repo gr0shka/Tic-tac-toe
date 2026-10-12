@@ -41,14 +41,20 @@ func (r repository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, 
 	return DTOtoDomain(u), nil
 }
 
-func (r repository) Save(ctx context.Context, user *user.User) error {
-	query := "INSERT INTO users(id, login, password) VALUES($1, $2, $3)"
+func (r repository) Save(ctx context.Context, u *user.User) error {
+	query := `INSERT INTO users(id, login, password) 
+				VALUES($1, $2, $3)
+				ON CONFLICT(login) DO NOTHING`
 
-	u := DomainToDTO(user)
+	uDTO := DomainToDTO(u)
 
-	_, err := r.db.Exec(ctx, query, u.ID, u.Login, u.Password)
+	tag, err := r.db.Exec(ctx, query, uDTO.ID, uDTO.Login, uDTO.Password)
 	if err != nil {
 		return err
+	}
+
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("%w: user already exists", user.ErrUserAlreadyExists)
 	}
 
 	return nil
