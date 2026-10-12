@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
+	"net"
+	"net/url"
 	"os"
 
 	"github.com/joho/godotenv"
