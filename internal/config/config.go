@@ -36,8 +36,15 @@ type Postgres struct {
 }
 
 func (p Postgres) ConnectionString() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		p.User, p.Password, p.Host, p.Port, p.Database)
+	u := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(p.User, p.Password),
+		Host:     net.JoinHostPort(p.Host, p.Port),
+		Path:     p.Database,
+		RawQuery: "sslmode=disable",
+	}
+
+	return u.String()
 }
 
 func Load() (*Config, error) {
