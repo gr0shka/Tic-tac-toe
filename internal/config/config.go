@@ -39,7 +39,7 @@ func (p Postgres) ConnectionString() string {
 
 func Load() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
+		slog.Info("No .env file found")
 	}
 
 	app := App{
@@ -58,33 +58,33 @@ func Load() (*Config, error) {
 
 	switch {
 	case app.Port == "":
-		log.Print("No APP_PORT found")
+		slog.Error("No APP_PORT found")
 		return nil, fmt.Errorf("APP_PORT: %w", ErrConfigNotFound)
 	case app.Host == "":
-		log.Print("No APP_HOST found")
+		slog.Error("No APP_HOST found")
 		return nil, fmt.Errorf("APP_HOST: %w", ErrConfigNotFound)
 
 	case postgres.User == "":
-		log.Print("No POSTGRES_USER found")
+		slog.Error("No POSTGRES_USER found")
 		return nil, fmt.Errorf("POSTGRES_USER: %w", ErrConfigNotFound)
 	case postgres.Password == "":
-		log.Print("No POSTGRES_PASSWORD found")
+		slog.Error("No POSTGRES_PASSWORD found")
 		return nil, fmt.Errorf("POSTGRES_PASSWORD: %w", ErrConfigNotFound)
 	case postgres.Host == "":
-		log.Print("No POSTGRES_HOST found")
+		slog.Error("No POSTGRES_HOST found")
 		return nil, fmt.Errorf("POSTGRES_HOST: %w", ErrConfigNotFound)
 	case postgres.Port == "":
-		log.Print("No POSTGRES_PORT found")
+		slog.Error("No POSTGRES_PORT found")
 		return nil, fmt.Errorf("POSTGRES_PORT: %w", ErrConfigNotFound)
 	case postgres.Database == "":
-		log.Print("No POSTGRES_DATABASE found")
+		slog.Error("No POSTGRES_DATABASE found")
 		return nil, fmt.Errorf("POSTGRES_DATABASE: %w", ErrConfigNotFound)
 	case postgres.Migration == "":
 		log.Print("No MIGRATION found")
 		return nil, fmt.Errorf("MIGRATION: %w", ErrConfigNotFound)
 	}
 
-	log.Print("Config successfully loaded")
+	slog.Info("Config successfully loaded")
 
 	return &Config{
 		Postgres: postgres,
