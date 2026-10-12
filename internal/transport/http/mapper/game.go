@@ -20,7 +20,8 @@ func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
 	}
 
 	var winnerID *uuid.UUID
-	if cg.Status() == game.StatusPlayerWins {
+	if cg.Status() == game.StatusPlayerWins &&
+		cg.Winner() >= 0 && len(cg.Players()) > cg.Winner() {
 		winnerID = new(cg.Players()[cg.Winner()].ID())
 	}
 
