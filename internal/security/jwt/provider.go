@@ -200,3 +200,29 @@ func (p *Provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
 
 	return userID, nil
 }
+
+func (p *Provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
+
+	var claims jwt.RegisteredClaims
+	token, err := jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidArgument, token.Header["alg"])
+		}
+
+		return p.publicKey, nil
+	})
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("unable to parse token: %w", err)
+	}
+
+	if !token.Valid {
+		return uuid.Nil, fmt.Errorf("%w: invalid token", ErrInvalidArgument)
+	}
+
+	tokenID, err := uuid.Parse(claims.ID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("%w: unable to parse token ID", ErrInvalidArgument)
+	}
+
+	return tokenID, nil
+}
