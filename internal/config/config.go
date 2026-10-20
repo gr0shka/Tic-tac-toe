@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -19,6 +20,7 @@ var (
 type Config struct {
 	App      App
 	Postgres Postgres
+	JWT      JWT
 }
 
 type App struct {
@@ -33,6 +35,13 @@ type Postgres struct {
 	Port      string
 	Database  string
 	Migration bool
+}
+
+type JWT struct {
+	PublicKey  string
+	PrivateKey string
+	AccessTTL  time.Duration
+	RefreshTTL time.Duration
 }
 
 func (p Postgres) ConnectionString() string {
@@ -71,6 +80,34 @@ func Load() (*Config, error) {
 		Migration: migration,
 	}
 
+	var accessTTL, refreshTTL time.Duration = time.Minute * 15, time.Hour * 24
+	aTTL := os.Getenv("JWT_ACCESS_TTL")
+	if aTTL == "" {
+		slog.Error("JWT_ACCESS_TTL environment variable not set, used default value", "default", aTTL)
+	} else {
+		accessTTL, err = time.ParseDuration(aTTL)
+		if err != nil {
+			slog.Error("JWT_ACCESS_TTL environment variable can not be parsed", "err", err)
+		}
+	}
+
+	rTTL := os.Getenv("JWT_REFRESH_TTL")
+	if rTTL == "" {
+		slog.Error("JWT_REFRESH_TTL environment variable not set, used default value", "default", rTTL)
+	} else {
+		refreshTTL, err = time.ParseDuration(rTTL)
+		if err != nil {
+			slog.Error("JWT_REFRESH_TTL environment variable can not be parsed", "err", err)
+		}
+	}
+
+	jwt := JWT{
+		PublicKey:  os.Getenv("JWT_PUBLIC_KEY"),
+		PrivateKey: os.Getenv("JWT_SECRET_KEY"),
+		AccessTTL:  accessTTL,
+		RefreshTTL: refreshTTL,
+	}
+
 	switch {
 	case app.Port == "":
 		slog.Error("No APP_PORT found")
@@ -94,6 +131,13 @@ func Load() (*Config, error) {
 	case postgres.Database == "":
 		slog.Error("No POSTGRES_DATABASE found")
 		return nil, fmt.Errorf("POSTGRES_DATABASE: %w", ErrConfigNotFound)
+
+	case jwt.PublicKey == "":
+		slog.Error("No JWT_PUBLIC_KEY found")
+		return nil, fmt.Errorf("JWT_PUBLIC_KEY: %w", ErrConfigNotFound)
+	case jwt.PrivateKey == "":
+		slog.Error("No JWT_SECRET_KEY found")
+		return nil, fmt.Errorf("JWT_SECRET_KEY: %w", ErrConfigNotFound)
 	}
 
 	slog.Info("Config successfully loaded")
@@ -101,5 +145,6 @@ func Load() (*Config, error) {
 	return &Config{
 		Postgres: postgres,
 		App:      app,
+		JWT:      jwt,
 	}, nil
 }
