@@ -69,13 +69,13 @@ func (a tokenRepository) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID
 func (a tokenRepository) DeleteRefreshToken(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM jwt_token WHERE id = $1`
 
-	_, err := a.db.Exec(ctx, query, id)
+	tag, err := a.db.Exec(ctx, query, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("%w: could not delete refresh token", jwt.ErrNotFound)
-		}
-
 		return fmt.Errorf("could not delete refresh token: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("%w: could not delete refresh token", jwt.ErrNotFound)
 	}
 
 	return nil
