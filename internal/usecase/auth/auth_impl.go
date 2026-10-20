@@ -104,9 +104,32 @@ func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshTo
 	return newAccessToken, nil
 }
 
-func RefreshRefreshToken(ctx context.Context, refreshToken string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+func (as *authenticateService) RefreshRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	if ok, err := as.jwtP.ValidateRefreshToken(ctx, refreshToken); !ok || err != nil {
+		return "", fmt.Errorf("validate refresh token: %w", err)
+	}
+
+	tokenID, err := as.jwtP.GetTokenIDFromToken(refreshToken)
+	if err != nil {
+		return "", fmt.Errorf("get token id from refresh token: %w", err)
+	}
+
+	userID, err := as.jwtP.GetUserIDFromToken(refreshToken)
+	if err != nil {
+		return "", fmt.Errorf("get user id from refresh token: %w", err)
+	}
+
+	u, err := as.us.GetUserByID(ctx, userID)
+	if err != nil {
+		return "", fmt.Errorf("get user by id from refresh token: %w", err)
+	}
+
+	newToken, err := as.jwtP.UpdateRefreshTokenFromID(ctx, tokenID, u)
+	if err != nil {
+		return "", fmt.Errorf("update refresh token: %w", err)
+	}
+
+	return newToken, nil
 }
 
 func validateData(login, password string) error {
