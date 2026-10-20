@@ -1,3 +1,5 @@
 .idea
 task.*
 .env
+secrets/
+.pem
