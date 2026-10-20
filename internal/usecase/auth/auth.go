@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type AuthenticateService interface {
