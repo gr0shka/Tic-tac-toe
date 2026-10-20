@@ -235,3 +235,23 @@ func (p *Provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 
 	return tokenID, nil
 }
+
+func (p *Provider) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, error) {
+	if tokenID == uuid.Nil {
+		return "", fmt.Errorf("%w: invalid token id", ErrInvalidArgument)
+	}
+	if u == nil {
+		return "", fmt.Errorf("%w: invalid user", ErrInvalidArgument)
+	}
+
+	if err := p.repo.DeleteRefreshToken(ctx, tokenID); err != nil {
+		return "", fmt.Errorf("unable to delete refresh token: %w", err)
+	}
+
+	newRefreshToken, err := p.GenerateRefreshToken(ctx, *u)
+	if err != nil {
+		return "", fmt.Errorf("unable to generate refresh token: %w", err)
+	}
+
+	return newRefreshToken, nil
+}
