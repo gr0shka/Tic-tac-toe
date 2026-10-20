@@ -47,7 +47,7 @@ func (as *authenticateService) Register(ctx context.Context, req SignUpRequest) 
 	return nil
 }
 
-func (as *authenticateService) Authenticate(ctx context.Context, login, password string) (*uuid.UUID, error) {
+func (as *authenticateService) Authenticate(ctx context.Context, login, password string) (*JwtResponse, error) {
 	if err := validateData(login, password); err != nil {
 		return nil, err
 	}
@@ -61,7 +61,32 @@ func (as *authenticateService) Authenticate(ctx context.Context, login, password
 		return nil, user.ErrInvalidCredentials
 	}
 
-	return new(u.ID()), nil
+	accessToken, err := as.jwtP.GenerateAccessToken(*u)
+	if err != nil {
+		return nil, fmt.Errorf("generate access token: %w", err)
+	}
+
+	refreshToken, err := as.jwtP.GenerateRefreshToken(ctx, *u)
+	if err != nil {
+		return nil, fmt.Errorf("generate refresh token: %w", err)
+	}
+
+	response := &JwtResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	return response, nil
+}
+
+func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshToken string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func RefreshRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func validateData(login, password string) error {
