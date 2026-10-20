@@ -13,10 +13,10 @@ import (
 
 type authenticateService struct {
 	us   userService.UserService
-	jwtP jwt.Provider
+	jwtP *jwt.Provider
 }
 
-func NewAuthenticateService(us userService.UserService, jwtP jwt.Provider) *authenticateService {
+func NewAuthenticateService(us userService.UserService, jwtP *jwt.Provider) *authenticateService {
 	return &authenticateService{
 		us:   us,
 		jwtP: jwtP,
