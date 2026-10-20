@@ -129,6 +129,15 @@ func (p *Provider) ValidateAccessToken(at string) (bool, error) {
 		return false, fmt.Errorf("%w: invalid token", ErrInvalidArgument)
 	}
 
+	date, err := token.Claims.GetExpirationTime()
+	if err != nil {
+		return false, fmt.Errorf("%w: invalid token claims", ErrInvalidArgument)
+	}
+
+	if date.After(time.Now()) {
+		return false, fmt.Errorf("%w: access token expired", ErrTokenExpired)
+	}
+
 	return true, nil
 }
 
