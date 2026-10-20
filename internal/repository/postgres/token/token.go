@@ -53,7 +53,7 @@ func (a tokenRepository) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID
 			return nil, fmt.Errorf("could not get refresh token: %w", jwt.ErrNotFound)
 		}
 
-		return nil, fmt.Errorf("get refresh token from ID: %w", id)
+		return nil, fmt.Errorf("get refresh token from ID %v: %w", id, err)
 	}
 
 	token := &jwt.Token{
