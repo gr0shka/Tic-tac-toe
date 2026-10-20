@@ -9,4 +9,5 @@ import (
 type Repository interface {
 	SaveRefreshToken(ctx context.Context, t Token) error
 	GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*Token, error)
+	DeleteRefreshToken(ctx context.Context, id uuid.UUID) error
 }
