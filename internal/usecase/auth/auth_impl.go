@@ -5,19 +5,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	userService "github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type authenticateService struct {
-	us userService.UserService
+	us   userService.UserService
+	jwtP jwt.Provider
 }
 
-func NewAuthenticateService(us userService.UserService) *authenticateService {
+func NewAuthenticateService(us userService.UserService, jwtP jwt.Provider) *authenticateService {
 	return &authenticateService{
-		us: us,
+		us:   us,
+		jwtP: jwtP,
 	}
 }
 
