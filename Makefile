@@ -4,6 +4,10 @@ export
 MIGRATION_DIR=./migration
 DB_DSN=postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DATABASE)?sslmode=disable
 
+generate-secrets:
+	openssl genrsa -out secrets/jwt_private.pem 2048
+	openssl rsa -in secrets/jwt_private.pem -pubout -out secrets/jwt_public.pem
+
 migrate-up:
 	goose -dir $(MIGRATION_DIR) postgres "$(DB_DSN)" up
 
