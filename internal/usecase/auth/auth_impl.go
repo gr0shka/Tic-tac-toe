@@ -16,6 +16,15 @@ type authenticateService struct {
 	jwtP *jwt.Provider
 }
 
+func (as *authenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
+	userID, err := as.jwtP.GetUserIDFromToken(token)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("could not get user ID from token: %w", err)
+	}
+
+	return userID, nil
+}
+
 func NewAuthenticateService(us userService.UserService, jwtP *jwt.Provider) *authenticateService {
 	return &authenticateService{
 		us:   us,
