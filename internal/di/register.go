@@ -78,7 +78,11 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 	mux.HandleFunc("POST /user/register", ah.Register)
 	mux.HandleFunc("POST /user/auth", ah.Authenticate)
 
+	mux.Handle("POST /user/token", http.HandlerFunc(ah.RefreshAccessToken))
+	mux.Handle("POST /user/refresh", http.HandlerFunc(ah.RefreshRefreshToken))
+
 	mux.Handle("GET /user/{uuid}", m.Authenticate(http.HandlerFunc(uh.GetUserByID)))
+	mux.Handle("GET /user/me", m.Authenticate(http.HandlerFunc(uh.GetUserByToken)))
 
 	mux.Handle("POST /games/{uuid}/moves", m.Authenticate(http.HandlerFunc(gh.NextTurn)))
 	mux.Handle("POST /games", m.Authenticate(http.HandlerFunc(gh.NewGame)))
