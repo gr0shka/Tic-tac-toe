@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	userService "github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
@@ -77,68 +78,88 @@ func (as *authenticateService) Authenticate(ctx context.Context, login, password
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
-	refreshToken, err := as.jwtP.GenerateRefreshToken(ctx, *u)
+	refreshToken, refreshTTL, err := as.jwtP.GenerateRefreshToken(ctx, *u)
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
 	response := &JwtResponse{
-		AccessToken:  accessToken,
+		Type:                  "Bearer",
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshTTL,
+	}
+
+	return response, nil
+}
+
+func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshToken string) (*JwtResponse, error) {
+	if ok, err := as.jwtP.ValidateRefreshToken(ctx, refreshToken); !ok || err != nil {
+		return nil, fmt.Errorf("validate refresh token: %w", err)
+	}
+
+	userID, err := as.jwtP.GetUserIDFromToken(refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("get user id from refresh token: %w", err)
+	}
+
+	u, err := as.us.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user by id from refresh token: %w", err)
+	}
+
+	newAccessToken, err := as.jwtP.GenerateAccessToken(*u)
+	if err != nil {
+		return nil, fmt.Errorf("generate new access token: %w", err)
+	}
+
+	response := &JwtResponse{
+		Type:         "Bearer",
+		AccessToken:  newAccessToken,
 		RefreshToken: refreshToken,
 	}
 
 	return response, nil
 }
 
-func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshToken string) (string, error) {
+func (as *authenticateService) RefreshRefreshToken(ctx context.Context, refreshToken string) (*JwtResponse, error) {
 	if ok, err := as.jwtP.ValidateRefreshToken(ctx, refreshToken); !ok || err != nil {
-		return "", fmt.Errorf("validate refresh token: %w", err)
-	}
-
-	userID, err := as.jwtP.GetUserIDFromToken(refreshToken)
-	if err != nil {
-		return "", fmt.Errorf("get user id from refresh token: %w", err)
-	}
-
-	u, err := as.us.GetUserByID(ctx, userID)
-	if err != nil {
-		return "", fmt.Errorf("get user by id from refresh token: %w", err)
-	}
-
-	newAccessToken, err := as.jwtP.GenerateAccessToken(*u)
-	if err != nil {
-		return "", fmt.Errorf("generate new access token: %w", err)
-	}
-
-	return newAccessToken, nil
-}
-
-func (as *authenticateService) RefreshRefreshToken(ctx context.Context, refreshToken string) (string, error) {
-	if ok, err := as.jwtP.ValidateRefreshToken(ctx, refreshToken); !ok || err != nil {
-		return "", fmt.Errorf("validate refresh token: %w", err)
+		return nil, fmt.Errorf("validate refresh token: %w", err)
 	}
 
 	tokenID, err := as.jwtP.GetTokenIDFromToken(refreshToken)
 	if err != nil {
-		return "", fmt.Errorf("get token id from refresh token: %w", err)
+		return nil, fmt.Errorf("get token id from refresh token: %w", err)
 	}
 
 	userID, err := as.jwtP.GetUserIDFromToken(refreshToken)
 	if err != nil {
-		return "", fmt.Errorf("get user id from refresh token: %w", err)
+		return nil, fmt.Errorf("get user id from refresh token: %w", err)
 	}
 
 	u, err := as.us.GetUserByID(ctx, userID)
 	if err != nil {
-		return "", fmt.Errorf("get user by id from refresh token: %w", err)
+		return nil, fmt.Errorf("get user by id from refresh token: %w", err)
 	}
 
-	newToken, err := as.jwtP.UpdateRefreshTokenFromID(ctx, tokenID, u)
+	newRefreshToken, refreshTTL, err := as.jwtP.UpdateRefreshTokenFromID(ctx, tokenID, u)
 	if err != nil {
-		return "", fmt.Errorf("update refresh token: %w", err)
+		return nil, fmt.Errorf("update refresh token: %w", err)
 	}
 
-	return newToken, nil
+	newAccessToken, err := as.jwtP.GenerateAccessToken(*u)
+	if err != nil {
+		return nil, fmt.Errorf("generate new access token: %w", err)
+	}
+
+	response := &JwtResponse{
+		Type:                  "Bearer",
+		AccessToken:           newAccessToken,
+		RefreshToken:          newRefreshToken,
+		RefreshTokenExpiresAt: refreshTTL,
+	}
+
+	return response, nil
 }
 
 func validateData(login, password string) error {
