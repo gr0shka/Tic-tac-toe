@@ -82,7 +82,7 @@ func (p *Provider) GenerateAccessToken(u user.User) (string, error) {
 	return tokenString, nil
 }
 
-func (p *Provider) GenerateRefreshToken(ctx context.Context, u user.User) (string, error) {
+func (p *Provider) GenerateRefreshToken(ctx context.Context, u user.User) (string, time.Time, error) {
 
 	t := Token{
 		ID:        uuid.New(),
@@ -101,15 +101,15 @@ func (p *Provider) GenerateRefreshToken(ctx context.Context, u user.User) (strin
 
 	tokenString, err := token.SignedString(p.privateKey)
 	if err != nil {
-		return "", fmt.Errorf("unable to sign token: %w", err)
+		return "", time.Time{}, fmt.Errorf("unable to sign token: %w", err)
 	}
 
 	err = p.repo.SaveRefreshToken(ctx, t)
 	if err != nil {
-		return "", fmt.Errorf("unable to save refresh token: %w", err)
+		return "", time.Time{}, fmt.Errorf("unable to save refresh token: %w", err)
 	}
 
-	return tokenString, nil
+	return tokenString, t.ExpiresAt, nil
 }
 
 func (p *Provider) ValidateAccessToken(at string) (bool, error) {
@@ -227,22 +227,22 @@ func (p *Provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 	return tokenID, nil
 }
 
-func (p *Provider) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, error) {
+func (p *Provider) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, time.Time, error) {
 	if tokenID == uuid.Nil {
-		return "", fmt.Errorf("%w: invalid token id", ErrInvalidArgument)
+		return "", time.Time{}, fmt.Errorf("%w: invalid token id", ErrInvalidArgument)
 	}
 	if u == nil {
-		return "", fmt.Errorf("%w: invalid user", ErrInvalidArgument)
+		return "", time.Time{}, fmt.Errorf("%w: invalid user", ErrInvalidArgument)
 	}
 
 	if err := p.repo.DeleteRefreshToken(ctx, tokenID); err != nil {
-		return "", fmt.Errorf("unable to delete refresh token: %w", err)
+		return "", time.Time{}, fmt.Errorf("unable to delete refresh token: %w", err)
 	}
 
-	newRefreshToken, err := p.GenerateRefreshToken(ctx, *u)
+	newRefreshToken, refreshTTL, err := p.GenerateRefreshToken(ctx, *u)
 	if err != nil {
-		return "", fmt.Errorf("unable to generate refresh token: %w", err)
+		return "", time.Time{}, fmt.Errorf("unable to generate refresh token: %w", err)
 	}
 
-	return newRefreshToken, nil
+	return newRefreshToken, refreshTTL, nil
 }
