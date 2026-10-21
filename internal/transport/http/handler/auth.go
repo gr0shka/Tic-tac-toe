@@ -2,10 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 )
@@ -47,19 +50,127 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	login, pass, ok := r.BasicAuth()
-	if !ok {
-		responseError(w, fmt.Errorf("%w: basic auth required", user.ErrInvalidCredentials))
+	var req dto.JwtRequest
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		responseError(w, fmt.Errorf("%w: error decoding request body", user.ErrInvalidArgument))
 		return
 	}
 
-	userID, err := h.service.Authenticate(r.Context(), login, pass)
+	resp, err := h.service.Authenticate(r.Context(), req.Login, req.Password)
 	if err != nil {
 		responseError(w, err)
 		return
 	}
 
+	response := dto.JwtResponse{
+		Type:         resp.Type,
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+	}
+
+	setRefreshTokenInCookie(w, resp.RefreshToken, resp.RefreshTokenExpiresAt)
+
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(userID)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *AuthHandler) RefreshAccessToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	refreshToken, err := extractToken(r)
+	if err != nil {
+		responseError(w, err)
+		return
+	}
+
+	resp, err := h.service.RefreshAccessToken(r.Context(), refreshToken)
+	if err != nil {
+		responseError(w, err)
+		return
+	}
+
+	response := dto.JwtResponse{
+		Type:         resp.Type,
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *AuthHandler) RefreshRefreshToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	refreshToken, err := extractToken(r)
+	if err != nil {
+		responseError(w, err)
+		return
+	}
+
+	resp, err := h.service.RefreshRefreshToken(r.Context(), refreshToken)
+	if err != nil {
+		responseError(w, err)
+		return
+	}
+
+	response := dto.JwtResponse{
+		Type:         resp.Type,
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+	}
+
+	setRefreshTokenInCookie(w, resp.RefreshToken, resp.RefreshTokenExpiresAt)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func setRefreshTokenInCookie(w http.ResponseWriter, refreshToken string, refreshTokenExpiresAt time.Time) {
+	newCookie := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  refreshTokenExpiresAt,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, newCookie)
+}
+
+func extractToken(r *http.Request) (string, error) {
+
+	if r.ContentLength > 0 {
+
+		defer r.Body.Close()
+
+		var request dto.RefreshJwtRequest
+		err := json.NewDecoder(r.Body).Decode(&request)
+		if err != nil || request.RefreshToken == "" {
+			return "", fmt.Errorf("%w: error decoding refresh token in request body", jwt.ErrInvalidArgument)
+		}
+
+		return request.RefreshToken, nil
+	}
+
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			return "", fmt.Errorf("%w: refresh token not found in cookie", user.ErrInvalidCredentials)
+		}
+
+		return "", fmt.Errorf("refresh token required: %w", err)
+	}
+
+	refreshToken := cookie.Value
+	if refreshToken == "" {
+		return "", fmt.Errorf("%w: refresh token required", user.ErrInvalidCredentials)
+	}
+
+	return refreshToken, nil
 }
