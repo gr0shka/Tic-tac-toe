@@ -9,6 +9,7 @@ import (
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 )
 
 type errorResponse struct {
@@ -20,7 +21,8 @@ func responseError(w http.ResponseWriter, err error) {
 
 	switch {
 	case errors.Is(err, game.ErrNotFound),
-		errors.Is(err, user.ErrUserNotFound):
+		errors.Is(err, user.ErrUserNotFound),
+		errors.Is(err, jwt.ErrNotFound):
 
 		status = http.StatusNotFound
 
@@ -32,11 +34,13 @@ func responseError(w http.ResponseWriter, err error) {
 
 	case errors.Is(err, game.ErrInvalidArgument),
 		errors.Is(err, game.ErrInvalidMove),
-		errors.Is(err, user.ErrInvalidArgument):
+		errors.Is(err, user.ErrInvalidArgument),
+		errors.Is(err, jwt.ErrInvalidArgument):
 
 		status = http.StatusBadRequest
 
-	case errors.Is(err, user.ErrInvalidCredentials):
+	case errors.Is(err, user.ErrInvalidCredentials),
+		errors.Is(err, jwt.ErrTokenExpired):
 
 		status = http.StatusUnauthorized
 	default:
