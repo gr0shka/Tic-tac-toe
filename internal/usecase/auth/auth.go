@@ -2,12 +2,16 @@ package auth
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type AuthenticateService interface {
 	Register(ctx context.Context, req SignUpRequest) error
 	Authenticate(ctx context.Context, login, password string) (*JwtResponse, error)
 
-	RefreshAccessToken(ctx context.Context, refreshToken string) (string, error)
-	RefreshRefreshToken(ctx context.Context, refreshToken string) (string, error)
+	AuthenticateByToken(token string) (uuid.UUID, error)
+
+	RefreshAccessToken(ctx context.Context, refreshToken string) (*JwtResponse, error)
+	RefreshRefreshToken(ctx context.Context, refreshToken string) (*JwtResponse, error)
 }
