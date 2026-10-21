@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
@@ -30,19 +31,28 @@ func NewUserAuthenticator(service auth.AuthenticateService) *UserAuthenticator {
 
 func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		login, pass, ok := r.BasicAuth()
-		if !ok {
-			writeUnauthorizedJSON(w, "error basic auth")
+		w.Header().Set("Content-Type", "application/json")
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			writeUnauthorizedJSON(w, "Missing Authorization header")
 			return
 		}
 
-		uID, err := ua.service.Authenticate(r.Context(), login, pass)
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			writeUnauthorizedJSON(w, "Invalid Authorization header")
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		uID, err := ua.service.AuthenticateByToken(tokenString)
 		if err != nil {
 			writeUnauthorizedJSON(w, err.Error())
 			return
 		}
 
-		r = r.WithContext(ContextWithUserID(r.Context(), *uID))
+		r = r.WithContext(ContextWithUserID(r.Context(), uID))
 		next.ServeHTTP(w, r)
 	})
 }
