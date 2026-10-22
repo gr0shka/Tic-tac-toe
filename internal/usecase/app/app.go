@@ -19,4 +19,5 @@ type AppService interface {
 	JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error)
 	AllGames(ctx context.Context) ([]*game.CurrentGame, error)
 	AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error)
+	GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error)
 }
