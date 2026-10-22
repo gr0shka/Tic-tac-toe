@@ -33,6 +33,9 @@ func CreateApp() fx.Option {
 			func(conf *config.Config) config.Postgres {
 				return conf.Postgres
 			},
+			func(conf *config.Config) config.JWT {
+				return conf.JWT
+			},
 			postgres.NewClient,
 			fx.Annotate(
 				game.New,
@@ -57,6 +60,14 @@ func CreateApp() fx.Option {
 			fx.Annotate(
 				user.NewUserService,
 				fx.As(new(user.UserService)),
+			),
+			fx.Annotate(
+				token.NewTokenRepository,
+				fx.As(new(jwt.Repository)),
+			),
+			fx.Annotate(
+				jwt.NewProvider,
+				fx.As(new(jwt.Provider)),
 			),
 			fx.Annotate(
 				auth.NewAuthenticateService,
