@@ -16,6 +16,19 @@ type appService struct {
 	tx          usecase.Transactor
 }
 
+func (a *appService) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
+	if count < 1 {
+		return nil, fmt.Errorf("%w: count users in leader board must be >= 1", game.ErrInvalidArgument)
+	}
+
+	lb, err := a.repository.GetLeaderBoard(ctx, count)
+	if err != nil {
+		return nil, fmt.Errorf("get leader board: %w", err)
+	}
+
+	return lb, nil
+}
+
 func (a *appService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
 	endedGames, err := a.repository.AllEndedGames(ctx, userID)
 	if err != nil {
