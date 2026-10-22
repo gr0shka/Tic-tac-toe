@@ -46,7 +46,8 @@ func DomainToDTO(cg game.CurrentGame) CurrentGameDTO {
 		Status:       string(cg.Status()),
 		Winner:       cg.Winner(),
 
-		WinnerID: winnerID,
+		WinnerID:  winnerID,
+		CreatedAt: cg.CreatedAt(),
 	}
 }
 
@@ -87,6 +88,8 @@ func DTOToDomain(cgd CurrentGameDTO) *game.CurrentGame {
 
 	cg.SetStatus(game.GameStatus(cgd.Status))
 	cg.SetWinner(cgd.Winner)
+
+	cg.SetCreatedAt(cgd.CreatedAt)
 
 	return cg
 }
