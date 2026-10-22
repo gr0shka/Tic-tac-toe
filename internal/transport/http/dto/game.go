@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
@@ -20,9 +22,10 @@ type GameBoardResponse struct {
 	Player2ID     *uuid.UUID `json:"player2_id"`
 	Player2Symbol *int       `json:"player2_symbol"`
 
-	Winner   int                                 `json:"winner"`
-	WinnerID *uuid.UUID                          `json:"winner_id"`
-	Board    [game.BoardSize][game.BoardSize]int `json:"board"`
+	Winner    int                                 `json:"winner"`
+	WinnerID  *uuid.UUID                          `json:"winner_id"`
+	Board     [game.BoardSize][game.BoardSize]int `json:"board"`
+	CreatedAt time.Time                           `json:"created_at"`
 }
 
 type CreateGameRequest struct {
