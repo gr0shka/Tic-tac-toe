@@ -94,6 +94,20 @@ func DTOToDomain(cgd CurrentGameDTO) *game.CurrentGame {
 	return cg
 }
 
+func DTOToLeaderBoard(pwr []PlayerWinRatioDTO) *game.LeaderBoard {
+	lb := game.NewLeaderBoard(len(pwr))
+	for _, player := range pwr {
+		pl, err := game.NewPlayerWinRatio(player.ID, player.Login, player.Wins, player.Loss, player.Draw, player.Ratio)
+		if err != nil {
+			continue
+		}
+
+		lb.Add(*pl)
+	}
+
+	return lb
+}
+
 func FlattenBoard(b [game.BoardSize][game.BoardSize]int) []int {
 	res := make([]int, 0, game.BoardSize*game.BoardSize)
 
