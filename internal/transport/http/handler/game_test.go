@@ -26,6 +26,11 @@ type mockAppService struct {
 	status  game.GameStatus
 }
 
+func (m mockAppService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m mockAppService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
 	return m.cg, m.outErr
 }
