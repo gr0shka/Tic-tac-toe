@@ -16,6 +16,15 @@ type appService struct {
 	tx          usecase.Transactor
 }
 
+func (a *appService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
+	endedGames, err := a.repository.AllEndedGames(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("repository.AllEndedGames: %w", err)
+	}
+
+	return endedGames, nil
+}
+
 func NewAppService(gameService service.GameService, rep GameRepository, tx usecase.Transactor) *appService {
 	return &appService{
 		gameService: gameService,
