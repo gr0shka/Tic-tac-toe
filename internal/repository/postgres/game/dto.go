@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -28,5 +30,6 @@ type CurrentGameDTO struct {
 	Status       string `db:"status"`
 	Winner       int    `db:"winner"`
 
-	WinnerID *uuid.UUID `db:"winner_id"`
+	WinnerID  *uuid.UUID `db:"winner_id"`
+	CreatedAt time.Time  `db:"created_at"`
 }
