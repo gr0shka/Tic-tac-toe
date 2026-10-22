@@ -38,10 +38,10 @@ type Postgres struct {
 }
 
 type JWT struct {
-	PublicKey  string
-	PrivateKey string
-	AccessTTL  time.Duration
-	RefreshTTL time.Duration
+	PublicFile  string
+	PrivateFile string
+	AccessTTL   time.Duration
+	RefreshTTL  time.Duration
 }
 
 func (p Postgres) ConnectionString() string {
@@ -81,31 +81,31 @@ func Load() (*Config, error) {
 	}
 
 	var accessTTL, refreshTTL time.Duration = time.Minute * 15, time.Hour * 24
-	aTTL := os.Getenv("JWT_ACCESS_TTL")
+	aTTL := os.Getenv("JWT_ACCESS_TIME")
 	if aTTL == "" {
-		slog.Error("JWT_ACCESS_TTL environment variable not set, used default value", "default", aTTL)
+		slog.Error("JWT_ACCESS_TIME environment variable not set, used default value", "default", aTTL)
 	} else {
 		accessTTL, err = time.ParseDuration(aTTL)
 		if err != nil {
-			slog.Error("JWT_ACCESS_TTL environment variable can not be parsed", "err", err)
+			slog.Error("JWT_ACCESS_TIME environment variable can not be parsed", "err", err)
 		}
 	}
 
-	rTTL := os.Getenv("JWT_REFRESH_TTL")
+	rTTL := os.Getenv("JWT_REFRESH_TIME")
 	if rTTL == "" {
-		slog.Error("JWT_REFRESH_TTL environment variable not set, used default value", "default", rTTL)
+		slog.Error("JWT_REFRESH_TIME environment variable not set, used default value", "default", rTTL)
 	} else {
 		refreshTTL, err = time.ParseDuration(rTTL)
 		if err != nil {
-			slog.Error("JWT_REFRESH_TTL environment variable can not be parsed", "err", err)
+			slog.Error("JWT_REFRESH_TIME environment variable can not be parsed", "err", err)
 		}
 	}
 
 	jwt := JWT{
-		PublicKey:  os.Getenv("JWT_PUBLIC_KEY"),
-		PrivateKey: os.Getenv("JWT_SECRET_KEY"),
-		AccessTTL:  accessTTL,
-		RefreshTTL: refreshTTL,
+		PublicFile:  os.Getenv("JWT_PUBLIC_FILE"),
+		PrivateFile: os.Getenv("JWT_SECRET_FILE"),
+		AccessTTL:   accessTTL,
+		RefreshTTL:  refreshTTL,
 	}
 
 	switch {
@@ -132,12 +132,12 @@ func Load() (*Config, error) {
 		slog.Error("No POSTGRES_DATABASE found")
 		return nil, fmt.Errorf("POSTGRES_DATABASE: %w", ErrConfigNotFound)
 
-	case jwt.PublicKey == "":
-		slog.Error("No JWT_PUBLIC_KEY found")
-		return nil, fmt.Errorf("JWT_PUBLIC_KEY: %w", ErrConfigNotFound)
-	case jwt.PrivateKey == "":
-		slog.Error("No JWT_SECRET_KEY found")
-		return nil, fmt.Errorf("JWT_SECRET_KEY: %w", ErrConfigNotFound)
+	case jwt.PublicFile == "":
+		slog.Error("No JWT_PUBLIC_FILE found")
+		return nil, fmt.Errorf("JWT_PUBLIC_FILE: %w", ErrConfigNotFound)
+	case jwt.PrivateFile == "":
+		slog.Error("No JWT_SECRET_FILE found")
+		return nil, fmt.Errorf("JWT_SECRET_FILE: %w", ErrConfigNotFound)
 	}
 
 	slog.Info("Config successfully loaded")
