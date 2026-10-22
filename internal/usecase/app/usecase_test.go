@@ -35,6 +35,11 @@ type mockRepository struct {
 	err     error
 }
 
+func (m mockRepository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m mockRepository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	return m.sliceCG, m.err
 }
