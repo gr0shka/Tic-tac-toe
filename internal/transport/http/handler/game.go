@@ -155,3 +155,27 @@ func (h *GameHandler) AllGames(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.Encode(data)
 }
+
+func (h *GameHandler) AllEndedGames(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userID, ok := middleware.UserIDFromContext(r.Context())
+	if !ok {
+		responseError(w, errors.New("user not in context"))
+		return
+	}
+
+	endedGames, err := h.service.AllEndedGamesByUserID(r.Context(), userID)
+	if err != nil {
+		responseError(w, err)
+		return
+	}
+
+	data := make([]dto.GameBoardResponse, len(endedGames))
+	for i, g := range endedGames {
+		data[i] = mapper.ToGameBoardResponse(g)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(data)
+}
