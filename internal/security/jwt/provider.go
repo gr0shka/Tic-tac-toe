@@ -13,7 +13,17 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 )
 
-type Provider struct {
+type Provider interface {
+	GenerateAccessToken(u user.User) (string, error)
+	GenerateRefreshToken(ctx context.Context, u user.User) (string, time.Time, error)
+	ValidateAccessToken(at string) (bool, error)
+	ValidateRefreshToken(ctx context.Context, rt string) (bool, error)
+	GetUserIDFromToken(t string) (uuid.UUID, error)
+	GetTokenIDFromToken(t string) (uuid.UUID, error)
+	UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, time.Time, error)
+}
+
+type provider struct {
 	repo       Repository
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
@@ -21,13 +31,13 @@ type Provider struct {
 	refreshTTL time.Duration
 }
 
-func NewProvider(cfg config.JWT, repo Repository) (*Provider, error) {
-	privateText, err := os.ReadFile(cfg.PrivateKey)
+func NewProvider(cfg config.JWT, repo Repository) (*provider, error) {
+	privateText, err := os.ReadFile(cfg.PrivateFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read privet key: %w", err)
 	}
 
-	publicText, err := os.ReadFile(cfg.PublicKey)
+	publicText, err := os.ReadFile(cfg.PublicFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read public key: %w", err)
 	}
@@ -42,7 +52,7 @@ func NewProvider(cfg config.JWT, repo Repository) (*Provider, error) {
 		return nil, fmt.Errorf("failed to parse public key: %w", err)
 	}
 
-	return &Provider{
+	return &provider{
 		repo:       repo,
 		privateKey: privateKey,
 		publicKey:  publicKey,
@@ -58,7 +68,7 @@ type Token struct {
 	IssuedAt  time.Time
 }
 
-func (p *Provider) GenerateAccessToken(u user.User) (string, error) {
+func (p *provider) GenerateAccessToken(u user.User) (string, error) {
 	t := Token{
 		ID:        uuid.New(),
 		UserID:    u.ID(),
@@ -82,7 +92,7 @@ func (p *Provider) GenerateAccessToken(u user.User) (string, error) {
 	return tokenString, nil
 }
 
-func (p *Provider) GenerateRefreshToken(ctx context.Context, u user.User) (string, time.Time, error) {
+func (p *provider) GenerateRefreshToken(ctx context.Context, u user.User) (string, time.Time, error) {
 
 	t := Token{
 		ID:        uuid.New(),
@@ -112,7 +122,7 @@ func (p *Provider) GenerateRefreshToken(ctx context.Context, u user.User) (strin
 	return tokenString, t.ExpiresAt, nil
 }
 
-func (p *Provider) ValidateAccessToken(at string) (bool, error) {
+func (p *provider) ValidateAccessToken(at string) (bool, error) {
 
 	token, err := jwt.Parse(at, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -132,7 +142,7 @@ func (p *Provider) ValidateAccessToken(at string) (bool, error) {
 	return true, nil
 }
 
-func (p *Provider) ValidateRefreshToken(ctx context.Context, rt string) (bool, error) {
+func (p *provider) ValidateRefreshToken(ctx context.Context, rt string) (bool, error) {
 
 	var claims jwt.RegisteredClaims
 	token, err := jwt.ParseWithClaims(rt, &claims, func(token *jwt.Token) (any, error) {
@@ -171,7 +181,7 @@ func (p *Provider) ValidateRefreshToken(ctx context.Context, rt string) (bool, e
 	return false, fmt.Errorf("%w: invalid token expired", ErrTokenExpired)
 }
 
-func (p *Provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
+func (p *provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
 
 	token, err := jwt.Parse(t, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -201,7 +211,7 @@ func (p *Provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
 	return userID, nil
 }
 
-func (p *Provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
+func (p *provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 
 	var claims jwt.RegisteredClaims
 	token, err := jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (any, error) {
@@ -227,7 +237,7 @@ func (p *Provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 	return tokenID, nil
 }
 
-func (p *Provider) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, time.Time, error) {
+func (p *provider) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, time.Time, error) {
 	if tokenID == uuid.Nil {
 		return "", time.Time{}, fmt.Errorf("%w: invalid token id", ErrInvalidArgument)
 	}
