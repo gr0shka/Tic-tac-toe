@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
@@ -26,6 +27,44 @@ func (m mockUserService) GetByLogin(ctx context.Context, login string) (*user.Us
 
 func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	return m.u, m.err
+}
+
+type mockJWTService struct {
+}
+
+func (m mockJWTService) GenerateAccessToken(u user.User) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockJWTService) GenerateRefreshToken(ctx context.Context, u user.User) (string, time.Time, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockJWTService) ValidateAccessToken(at string) (bool, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockJWTService) ValidateRefreshToken(ctx context.Context, rt string) (bool, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockJWTService) GetUserIDFromToken(t string) (uuid.UUID, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockJWTService) GetTokenIDFromToken(t string) (uuid.UUID, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockJWTService) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, time.Time, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func TestAuthenticateService_Authenticate(t *testing.T) {
@@ -79,16 +118,13 @@ func TestAuthenticateService_Authenticate(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			us := mockUserService{tc.user, tc.mockErr}
-			as := auth.NewAuthenticateService(us)
+			pr := mockJWTService{}
+			as := auth.NewAuthenticateService(us, pr)
 
-			gotUserID, err := as.Authenticate(context.Background(), tc.login, tc.password)
+			_, err := as.Authenticate(context.Background(), tc.login, tc.password)
 
 			if !errors.Is(err, tc.err) {
 				t.Errorf("error = %v, want = %v", err, tc.err)
-			}
-
-			if gotUserID != nil && *gotUserID != tc.user.ID() {
-				t.Errorf("gotUser.ID() = %v, want = %v", *gotUserID, tc.user.ID())
 			}
 		})
 	}
@@ -141,7 +177,8 @@ func TestAuthenticateService_Register(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			us := mockUserService{tc.user, tc.mockErr}
-			as := auth.NewAuthenticateService(us)
+			pr := mockJWTService{}
+			as := auth.NewAuthenticateService(us, pr)
 
 			req := auth.SignUpRequest{tc.login, tc.password}
 			err := as.Register(context.Background(), req)
