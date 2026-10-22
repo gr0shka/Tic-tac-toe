@@ -34,11 +34,24 @@ services:
       MIGRATION: true
       APP_HOST: 0.0.0.0
       APP_PORT: ${APP_PORT}
+      JWT_SECRET_FILE: /run/secrets/jwt_private_key
+      JWT_PUBLIC_FILE: /run/secrets/jwt_public_key
+      JWT_ACCESS_TIME: 15m
+      JWT_REFRESH_TIME: 720h
+    secrets:
+      - source: jwt_private_key
+      - source: jwt_public_key
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - backend-network
+
+secrets:
+  jwt_private_key:
+    file: ./secrets/jwt_private.pem
+  jwt_public_key:
+    file: ./secrets/jwt_public.pem
 
 volumes:
   postgres_data:
