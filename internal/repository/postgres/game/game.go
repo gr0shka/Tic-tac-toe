@@ -168,3 +168,31 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 
 	return nil
 }
+
+func (m *repository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
+	query := `SELECT * FROM current_game 
+        WHERE (player1_id = $1 OR player2_id = $1) AND (status = $2 OR status = $3)
+		ORDER BY created_at DESC`
+
+	rows, err := m.db.Query(ctx, query, userID, game.StatusDraw, game.StatusPlayerWins)
+	if err != nil {
+		return nil, fmt.Errorf("get all ended games: %w", err)
+	}
+	defer rows.Close()
+
+	dto, err := pgx.CollectRows(rows, pgx.RowToStructByName[CurrentGameDTO])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: no waiting games", game.ErrNotFound)
+		}
+
+		return nil, fmt.Errorf("all games collect rows: %w", err)
+	}
+
+	result := make([]*game.CurrentGame, len(dto))
+	for i, d := range dto {
+		result[i] = DTOToDomain(d)
+	}
+
+	return result, nil
+}
