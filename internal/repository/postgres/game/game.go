@@ -69,8 +69,9 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
      number_of_turn, 
      status, 
      winner,
-     winner_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+     winner_id,
+     created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	_, err := m.db.Exec(ctx, query,
 		dto.ID,
@@ -89,7 +90,8 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 		dto.NumberOfTurn,
 		dto.Status,
 		dto.Winner,
-		dto.WinnerID)
+		dto.WinnerID,
+		dto.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("save game with id = %s: %w", cg.ID(), err)
 	}
