@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
@@ -178,4 +179,32 @@ func (h *GameHandler) AllEndedGames(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
+}
+
+func (h *GameHandler) GetLeaderBoard(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	limit := r.URL.Query()["limit"]
+	if len(limit) != 1 {
+		responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, game.ErrInvalidArgument))
+		return
+	}
+
+	limitInt, err := strconv.Atoi(limit[0])
+	if err != nil {
+		responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, game.ErrInvalidArgument))
+		return
+	}
+
+	lb, err := h.service.GetLeaderBoard(r.Context(), limitInt)
+	if err != nil {
+		responseError(w, err)
+		return
+	}
+
+	data := mapper.ToLeaderBoardResponse(lb)
+
+	w.WriteHeader(http.StatusOK)
+	encoder := json.NewEncoder(w)
+	encoder.Encode(data)
 }
