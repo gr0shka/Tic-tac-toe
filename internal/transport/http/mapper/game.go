@@ -42,3 +42,24 @@ func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
 		CreatedAt: cg.CreatedAt(),
 	}
 }
+
+func ToLeaderBoardResponse(lb *game.LeaderBoard) dto.LeaderBoardResponse {
+	pr := make([]dto.PlayerWinRatioResponse, 0, lb.Length())
+
+	for _, pl := range lb.GetPlayers() {
+		player := dto.PlayerWinRatioResponse{
+			ID:    pl.ID(),
+			Login: pl.Login(),
+			Wins:  pl.Wins(),
+			Loss:  pl.Loss(),
+			Draw:  pl.Draw(),
+			Ratio: pl.Ratio(),
+		}
+
+		pr = append(pr, player)
+	}
+
+	return dto.LeaderBoardResponse{
+		Player: pr,
+	}
+}
