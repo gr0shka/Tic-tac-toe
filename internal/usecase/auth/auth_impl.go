@@ -14,7 +14,7 @@ import (
 
 type authenticateService struct {
 	us   userService.UserService
-	jwtP *jwt.Provider
+	jwtP jwt.Provider
 }
 
 func (as *authenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
@@ -26,7 +26,7 @@ func (as *authenticateService) AuthenticateByToken(token string) (uuid.UUID, err
 	return userID, nil
 }
 
-func NewAuthenticateService(us userService.UserService, jwtP *jwt.Provider) *authenticateService {
+func NewAuthenticateService(us userService.UserService, jwtP jwt.Provider) *authenticateService {
 	return &authenticateService{
 		us:   us,
 		jwtP: jwtP,
