@@ -21,12 +21,28 @@ type mockAuthenticateService struct {
 	err error
 }
 
-func (m mockAuthenticateService) Register(ctx context.Context, req auth.SignUpRequest) error {
-	return m.err
+func (m mockAuthenticateService) Authenticate(ctx context.Context, login, password string) (*auth.JwtResponse, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (m mockAuthenticateService) Authenticate(ctx context.Context, login, password string) (*uuid.UUID, error) {
-	return m.u, m.err
+func (m mockAuthenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockAuthenticateService) RefreshAccessToken(ctx context.Context, refreshToken string) (*auth.JwtResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockAuthenticateService) RefreshRefreshToken(ctx context.Context, refreshToken string) (*auth.JwtResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockAuthenticateService) Register(ctx context.Context, req auth.SignUpRequest) error {
+	return m.err
 }
 
 func TestHandler_Register(t *testing.T) {
