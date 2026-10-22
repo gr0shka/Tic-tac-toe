@@ -103,6 +103,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 	mux.Handle("POST /games/{uuid}/join", m.Authenticate(http.HandlerFunc(gh.JoinGame)))
 	mux.Handle("GET /games", m.Authenticate(http.HandlerFunc(gh.AllGames)))
 	mux.Handle("GET /games/ended", m.Authenticate(http.HandlerFunc(gh.AllEndedGames)))
+	mux.Handle("GET /leaderboard", m.Authenticate(http.HandlerFunc(gh.GetLeaderBoard)))
 
 	muxWithMiddleware := middleware.CORS(mux)
 	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
