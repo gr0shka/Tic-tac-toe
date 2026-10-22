@@ -31,3 +31,16 @@ type GameBoardResponse struct {
 type CreateGameRequest struct {
 	Mode string `json:"mode"`
 }
+
+type PlayerWinRatioResponse struct {
+	ID    uuid.UUID `json:"id"`
+	Login string    `json:"login"`
+	Wins  int       `json:"wins"`
+	Loss  int       `json:"loss"`
+	Draw  int       `json:"draw"`
+	Ratio float32   `json:"ratio"`
+}
+
+type LeaderBoardResponse struct {
+	Player []PlayerWinRatioResponse `json:"player"`
+}
