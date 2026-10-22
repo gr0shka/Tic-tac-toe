@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -26,6 +28,7 @@ type CurrentGame struct {
 	status       GameStatus
 	activePlayer *Player
 	winner       int
+	createdAt    time.Time
 }
 
 func NewCurrentGame(gb *GameBoard) *CurrentGame {
@@ -35,6 +38,7 @@ func NewCurrentGame(gb *GameBoard) *CurrentGame {
 		status:       StatusWaitingForPlayers,
 		winner:       -1,
 		activePlayer: nil,
+		createdAt:    time.Now(),
 	}
 }
 
@@ -78,4 +82,12 @@ func (c *CurrentGame) SetActivePlayer(p *Player) {
 
 func (c *CurrentGame) ActivePlayer() *Player {
 	return c.activePlayer
+}
+
+func (c *CurrentGame) CreatedAt() time.Time {
+	return c.createdAt
+}
+
+func (c *CurrentGame) SetCreatedAt(createdAt time.Time) {
+	c.createdAt = createdAt
 }
