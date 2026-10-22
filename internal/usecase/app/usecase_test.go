@@ -35,6 +35,11 @@ type mockRepository struct {
 	err     error
 }
 
+func (m mockRepository) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m mockRepository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
 	//TODO implement me
 	panic("implement me")
