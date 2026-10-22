@@ -33,3 +33,12 @@ type CurrentGameDTO struct {
 	WinnerID  *uuid.UUID `db:"winner_id"`
 	CreatedAt time.Time  `db:"created_at"`
 }
+
+type PlayerWinRatioDTO struct {
+	ID    uuid.UUID `db:"id"`
+	Login string    `db:"login"`
+	Wins  int       `db:"wins"`
+	Loss  int       `db:"loss"`
+	Draw  int       `db:"draw"`
+	Ratio float32   `db:"ratio"`
+}
