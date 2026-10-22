@@ -21,10 +21,12 @@ func (b *LeaderBoard) Add(player ...PlayerWinRatio) {
 }
 
 func (b *LeaderBoard) Clone() *LeaderBoard {
-	lb := NewLeaderBoard(len(b.players))
-	copy(lb.players, b.players)
+	players := make([]PlayerWinRatio, len(b.players))
+	copy(players, b.players)
 
-	return lb
+	return &LeaderBoard{
+		players: players,
+	}
 }
 
 func (b *LeaderBoard) GetPlayers() []PlayerWinRatio {
