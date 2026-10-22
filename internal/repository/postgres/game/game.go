@@ -16,6 +16,50 @@ type repository struct {
 	db *pgxpool.Pool
 }
 
+func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
+	query := `
+			WITH player_stats AS (
+				SELECT
+					users.id AS id,
+					users.login AS login,
+					COUNT(*) FILTER (WHERE status = $1) AS draw,
+					COUNT(*) FILTER (WHERE status = $2 and winner_id = users.id) AS wins,
+					COUNT(*) FILTER (WHERE status = $2 and winner_id != users.id) AS loss
+				FROM users
+				LEFT JOIN current_game cg 
+					ON (users.id = cg.player1_id OR users.id = cg.player2_id)
+						AND (cg.status = $1 OR cg.status = $2) 
+				GROUP BY users.id, users.login
+			)
+			
+			SELECT id, login, wins, loss, draw,
+				CASE
+					WHEN loss + draw = 0 AND wins = 0 THEN 0
+					WHEN loss + draw = 0 AND wins > 0 THEN wins::float
+					ELSE wins::float / (loss + draw)::float
+				END AS ratio
+			FROM player_stats
+			ORDER  BY ratio DESC
+			LIMIT $3
+			`
+
+	rows, err := m.db.Query(ctx, query, game.StatusDraw, game.StatusPlayerWins, count)
+	if err != nil {
+		return nil, fmt.Errorf("query get leader board: %w", err)
+	}
+	defer rows.Close()
+
+	dto, err := pgx.CollectRows(rows, pgx.RowToStructByName[PlayerWinRatioDTO])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: no rows for leader board", game.ErrNotFound)
+		}
+		return nil, fmt.Errorf("collect leader board: %w", err)
+	}
+
+	return DTOToLeaderBoard(dto), nil
+}
+
 func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	query := `SELECT * FROM current_game 
          WHERE player2_id IS NULL 
