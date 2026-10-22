@@ -36,8 +36,9 @@ func ToGameBoardResponse(cg *game.CurrentGame) dto.GameBoardResponse {
 		Player2Symbol: p2Symbol,
 		Player2ID:     p2ID,
 
-		Winner:   cg.Winner(),
-		WinnerID: winnerID,
-		Board:    cg.Board(),
+		Winner:    cg.Winner(),
+		WinnerID:  winnerID,
+		Board:     cg.Board(),
+		CreatedAt: cg.CreatedAt(),
 	}
 }
