@@ -103,7 +103,7 @@ func Load() (*Config, error) {
 
 	jwt := JWT{
 		PublicFile:  os.Getenv("JWT_PUBLIC_FILE"),
-		PrivateFile: os.Getenv("JWT_SECRET_FILE"),
+		PrivateFile: os.Getenv("JWT_PRIVATE_FILE"),
 		AccessTTL:   accessTTL,
 		RefreshTTL:  refreshTTL,
 	}
@@ -136,8 +136,8 @@ func Load() (*Config, error) {
 		slog.Error("No JWT_PUBLIC_FILE found")
 		return nil, fmt.Errorf("JWT_PUBLIC_FILE: %w", ErrConfigNotFound)
 	case jwt.PrivateFile == "":
-		slog.Error("No JWT_SECRET_FILE found")
-		return nil, fmt.Errorf("JWT_SECRET_FILE: %w", ErrConfigNotFound)
+		slog.Error("No JWT_PRIVATE_FILE found")
+		return nil, fmt.Errorf("JWT_PRIVATE_FILE: %w", ErrConfigNotFound)
 	}
 
 	slog.Info("Config successfully loaded")
