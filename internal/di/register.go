@@ -65,7 +65,7 @@ func CreateApp() fx.Option {
 			),
 			fx.Annotate(
 				token.NewTokenRepository,
-				fx.As(new(jwt.Repository)),
+				fx.As(new(auth.Repository)),
 			),
 			fx.Annotate(
 				jwt.NewProvider,
