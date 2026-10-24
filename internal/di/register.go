@@ -106,7 +106,6 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 	mux.Handle("GET /leaderboard", m.Authenticate(http.HandlerFunc(gh.GetLeaderBoard)))
 
 	muxWithMiddleware := middleware.CORS(mux)
-	muxWithMiddleware = middleware.SetHeaders(muxWithMiddleware)
 	muxWithMiddleware = middleware.RequestLogger(muxWithMiddleware)
 
 	srv := &http.Server{
