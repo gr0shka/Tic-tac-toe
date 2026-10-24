@@ -42,5 +42,5 @@ type PlayerWinRatioResponse struct {
 }
 
 type LeaderBoardResponse struct {
-	Player []PlayerWinRatioResponse `json:"player"`
+	Player []PlayerWinRatioResponse `json:"players"`
 }
