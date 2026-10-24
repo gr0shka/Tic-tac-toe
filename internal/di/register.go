@@ -68,7 +68,7 @@ func CreateApp() fx.Option {
 			),
 			fx.Annotate(
 				jwt.NewProvider,
-				fx.As(new(jwt.Provider)),
+				fx.As(new(auth.Provider)),
 			),
 			fx.Annotate(
 				auth.NewAuthenticateService,
