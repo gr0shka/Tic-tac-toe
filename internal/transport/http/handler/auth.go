@@ -2,13 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
-	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 )
@@ -145,32 +143,20 @@ func setRefreshTokenInCookie(w http.ResponseWriter, refreshToken string, refresh
 
 func extractToken(r *http.Request) (string, error) {
 
-	if r.Body != http.NoBody {
+	cookie, err := r.Cookie("refresh_token")
+	if err == nil && cookie.Value != "" {
+		return cookie.Value, nil
+	}
 
+	if r.Body != nil {
 		defer r.Body.Close()
 
 		var request dto.RefreshJwtRequest
-		err := json.NewDecoder(r.Body).Decode(&request)
-		if err != nil || request.RefreshToken == "" {
-			return "", fmt.Errorf("%w: error decoding refresh token in request body", jwt.ErrInvalidArgument)
+		err = json.NewDecoder(r.Body).Decode(&request)
+		if err == nil || request.RefreshToken != "" {
+			return request.RefreshToken, nil
 		}
-
-		return request.RefreshToken, nil
 	}
 
-	cookie, err := r.Cookie("refresh_token")
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			return "", fmt.Errorf("%w: refresh token not found in cookie", user.ErrInvalidCredentials)
-		}
-
-		return "", fmt.Errorf("refresh token required: %w", err)
-	}
-
-	refreshToken := cookie.Value
-	if refreshToken == "" {
-		return "", fmt.Errorf("%w: refresh token required", user.ErrInvalidCredentials)
-	}
-
-	return refreshToken, nil
+	return "", fmt.Errorf("%w: refresh token required in cookie or body", user.ErrInvalidCredentials)
 }
