@@ -153,7 +153,7 @@ func extractToken(r *http.Request) (string, error) {
 
 		var request dto.RefreshJwtRequest
 		err = json.NewDecoder(r.Body).Decode(&request)
-		if err == nil || request.RefreshToken != "" {
+		if err == nil && request.RefreshToken != "" {
 			return request.RefreshToken, nil
 		}
 	}
