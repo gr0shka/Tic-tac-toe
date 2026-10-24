@@ -211,6 +211,7 @@ func (a *appService) ProcessPlayerMove(
 		winner, ended := a.gameService.IsEnded(nextCg.Board())
 		nextCg.SetWinner(winner)
 		nextCg.SetStatus(ended)
+		nextCg.SetCreatedAt(current.CreatedAt())
 
 		nextCg, err = a.checkTurn(nextCg)
 		if err != nil {
