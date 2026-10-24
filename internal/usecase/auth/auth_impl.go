@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 	userService "github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,22 +16,30 @@ import (
 type authenticateService struct {
 	us   userService.UserService
 	jwtP jwt.Provider
+	repo Repository
+	tx   usecase.Transactor
 }
 
-func (as *authenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
-	userID, err := as.jwtP.ValidateAccessToken(token)
-	if err != nil || userID == uuid.Nil {
-		return uuid.Nil, fmt.Errorf("authenticate by token: %w", err)
-	}
-
-	return userID, nil
-}
-
-func NewAuthenticateService(us userService.UserService, jwtP jwt.Provider) *authenticateService {
+func NewAuthenticateService(us userService.UserService, jwtP jwt.Provider, repo Repository, tx usecase.Transactor) AuthenticateService {
 	return &authenticateService{
 		us:   us,
 		jwtP: jwtP,
+		repo: repo,
+		tx:   tx,
 	}
+}
+
+func (as *authenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
+	t, err := as.jwtP.ValidateAccessToken(token)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("validate access token: %w", err)
+	}
+
+	if t.UserID() == uuid.Nil {
+		return uuid.Nil, fmt.Errorf("%w: validate access token invalid user id", jwt.ErrInvalidArgument)
+	}
+
+	return t.UserID(), nil
 }
 
 func (as *authenticateService) Register(ctx context.Context, req SignUpRequest) error {
@@ -78,32 +87,38 @@ func (as *authenticateService) Authenticate(ctx context.Context, login, password
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
-	refreshToken, refreshTTL, err := as.jwtP.GenerateRefreshToken(ctx, *u)
+	refreshToken, err := as.jwtP.GenerateRefreshToken(*u)
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
 
+	err = as.repo.SaveRefreshToken(ctx, *refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("save refresh token: %w", err)
+	}
+
 	response := &JwtResponse{
 		Type:                  "Bearer",
-		AccessToken:           accessToken,
-		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: refreshTTL,
+		AccessToken:           accessToken.TokenString(),
+		RefreshToken:          refreshToken.TokenString(),
+		RefreshTokenExpiresAt: refreshToken.ExpiresAt(),
 	}
 
 	return response, nil
 }
 
 func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshToken string) (*JwtResponse, error) {
-	if ok, err := as.jwtP.ValidateRefreshToken(ctx, refreshToken); !ok || err != nil {
+	token, err := as.jwtP.ValidateRefreshToken(refreshToken)
+	if err != nil {
 		return nil, fmt.Errorf("validate refresh token: %w", err)
 	}
 
-	userID, err := as.jwtP.GetUserIDFromToken(refreshToken)
+	_, err = as.repo.GetRefreshTokenFromID(ctx, token.ID())
 	if err != nil {
-		return nil, fmt.Errorf("get user id from refresh token: %w", err)
+		return nil, fmt.Errorf("get refresh token: %w", err)
 	}
 
-	u, err := as.us.GetUserByID(ctx, userID)
+	u, err := as.us.GetUserByID(ctx, token.UserID())
 	if err != nil {
 		return nil, fmt.Errorf("get user by id from refresh token: %w", err)
 	}
@@ -115,7 +130,7 @@ func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshTo
 
 	response := &JwtResponse{
 		Type:         "Bearer",
-		AccessToken:  newAccessToken,
+		AccessToken:  newAccessToken.TokenString(),
 		RefreshToken: refreshToken,
 	}
 
@@ -123,27 +138,37 @@ func (as *authenticateService) RefreshAccessToken(ctx context.Context, refreshTo
 }
 
 func (as *authenticateService) RefreshRefreshToken(ctx context.Context, refreshToken string) (*JwtResponse, error) {
-	if ok, err := as.jwtP.ValidateRefreshToken(ctx, refreshToken); !ok || err != nil {
+	token, err := as.jwtP.ValidateRefreshToken(refreshToken)
+	if err != nil {
 		return nil, fmt.Errorf("validate refresh token: %w", err)
 	}
 
-	tokenID, err := as.jwtP.GetTokenIDFromToken(refreshToken)
-	if err != nil {
-		return nil, fmt.Errorf("get token id from refresh token: %w", err)
-	}
-
-	userID, err := as.jwtP.GetUserIDFromToken(refreshToken)
-	if err != nil {
-		return nil, fmt.Errorf("get user id from refresh token: %w", err)
-	}
-
-	u, err := as.us.GetUserByID(ctx, userID)
+	u, err := as.us.GetUserByID(ctx, token.UserID())
 	if err != nil {
 		return nil, fmt.Errorf("get user by id from refresh token: %w", err)
 	}
 
-	newRefreshToken, refreshTTL, err := as.jwtP.UpdateRefreshTokenFromID(ctx, tokenID, u)
-	if err != nil {
+	var newRefreshToken *jwt.Token
+	err = as.tx.Do(ctx, func(txCtx context.Context) error {
+
+		err = as.repo.DeleteRefreshToken(txCtx, token.ID())
+		if err != nil {
+			return fmt.Errorf("delete refresh token: %w", err)
+		}
+
+		newRefreshToken, err = as.jwtP.GenerateRefreshToken(*u)
+		if err != nil {
+			return fmt.Errorf("generate new refresh token: %w", err)
+		}
+
+		err = as.repo.SaveRefreshToken(txCtx, *newRefreshToken)
+		if err != nil {
+			return fmt.Errorf("save new refresh token: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil || newRefreshToken == nil {
 		return nil, fmt.Errorf("update refresh token: %w", err)
 	}
 
@@ -154,9 +179,9 @@ func (as *authenticateService) RefreshRefreshToken(ctx context.Context, refreshT
 
 	response := &JwtResponse{
 		Type:                  "Bearer",
-		AccessToken:           newAccessToken,
-		RefreshToken:          newRefreshToken,
-		RefreshTokenExpiresAt: refreshTTL,
+		AccessToken:           newAccessToken.TokenString(),
+		RefreshToken:          newRefreshToken.TokenString(),
+		RefreshTokenExpiresAt: newRefreshToken.ExpiresAt(),
 	}
 
 	return response, nil
