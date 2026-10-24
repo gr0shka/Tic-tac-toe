@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -32,22 +32,22 @@ func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 type mockJWTService struct {
 }
 
-func (m mockJWTService) GenerateAccessToken(u user.User) (string, error) {
+func (m mockJWTService) GenerateAccessToken(u user.User) (*jwt.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockJWTService) GenerateRefreshToken(ctx context.Context, u user.User) (string, time.Time, error) {
+func (m mockJWTService) GenerateRefreshToken(u user.User) (*jwt.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockJWTService) ValidateAccessToken(at string) (bool, error) {
+func (m mockJWTService) ValidateAccessToken(at string) (*jwt.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockJWTService) ValidateRefreshToken(ctx context.Context, rt string) (bool, error) {
+func (m mockJWTService) ValidateRefreshToken(rt string) (*jwt.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -62,7 +62,28 @@ func (m mockJWTService) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 	panic("implement me")
 }
 
-func (m mockJWTService) UpdateRefreshTokenFromID(ctx context.Context, tokenID uuid.UUID, u *user.User) (string, time.Time, error) {
+type mockRepo struct {
+}
+
+func (m mockRepo) SaveRefreshToken(ctx context.Context, t jwt.Token) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockRepo) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*jwt.Token, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockRepo) DeleteRefreshToken(ctx context.Context, id uuid.UUID) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+type mockTransactor struct {
+}
+
+func (m mockTransactor) Do(ctx context.Context, fn func(txCtx context.Context) error) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -119,7 +140,9 @@ func TestAuthenticateService_Authenticate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			us := mockUserService{tc.user, tc.mockErr}
 			pr := mockJWTService{}
-			as := auth.NewAuthenticateService(us, pr)
+			repo := mockRepo{}
+			tx := mockTransactor{}
+			as := auth.NewAuthenticateService(us, pr, repo, tx)
 
 			_, err := as.Authenticate(context.Background(), tc.login, tc.password)
 
@@ -178,7 +201,9 @@ func TestAuthenticateService_Register(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			us := mockUserService{tc.user, tc.mockErr}
 			pr := mockJWTService{}
-			as := auth.NewAuthenticateService(us, pr)
+			repo := mockRepo{}
+			tx := mockTransactor{}
+			as := auth.NewAuthenticateService(us, pr, repo, tx)
 
 			req := auth.SignUpRequest{tc.login, tc.password}
 			err := as.Register(context.Background(), req)
