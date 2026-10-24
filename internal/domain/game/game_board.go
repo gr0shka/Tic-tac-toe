@@ -34,10 +34,18 @@ func NewGameBoard() *GameBoard {
 }
 
 func (gb *GameBoard) Clone() *GameBoard {
+	players := make([]*Player, 0, len(gb.players))
+	for _, player := range gb.players {
+
+		np := NewPlayer(player.ID(), player.Symbol(), player.IsRealPlayer())
+
+		players = append(players, np)
+	}
+
 	clone := &GameBoard{
 		board:        gb.board,
 		numberOfTurn: gb.numberOfTurn,
-		players:      gb.players,
+		players:      players,
 	}
 	return clone
 }
