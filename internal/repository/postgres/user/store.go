@@ -22,7 +22,10 @@ func New(db *pgxpool.Pool) *repository {
 }
 
 func (r repository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
-	query := `SELECT * FROM users WHERE id = $1`
+	query := `
+			SELECT id, login, password 
+			FROM users 
+			WHERE id = $1`
 
 	rows, err := r.db.Query(ctx, query, id)
 	if err != nil {
@@ -61,7 +64,10 @@ func (r repository) Save(ctx context.Context, u *user.User) error {
 }
 
 func (r repository) GetByLogin(ctx context.Context, login string) (*user.User, error) {
-	query := "SELECT * FROM users WHERE login = $1"
+	query := `
+			SELECT id, login, password 
+			FROM users 
+			WHERE login = $1`
 
 	rows, err := r.db.Query(ctx, query, login)
 	if err != nil {

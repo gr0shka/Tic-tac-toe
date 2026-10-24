@@ -61,9 +61,30 @@ func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 }
 
 func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
-	query := `SELECT * FROM current_game 
-         WHERE player2_id IS NULL 
-         LIMIT 50`
+	query := `
+			SELECT     
+			    (id,
+			     
+				 player1_id, 
+				 player1_real,
+				 player1_symbol,
+				 
+				 player2_id, 
+				 player2_real,
+				 player2_symbol,
+				 
+				 active_player_id,
+				 
+				 board, 
+				 number_of_turn, 
+				 status, 
+				 winner,
+				 winner_id,
+				 created_at)
+			
+    		FROM current_game 
+        	WHERE player2_id IS NULL 
+        	LIMIT 50`
 
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
@@ -144,7 +165,29 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 }
 
 func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
-	query := `SELECT * FROM current_game WHERE id = $1`
+	query := `
+			SELECT     
+			    (id,
+     
+				 player1_id, 
+				 player1_real,
+				 player1_symbol,
+				 
+				 player2_id, 
+				 player2_real,
+				 player2_symbol,
+				 
+				 active_player_id,
+				 
+				 board, 
+				 number_of_turn, 
+				 status, 
+				 winner,
+				 winner_id,
+				 created_at)
+			
+			FROM current_game 
+			WHERE id = $1`
 
 	db := transactor.GetExecutor(ctx, m.db)
 
@@ -214,7 +257,28 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 }
 
 func (m *repository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
-	query := `SELECT * FROM current_game 
+	query := `
+		SELECT     
+		    (id,
+     
+			 player1_id, 
+			 player1_real,
+			 player1_symbol,
+			 
+			 player2_id, 
+			 player2_real,
+			 player2_symbol,
+			 
+			 active_player_id,
+			 
+			 board, 
+			 number_of_turn, 
+			 status, 
+			 winner,
+			 winner_id,
+			 created_at)
+		
+		FROM current_game 
         WHERE (player1_id = $1 OR player2_id = $1) AND (status = $2 OR status = $3)
 		ORDER BY created_at DESC`
 
