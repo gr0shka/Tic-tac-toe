@@ -145,7 +145,7 @@ func setRefreshTokenInCookie(w http.ResponseWriter, refreshToken string, refresh
 
 func extractToken(r *http.Request) (string, error) {
 
-	if r.ContentLength > 0 {
+	if r.Body != http.NoBody {
 
 		defer r.Body.Close()
 
