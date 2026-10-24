@@ -39,6 +39,7 @@ func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 					ELSE wins::float / (loss + draw)::float
 				END AS ratio
 			FROM player_stats
+			WHERE wins > 0
 			ORDER  BY ratio DESC, wins DESC, loss ASC, draw DESC
 			LIMIT $3
 			`
