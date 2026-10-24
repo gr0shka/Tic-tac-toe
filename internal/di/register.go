@@ -87,6 +87,7 @@ func CreateApp() fx.Option {
 
 func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHandler, ah *handler.AuthHandler, m *middleware.UserAuthenticator, cfg *config.Config, pool *pgxpool.Pool) {
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("POST /user/register", ah.Register)
 	mux.HandleFunc("POST /user/auth", ah.Authenticate)
 
@@ -106,6 +107,7 @@ func RegisterServer(lc fx.Lifecycle, gh *handler.GameHandler, uh *handler.UserHa
 
 	muxWithMiddleware := middleware.CORS(mux)
 	muxWithMiddleware = middleware.RequestLogger(muxWithMiddleware)
+	muxWithMiddleware = middleware.Recovery(muxWithMiddleware)
 
 	srv := &http.Server{
 		Addr:         cfg.App.Host + ":" + cfg.App.Port,
