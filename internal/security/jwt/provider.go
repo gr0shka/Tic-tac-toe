@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -104,6 +105,10 @@ func (p *provider) ValidateAccessToken(at string) (*Token, error) {
 	})
 
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrTokenExpired
+		}
+
 		return nil, fmt.Errorf("unable to parse token: %w", err)
 	}
 
@@ -141,6 +146,10 @@ func (p *provider) ValidateRefreshToken(rt string) (*Token, error) {
 		return p.publicKey, nil
 	})
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrTokenExpired
+		}
+
 		return nil, fmt.Errorf("unable to parse token: %w", err)
 	}
 
@@ -168,11 +177,7 @@ func (p *provider) ValidateRefreshToken(rt string) (*Token, error) {
 
 	t := NewTokenWithFields(tokenID, userID, rt, claims.ExpiresAt.Time, claims.IssuedAt.Time)
 
-	if t.ExpiresAt().After(time.Now()) {
-		return t, nil
-	}
-
-	return nil, fmt.Errorf("%w: invalid token expired", ErrTokenExpired)
+	return t, nil
 }
 
 func (p *provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
@@ -185,6 +190,10 @@ func (p *provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
 		return p.publicKey, nil
 	})
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return uuid.Nil, ErrTokenExpired
+		}
+
 		return uuid.Nil, fmt.Errorf("unable to parse token: %w", err)
 	}
 
@@ -216,6 +225,10 @@ func (p *provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 		return p.publicKey, nil
 	})
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return uuid.Nil, ErrTokenExpired
+		}
+
 		return uuid.Nil, fmt.Errorf("unable to parse token: %w", err)
 	}
 
