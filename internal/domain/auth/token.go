@@ -1,9 +1,8 @@
-package jwt
+package auth
 
 import (
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -13,23 +12,6 @@ const (
 	TokenTypeAccess  TokenType = "access"
 	TokenTypeRefresh TokenType = "refresh"
 )
-
-type Claims struct {
-	jwt.RegisteredClaims
-	TokenType TokenType `json:"token_type"`
-}
-
-func NewClaims(t *Token, tt TokenType) *Claims {
-	return &Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        t.ID().String(),
-			Subject:   t.UserID().String(),
-			ExpiresAt: jwt.NewNumericDate(t.ExpiresAt()),
-			IssuedAt:  jwt.NewNumericDate(t.IssuedAt()),
-		},
-		TokenType: tt,
-	}
-}
 
 type Token struct {
 	id        uuid.UUID
