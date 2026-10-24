@@ -184,16 +184,22 @@ func (h *GameHandler) AllEndedGames(w http.ResponseWriter, r *http.Request) {
 func (h *GameHandler) GetLeaderBoard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	limit := r.URL.Query()["limit"]
-	if len(limit) != 1 {
-		responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, game.ErrInvalidArgument))
-		return
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	limitInt := 10
+
+	limit := r.URL.Query().Get("limit")
+
+	if limit != "" {
+		val, err := strconv.Atoi(limit)
+		if err != nil {
+			responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, game.ErrInvalidArgument))
+			return
+		}
+		limitInt = val
 	}
 
-	limitInt, err := strconv.Atoi(limit[0])
-	if err != nil {
-		responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, game.ErrInvalidArgument))
-		return
+	if limitInt > 100 {
+		limitInt = 100
 	}
 
 	lb, err := h.service.GetLeaderBoard(r.Context(), limitInt)
