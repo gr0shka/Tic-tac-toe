@@ -10,16 +10,25 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 )
 
-type Provider interface {
-	GenerateAccessToken(u user.User) (*Token, error)
-	GenerateRefreshToken(u user.User) (*Token, error)
-	ValidateAccessToken(at string) (*Token, error)
-	ValidateRefreshToken(rt string) (*Token, error)
-	GetUserIDFromToken(t string) (uuid.UUID, error)
-	GetTokenIDFromToken(t string) (uuid.UUID, error)
+type Claims struct {
+	jwt.RegisteredClaims
+	TokenType auth.TokenType `json:"token_type"`
+}
+
+func NewClaims(t *auth.Token, tt auth.TokenType) *Claims {
+	return &Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        t.ID().String(),
+			Subject:   t.UserID().String(),
+			ExpiresAt: jwt.NewNumericDate(t.ExpiresAt()),
+			IssuedAt:  jwt.NewNumericDate(t.IssuedAt()),
+		},
+		TokenType: tt,
+	}
 }
 
 type provider struct {
@@ -29,7 +38,7 @@ type provider struct {
 	refreshTTL time.Duration
 }
 
-func NewProvider(cfg config.JWT) (Provider, error) {
+func NewProvider(cfg config.JWT) (*provider, error) {
 	privateText, err := os.ReadFile(cfg.PrivateFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key: %w", err)
@@ -58,28 +67,10 @@ func NewProvider(cfg config.JWT) (Provider, error) {
 	}, nil
 }
 
-func (p *provider) GenerateAccessToken(u user.User) (*Token, error) {
-	t := NewToken(u.ID(), p.accessTTL)
+func (p *provider) GenerateAccessToken(u user.User) (*auth.Token, error) {
+	t := auth.NewToken(u.ID(), p.accessTTL)
 
-	claims := NewClaims(t, TokenTypeAccess)
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	tokenString, err := token.SignedString(p.privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("unable to sign token: %w", err)
-	}
-
-	t.SetTokenString(tokenString)
-
-	return t, nil
-}
-
-func (p *provider) GenerateRefreshToken(u user.User) (*Token, error) {
-
-	t := NewToken(u.ID(), p.refreshTTL)
-
-	claims := NewClaims(t, TokenTypeRefresh)
+	claims := NewClaims(t, auth.TokenTypeAccess)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
@@ -93,12 +84,30 @@ func (p *provider) GenerateRefreshToken(u user.User) (*Token, error) {
 	return t, nil
 }
 
-func (p *provider) ValidateAccessToken(at string) (*Token, error) {
+func (p *provider) GenerateRefreshToken(u user.User) (*auth.Token, error) {
+
+	t := auth.NewToken(u.ID(), p.refreshTTL)
+
+	claims := NewClaims(t, auth.TokenTypeRefresh)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+	tokenString, err := token.SignedString(p.privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("unable to sign token: %w", err)
+	}
+
+	t.SetTokenString(tokenString)
+
+	return t, nil
+}
+
+func (p *provider) ValidateAccessToken(at string) (*auth.Token, error) {
 
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(at, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidArgument, token.Header["alg"])
+			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidToken, token.Header["alg"])
 		}
 
 		return p.publicKey, nil
@@ -109,38 +118,46 @@ func (p *provider) ValidateAccessToken(at string) (*Token, error) {
 			return nil, ErrTokenExpired
 		}
 
-		return nil, fmt.Errorf("unable to parse token: %w", err)
+		return nil, fmt.Errorf("%w: unable to parse token: %v", ErrInvalidToken, err)
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("%w: invalid token", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid token", ErrInvalidToken)
 	}
 
-	if claims.TokenType != TokenTypeAccess {
-		return nil, fmt.Errorf("%w: invalid token type", ErrInvalidArgument)
+	if claims.TokenType != auth.TokenTypeAccess {
+		return nil, fmt.Errorf("%w: invalid token type", ErrInvalidToken)
 	}
 
 	userID, err := uuid.Parse(claims.Subject)
 	if err != nil {
-		return nil, fmt.Errorf("%w: invalid user id parse", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid user id parse", ErrInvalidToken)
 	}
 
 	tokenID, err := uuid.Parse(claims.ID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: invalid token id parse", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid token id parse", ErrInvalidToken)
 	}
 
-	t := NewTokenWithFields(tokenID, userID, at, claims.ExpiresAt.Time, claims.IssuedAt.Time)
+	if claims.ExpiresAt == nil {
+		return nil, fmt.Errorf("%w: invalid token expires at parse", ErrInvalidToken)
+	}
+
+	if claims.IssuedAt == nil {
+		return nil, fmt.Errorf("%w: invalid token issued at parse", ErrInvalidToken)
+	}
+
+	t := auth.NewTokenWithFields(tokenID, userID, at, claims.ExpiresAt.Time, claims.IssuedAt.Time)
 
 	return t, nil
 }
 
-func (p *provider) ValidateRefreshToken(rt string) (*Token, error) {
+func (p *provider) ValidateRefreshToken(rt string) (*auth.Token, error) {
 
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(rt, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidArgument, token.Header["alg"])
+			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidToken, token.Header["alg"])
 		}
 
 		return p.publicKey, nil
@@ -150,32 +167,40 @@ func (p *provider) ValidateRefreshToken(rt string) (*Token, error) {
 			return nil, ErrTokenExpired
 		}
 
-		return nil, fmt.Errorf("unable to parse token: %w", err)
+		return nil, fmt.Errorf("%w: unable to parse token: %v", ErrInvalidToken, err)
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("%w: invalid token", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid token", ErrInvalidToken)
 	}
 
 	if claims.ID == "" {
-		return nil, fmt.Errorf("%w: invalid token id", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid token id", ErrInvalidToken)
 	}
 
-	if claims.TokenType != TokenTypeRefresh {
-		return nil, fmt.Errorf("%w: invalid token type", ErrInvalidArgument)
+	if claims.TokenType != auth.TokenTypeRefresh {
+		return nil, fmt.Errorf("%w: invalid token type", ErrInvalidToken)
 	}
 
 	tokenID, err := uuid.Parse(claims.ID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: invalid parse token id", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid parse token id", ErrInvalidToken)
 	}
 
 	userID, err := uuid.Parse(claims.Subject)
 	if err != nil {
-		return nil, fmt.Errorf("%w: invalid user id parse", ErrInvalidArgument)
+		return nil, fmt.Errorf("%w: invalid user id parse", ErrInvalidToken)
 	}
 
-	t := NewTokenWithFields(tokenID, userID, rt, claims.ExpiresAt.Time, claims.IssuedAt.Time)
+	if claims.ExpiresAt == nil {
+		return nil, fmt.Errorf("%w: invalid token expires at parse", ErrInvalidToken)
+	}
+
+	if claims.IssuedAt == nil {
+		return nil, fmt.Errorf("%w: invalid token issued at parse", ErrInvalidToken)
+	}
+
+	t := auth.NewTokenWithFields(tokenID, userID, rt, claims.ExpiresAt.Time, claims.IssuedAt.Time)
 
 	return t, nil
 }
@@ -184,7 +209,7 @@ func (p *provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
 
 	token, err := jwt.Parse(t, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidArgument, token.Header["alg"])
+			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidToken, token.Header["alg"])
 		}
 
 		return p.publicKey, nil
@@ -194,21 +219,21 @@ func (p *provider) GetUserIDFromToken(t string) (uuid.UUID, error) {
 			return uuid.Nil, ErrTokenExpired
 		}
 
-		return uuid.Nil, fmt.Errorf("unable to parse token: %w", err)
+		return uuid.Nil, fmt.Errorf("%w: unable to parse token: %v", ErrInvalidToken, err)
 	}
 
 	if !token.Valid {
-		return uuid.Nil, fmt.Errorf("%w: invalid token", ErrInvalidArgument)
+		return uuid.Nil, fmt.Errorf("%w: invalid token", ErrInvalidToken)
 	}
 
 	userIDStr, err := token.Claims.GetSubject()
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("%w: unable to get user ID", ErrInvalidArgument)
+		return uuid.Nil, fmt.Errorf("%w: unable to get user ID", ErrInvalidToken)
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("%w: unable to parse user ID", ErrInvalidArgument)
+		return uuid.Nil, fmt.Errorf("%w: unable to parse user ID", ErrInvalidToken)
 	}
 
 	return userID, nil
@@ -219,7 +244,7 @@ func (p *provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 	var claims jwt.RegisteredClaims
 	token, err := jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidArgument, token.Header["alg"])
+			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrInvalidToken, token.Header["alg"])
 		}
 
 		return p.publicKey, nil
@@ -229,16 +254,16 @@ func (p *provider) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 			return uuid.Nil, ErrTokenExpired
 		}
 
-		return uuid.Nil, fmt.Errorf("unable to parse token: %w", err)
+		return uuid.Nil, fmt.Errorf("%w: unable to parse token: %v", ErrInvalidToken, err)
 	}
 
 	if !token.Valid {
-		return uuid.Nil, fmt.Errorf("%w: invalid token", ErrInvalidArgument)
+		return uuid.Nil, fmt.Errorf("%w: invalid token", ErrInvalidToken)
 	}
 
 	tokenID, err := uuid.Parse(claims.ID)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("%w: unable to parse token ID", ErrInvalidArgument)
+		return uuid.Nil, fmt.Errorf("%w: unable to parse token ID", ErrInvalidToken)
 	}
 
 	return tokenID, nil
