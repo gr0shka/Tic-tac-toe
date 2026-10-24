@@ -190,7 +190,7 @@ func (a *appService) ProcessPlayerMove(
 
 		if current.IsEnded() {
 			resultCG = current
-			return nil
+			return fmt.Errorf("%w: game is ended", game.ErrInvalidMove)
 		}
 
 		if current.ActivePlayer() == nil || current.ActivePlayer().ID() != playerID {
