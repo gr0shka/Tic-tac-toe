@@ -39,7 +39,7 @@ func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 					ELSE wins::float / (loss + draw)::float
 				END AS ratio
 			FROM player_stats
-			ORDER  BY ratio DESC
+			ORDER  BY ratio DESC, wins DESC, loss ASC, draw DESC
 			LIMIT $3
 			`
 
@@ -65,7 +65,7 @@ func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	query := `
 			SELECT     
-			    (id,
+			    id,
 			     
 				 player1_id, 
 				 player1_real,
@@ -82,7 +82,7 @@ func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) 
 				 status, 
 				 winner,
 				 winner_id,
-				 created_at)
+				 created_at
 			
     		FROM current_game 
         	WHERE player2_id IS NULL 
@@ -173,7 +173,7 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
 func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	query := `
 			SELECT     
-			    (id,
+			    id,
      
 				 player1_id, 
 				 player1_real,
@@ -190,7 +190,7 @@ func (m *repository) Get(ctx context.Context, id uuid.UUID) (*game.CurrentGame, 
 				 status, 
 				 winner,
 				 winner_id,
-				 created_at)
+				 created_at
 			
 			FROM current_game 
 			WHERE id = $1`
@@ -265,7 +265,7 @@ func (m *repository) Update(ctx context.Context, cg *game.CurrentGame) error {
 func (m *repository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
 	query := `
 		SELECT     
-		    (id,
+		    id,
      
 			 player1_id, 
 			 player1_real,
@@ -282,7 +282,7 @@ func (m *repository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*ga
 			 status, 
 			 winner,
 			 winner_id,
-			 created_at)
+			 created_at
 		
 		FROM current_game 
         WHERE (player1_id = $1 OR player2_id = $1) AND (status = $2 OR status = $3)
