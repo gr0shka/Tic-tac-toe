@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	auth2 "github.com/gr0shka/Tic-tac-toe/internal/domain/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
-	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -32,22 +32,22 @@ func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 type mockJWTService struct {
 }
 
-func (m mockJWTService) GenerateAccessToken(u user.User) (*jwt.Token, error) {
+func (m mockJWTService) GenerateAccessToken(u user.User) (*auth2.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockJWTService) GenerateRefreshToken(u user.User) (*jwt.Token, error) {
+func (m mockJWTService) GenerateRefreshToken(u user.User) (*auth2.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockJWTService) ValidateAccessToken(at string) (*jwt.Token, error) {
+func (m mockJWTService) ValidateAccessToken(at string) (*auth2.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockJWTService) ValidateRefreshToken(rt string) (*jwt.Token, error) {
+func (m mockJWTService) ValidateRefreshToken(rt string) (*auth2.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -65,12 +65,12 @@ func (m mockJWTService) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 type mockRepo struct {
 }
 
-func (m mockRepo) SaveRefreshToken(ctx context.Context, t jwt.Token) error {
+func (m mockRepo) SaveRefreshToken(ctx context.Context, t auth2.Token) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m mockRepo) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*jwt.Token, error) {
+func (m mockRepo) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*auth2.Token, error) {
 	//TODO implement me
 	panic("implement me")
 }
