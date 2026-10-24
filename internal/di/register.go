@@ -30,7 +30,6 @@ import (
 func CreateApp() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			context.Background,
 			config.Load,
 			func(conf *config.Config) config.Postgres {
 				return conf.Postgres
