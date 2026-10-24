@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -48,7 +49,8 @@ func (ua *UserAuthenticator) Authenticate(next http.Handler) http.Handler {
 
 		uID, err := ua.service.AuthenticateByToken(tokenString)
 		if err != nil {
-			writeUnauthorizedJSON(w, err.Error())
+			writeUnauthorizedJSON(w, "Invalid token")
+			slog.Error("Failed to authenticate user", "error", err)
 			return
 		}
 
