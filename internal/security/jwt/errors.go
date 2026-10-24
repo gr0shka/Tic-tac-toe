@@ -3,7 +3,7 @@ package jwt
 import "errors"
 
 var (
-	ErrNotFound        = errors.New("not found")
-	ErrInvalidArgument = errors.New("invalid argument")
-	ErrTokenExpired    = errors.New("token expired")
+	ErrNotFound     = errors.New("not found")
+	ErrTokenExpired = errors.New("token expired")
+	ErrInvalidToken = errors.New("invalid token")
 )
