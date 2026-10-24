@@ -18,30 +18,45 @@ type repository struct {
 
 func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
 	query := `
-			WITH player_stats AS (
+			WITH complete_games AS (
+				SELECT player1_id AS user_id, status, winner_id
+				FROM current_game
+				WHERE status IN ($1, $2)
+				UNION ALL
+				SELECT player2_id AS user_id, status, winner_id
+				WHERE status IN ($1, $2) AND player2_id IS NOT NULL
+			),
+
+			user_status AS (
 				SELECT
-					users.id AS id,
-					users.login AS login,
+					user_id,
 					COUNT(*) FILTER (WHERE status = $1) AS draw,
-					COUNT(*) FILTER (WHERE status = $2 and winner_id = users.id) AS wins,
-					COUNT(*) FILTER (WHERE status = $2 and winner_id != users.id) AS loss
-				FROM users
-				LEFT JOIN current_game cg 
-					ON (users.id = cg.player1_id OR users.id = cg.player2_id)
-						AND (cg.status = $1 OR cg.status = $2) 
-				GROUP BY users.id, users.login
+					COUNT(*) FILTER (WHERE status = $2 and winner_id = user_id) AS wins,
+					COUNT(*) FILTER (WHERE status = $2 and winner_id != user_id) AS loss
+				FROM complete_games
+				GROUP BY user_id
+
+			), top_players AS (
+				SELECT user_id, wins, loss, draw,
+					CASE
+						WHEN (wins + loss + draw) = 0 THEN 0.0
+						ELSE wins::float / (wins + loss + draw)::float
+					END AS ratio
+				FROM user_status
+				ORDER  BY ratio DESC, wins DESC, loss ASC, draw DESC
+				LIMIT $3
 			)
 			
-			SELECT id, login, wins, loss, draw,
-				CASE
-					WHEN loss + draw = 0 AND wins = 0 THEN 0
-					WHEN loss + draw = 0 AND wins > 0 THEN wins::float
-					ELSE wins::float / (loss + draw)::float
-				END AS ratio
-			FROM player_stats
-			WHERE wins > 0
-			ORDER  BY ratio DESC, wins DESC, loss ASC, draw DESC
-			LIMIT $3
+			SELECT 
+				u.id AS id, 
+				u.login AS login, 
+				tp.wins AS wins, 
+				tp.loss AS loss, 
+				tp.draw AS draw, 
+				tp.ratio AS ratio
+			FROM top_players tp
+			LEFT JOIN users u ON u.id = tp.user_id
+			ORDER BY ratio DESC, wins DESC, loss ASC, draw DESC
 			`
 
 	db := transactor.GetExecutor(ctx, m.db)
