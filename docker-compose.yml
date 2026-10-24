@@ -34,7 +34,7 @@ services:
       MIGRATION: true
       APP_HOST: 0.0.0.0
       APP_PORT: ${APP_PORT}
-      JWT_SECRET_FILE: /run/secrets/jwt_private_key
+      JWT_PRIVATE_FILE: /run/secrets/jwt_private_key
       JWT_PUBLIC_FILE: /run/secrets/jwt_public_key
       JWT_ACCESS_TIME: 15m
       JWT_REFRESH_TIME: 720h
