@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
@@ -13,14 +14,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const bcryptMaxBytes = 72
+
 type authenticateService struct {
 	us   userService.UserService
-	jwtP jwt.Provider
+	jwtP Provider
 	repo Repository
 	tx   usecase.Transactor
 }
 
-func NewAuthenticateService(us userService.UserService, jwtP jwt.Provider, repo Repository, tx usecase.Transactor) AuthenticateService {
+func NewAuthenticateService(us userService.UserService, jwtP Provider, repo Repository, tx usecase.Transactor) AuthenticateService {
 	return &authenticateService{
 		us:   us,
 		jwtP: jwtP,
@@ -36,7 +39,7 @@ func (as *authenticateService) AuthenticateByToken(token string) (uuid.UUID, err
 	}
 
 	if t.UserID() == uuid.Nil {
-		return uuid.Nil, fmt.Errorf("%w: validate access token invalid user id", jwt.ErrInvalidArgument)
+		return uuid.Nil, fmt.Errorf("%w: validate access token invalid user id", jwt.ErrInvalidToken)
 	}
 
 	return t.UserID(), nil
@@ -148,7 +151,7 @@ func (as *authenticateService) RefreshRefreshToken(ctx context.Context, refreshT
 		return nil, fmt.Errorf("get user by id from refresh token: %w", err)
 	}
 
-	var newRefreshToken *jwt.Token
+	var newRefreshToken *auth.Token
 	err = as.tx.Do(ctx, func(txCtx context.Context) error {
 
 		err = as.repo.DeleteRefreshToken(txCtx, token.ID())
@@ -193,6 +196,9 @@ func validateData(login, password string) error {
 	}
 	if password == "" {
 		return fmt.Errorf("%w: password cannot be empty", user.ErrInvalidArgument)
+	}
+	if len(password) > bcryptMaxBytes {
+		return fmt.Errorf("%w: password is too long", user.ErrInvalidArgument)
 	}
 
 	return nil
