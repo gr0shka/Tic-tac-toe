@@ -21,8 +21,7 @@ func responseError(w http.ResponseWriter, err error) {
 
 	switch {
 	case errors.Is(err, game.ErrNotFound),
-		errors.Is(err, user.ErrUserNotFound),
-		errors.Is(err, jwt.ErrNotFound):
+		errors.Is(err, user.ErrUserNotFound):
 
 		status = http.StatusNotFound
 
@@ -34,13 +33,14 @@ func responseError(w http.ResponseWriter, err error) {
 
 	case errors.Is(err, game.ErrInvalidArgument),
 		errors.Is(err, game.ErrInvalidMove),
-		errors.Is(err, user.ErrInvalidArgument),
-		errors.Is(err, jwt.ErrInvalidArgument):
+		errors.Is(err, user.ErrInvalidArgument):
 
 		status = http.StatusBadRequest
 
 	case errors.Is(err, user.ErrInvalidCredentials),
-		errors.Is(err, jwt.ErrTokenExpired):
+		errors.Is(err, jwt.ErrTokenExpired),
+		errors.Is(err, jwt.ErrNotFound),
+		errors.Is(err, jwt.ErrInvalidToken):
 
 		status = http.StatusUnauthorized
 	default:
