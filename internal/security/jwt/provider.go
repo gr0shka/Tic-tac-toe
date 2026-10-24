@@ -32,7 +32,7 @@ type provider struct {
 func NewProvider(cfg config.JWT) (Provider, error) {
 	privateText, err := os.ReadFile(cfg.PrivateFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read privet key: %w", err)
+		return nil, fmt.Errorf("failed to read private key: %w", err)
 	}
 
 	publicText, err := os.ReadFile(cfg.PublicFile)
