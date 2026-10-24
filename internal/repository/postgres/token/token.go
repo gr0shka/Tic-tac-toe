@@ -24,11 +24,10 @@ func NewTokenRepository(db *pgxpool.Pool) auth.Repository {
 }
 
 func (a tokenRepository) SaveRefreshToken(ctx context.Context, t jwt.Token) error {
-	query := `INSERT INTO jwt_token (id, token ,user_id, expires_at, issued_at) VALUES ($1, $2, $3, $4, $5)`
+	query := `INSERT INTO jwt_token (id ,user_id, expires_at, issued_at) VALUES ($1, $2, $3, $4)`
 
 	dto := tokenDTO{
 		ID:        t.ID(),
-		Token:     t.TokenString(),
 		UserID:    t.UserID(),
 		ExpiresAt: t.ExpiresAt(),
 		IssuedAt:  t.IssuedAt(),
@@ -36,7 +35,7 @@ func (a tokenRepository) SaveRefreshToken(ctx context.Context, t jwt.Token) erro
 
 	db := transactor.GetExecutor(ctx, a.db)
 
-	_, err := db.Exec(ctx, query, dto.ID, dto.Token, dto.UserID, dto.ExpiresAt, dto.IssuedAt)
+	_, err := db.Exec(ctx, query, dto.ID, dto.UserID, dto.ExpiresAt, dto.IssuedAt)
 	if err != nil {
 		return fmt.Errorf("could not save refresh token: %w", err)
 	}
@@ -45,7 +44,7 @@ func (a tokenRepository) SaveRefreshToken(ctx context.Context, t jwt.Token) erro
 }
 
 func (a tokenRepository) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*jwt.Token, error) {
-	query := `SELECT id, token, user_id, expires_at, issued_at FROM jwt_token WHERE id = $1`
+	query := `SELECT id, user_id, expires_at, issued_at FROM jwt_token WHERE id = $1`
 
 	db := transactor.GetExecutor(ctx, a.db)
 
@@ -63,7 +62,7 @@ func (a tokenRepository) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID
 		return nil, fmt.Errorf("get refresh token from ID %v: %w", id, err)
 	}
 
-	token := jwt.NewTokenWithFields(dto.ID, dto.UserID, dto.Token, dto.ExpiresAt, dto.IssuedAt)
+	token := jwt.NewTokenWithFields(dto.ID, dto.UserID, "", dto.ExpiresAt, dto.IssuedAt)
 
 	return token, nil
 }
