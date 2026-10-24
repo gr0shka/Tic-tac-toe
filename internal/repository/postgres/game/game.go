@@ -43,7 +43,9 @@ func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 			LIMIT $3
 			`
 
-	rows, err := m.db.Query(ctx, query, game.StatusDraw, game.StatusPlayerWins, count)
+	db := transactor.GetExecutor(ctx, m.db)
+
+	rows, err := db.Query(ctx, query, game.StatusDraw, game.StatusPlayerWins, count)
 	if err != nil {
 		return nil, fmt.Errorf("query get leader board: %w", err)
 	}
@@ -86,7 +88,9 @@ func (m *repository) AllGames(ctx context.Context) ([]*game.CurrentGame, error) 
         	WHERE player2_id IS NULL 
         	LIMIT 50`
 
-	rows, err := m.db.Query(ctx, query)
+	db := transactor.GetExecutor(ctx, m.db)
+
+	rows, err := db.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("query all games: %w", err)
 	}
@@ -138,7 +142,9 @@ func (m *repository) Save(ctx context.Context, cg *game.CurrentGame) error {
      created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
-	_, err := m.db.Exec(ctx, query,
+	db := transactor.GetExecutor(ctx, m.db)
+
+	_, err := db.Exec(ctx, query,
 		dto.ID,
 
 		dto.Player1ID,
@@ -282,7 +288,9 @@ func (m *repository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*ga
         WHERE (player1_id = $1 OR player2_id = $1) AND (status = $2 OR status = $3)
 		ORDER BY created_at DESC`
 
-	rows, err := m.db.Query(ctx, query, userID, game.StatusDraw, game.StatusPlayerWins)
+	db := transactor.GetExecutor(ctx, m.db)
+
+	rows, err := db.Query(ctx, query, userID, game.StatusDraw, game.StatusPlayerWins)
 	if err != nil {
 		return nil, fmt.Errorf("get all ended games: %w", err)
 	}

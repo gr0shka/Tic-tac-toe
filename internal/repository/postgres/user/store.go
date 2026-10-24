@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/repository/transactor"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -27,7 +28,9 @@ func (r repository) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, 
 			FROM users 
 			WHERE id = $1`
 
-	rows, err := r.db.Query(ctx, query, id)
+	db := transactor.GetExecutor(ctx, r.db)
+
+	rows, err := db.Query(ctx, query, id)
 	if err != nil {
 		return nil, fmt.Errorf("get user with id %v: %w", id, err)
 	}
@@ -51,7 +54,9 @@ func (r repository) Save(ctx context.Context, u *user.User) error {
 
 	uDTO := DomainToDTO(u)
 
-	tag, err := r.db.Exec(ctx, query, uDTO.ID, uDTO.Login, uDTO.Password)
+	db := transactor.GetExecutor(ctx, r.db)
+
+	tag, err := db.Exec(ctx, query, uDTO.ID, uDTO.Login, uDTO.Password)
 	if err != nil {
 		return err
 	}
@@ -69,7 +74,9 @@ func (r repository) GetByLogin(ctx context.Context, login string) (*user.User, e
 			FROM users 
 			WHERE login = $1`
 
-	rows, err := r.db.Query(ctx, query, login)
+	db := transactor.GetExecutor(ctx, r.db)
+
+	rows, err := db.Query(ctx, query, login)
 	if err != nil {
 		return nil, err
 	}
