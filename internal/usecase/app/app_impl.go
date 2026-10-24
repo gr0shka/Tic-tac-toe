@@ -95,13 +95,14 @@ func (a *appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) 
 	return res, nil
 }
 
-func (a *appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
+func (a *appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus, error) {
 	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
-		return 0, game.StatusDraw
+		return 0, game.StatusDraw, fmt.Errorf("repository.Get: %w", err)
 	}
 
-	return a.gameService.IsEnded(cg.Board())
+	player, status := a.gameService.IsEnded(cg.Board())
+	return player, status, nil
 }
 
 func (a *appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
