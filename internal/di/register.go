@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
-	gameRules "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game/rules"
 	"github.com/gr0shka/Tic-tac-toe/internal/migration"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
@@ -47,8 +47,8 @@ func CreateApp() fx.Option {
 				fx.As(new(user.UserRepository)),
 			),
 			fx.Annotate(
-				gameRules.NewGameService,
-				fx.As(new(gameRules.GameRules)),
+				rules.NewGameRules,
+				fx.As(new(rules.GameRules)),
 			),
 			fx.Annotate(
 				transactor.NewTransactor,

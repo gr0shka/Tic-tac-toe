@@ -1,4 +1,4 @@
-package service
+package rules
 
 import (
 	"context"
@@ -16,7 +16,7 @@ const (
 type gameRules struct {
 }
 
-func NewGameService() *gameRules {
+func NewGameRules() *gameRules {
 	return &gameRules{}
 }
 
