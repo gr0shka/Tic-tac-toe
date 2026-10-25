@@ -142,3 +142,60 @@ func TestUserService_GetUserByID(t *testing.T) {
 		})
 	}
 }
+
+func TestUserService_Create(t *testing.T) {
+	dbErr := errors.New("db error")
+
+	type testCase struct {
+		name     string
+		login    string
+		passHash string
+		repoErr  error
+		wantErr  error
+	}
+
+	testCases := []testCase{
+		{
+			name:     "Success create user",
+			login:    "newUser",
+			passHash: "hashedPassword123",
+			repoErr:  nil,
+			wantErr:  nil,
+		},
+		{
+			name:     "Failed repo save error",
+			login:    "newUser",
+			passHash: "hashedPassword123",
+			repoErr:  dbErr,
+			wantErr:  dbErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := MockUserRepository{err: tc.repoErr}
+			us := userService.NewUserService(repo)
+
+			gotUser, err := us.Create(context.Background(), tc.login, tc.passHash)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("Create() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr == nil {
+				if gotUser == nil {
+					t.Fatal("Create() returned nil user, want non-nil")
+				}
+				if gotUser.ID() == uuid.Nil {
+					t.Errorf("Create() gotUser.ID() = uuid.Nil, want valid UUID")
+				}
+				if gotUser.Login() != tc.login {
+					t.Errorf("Create() gotUser.Login() = %v, want %v", gotUser.Login(), tc.login)
+				}
+				if gotUser.Password() != tc.passHash {
+					t.Errorf("Create() gotUser.Password() = %v, want %v", gotUser.Password(), tc.passHash)
+				}
+			}
+		})
+	}
+}
