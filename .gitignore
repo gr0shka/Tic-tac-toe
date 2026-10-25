@@ -3,3 +3,4 @@ task.*
 .env
 secrets/
 .pem
+covarage.*
