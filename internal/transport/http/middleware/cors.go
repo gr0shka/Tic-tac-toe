@@ -3,7 +3,12 @@ package middleware
 import "net/http"
 
 var allowedOrigin = map[string]bool{
-	"http://localhost:3000": true,
+	"http://localhost:3000":  true,
+	"http://127.0.0.1:3000":  true,
+	"http://localhost:63342": true,
+	"http://127.0.0.1:63342": true,
+	"http://localhost:8080":  true,
+	"http://127.0.0.1:8080":  true,
 }
 
 func CORS(h http.Handler) http.Handler {
