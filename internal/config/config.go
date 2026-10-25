@@ -85,9 +85,11 @@ func Load() (*Config, error) {
 	if aTTL == "" {
 		slog.Error("JWT_ACCESS_TIME environment variable not set, used default value", "default", aTTL)
 	} else {
-		accessTTL, err = time.ParseDuration(aTTL)
+		val, err := time.ParseDuration(aTTL)
 		if err != nil {
 			slog.Error("JWT_ACCESS_TIME environment variable can not be parsed", "err", err)
+		} else {
+			accessTTL = val
 		}
 	}
 
@@ -95,9 +97,11 @@ func Load() (*Config, error) {
 	if rTTL == "" {
 		slog.Error("JWT_REFRESH_TIME environment variable not set, used default value", "default", rTTL)
 	} else {
-		refreshTTL, err = time.ParseDuration(rTTL)
+		val, err := time.ParseDuration(rTTL)
 		if err != nil {
 			slog.Error("JWT_REFRESH_TIME environment variable can not be parsed", "err", err)
+		} else {
+			refreshTTL = val
 		}
 	}
 
