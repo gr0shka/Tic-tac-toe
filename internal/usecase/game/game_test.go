@@ -33,11 +33,11 @@ type mockRepository struct {
 	cg      *gameRules.CurrentGame
 	sliceCG []*gameRules.CurrentGame
 	err     error
+	lb      *gameRules.LeaderBoard
 }
 
 func (m mockRepository) GetLeaderBoard(ctx context.Context, count int) (*gameRules.LeaderBoard, error) {
-	//TODO implement me
-	panic("implement me")
+	return m.lb, m.err
 }
 
 func (m mockRepository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*gameRules.CurrentGame, error) {
@@ -456,7 +456,7 @@ func TestGameService_JoinGame(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repo := mockRepository{tc.cg, nil, nil}
+			repo := mockRepository{cg: tc.cg}
 			gs := mockGameRules{tc.gb, nil, 0, gameRules.StatusWaitingForPlayers}
 			as := game.NewGameService(gs, repo, mockTransactor{})
 
@@ -620,6 +620,79 @@ func TestGameService_AllEndedGamesByUserID(t *testing.T) {
 			if tc.wantErr == nil {
 				if len(games) != tc.wantCount {
 					t.Errorf("AllEndedGamesByUserID() count = %d, wantCount %d", len(games), tc.wantCount)
+				}
+			}
+		})
+	}
+}
+
+func TestGameService_GetLeaderBoard(t *testing.T) {
+	repoErr := errors.New("db error")
+
+	p1, _ := gameRules.NewPlayerWinRatio(uuid.New(), "alice", 10, 2, 1, 0.8)
+	lb := gameRules.NewLeaderBoard(5)
+	lb.Add(*p1)
+
+	type testCase struct {
+		name    string
+		count   int
+		mockLB  *gameRules.LeaderBoard
+		repoErr error
+		wantErr error
+	}
+
+	testCases := []testCase{
+		{
+			name:    "success get leader board",
+			count:   5,
+			mockLB:  lb,
+			repoErr: nil,
+			wantErr: nil,
+		},
+		{
+			name:    "failed count less than 1",
+			count:   0,
+			mockLB:  nil,
+			repoErr: nil,
+			wantErr: gameRules.ErrInvalidArgument,
+		},
+		{
+			name:    "failed negative count",
+			count:   -5,
+			mockLB:  nil,
+			repoErr: nil,
+			wantErr: gameRules.ErrInvalidArgument,
+		},
+		{
+			name:    "failed repo error",
+			count:   10,
+			mockLB:  nil,
+			repoErr: repoErr,
+			wantErr: repoErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepository{
+				lb:  tc.mockLB,
+				err: tc.repoErr,
+			}
+			gs := mockGameRules{}
+			as := game.NewGameService(gs, repo, mockTransactor{})
+
+			resLB, err := as.GetLeaderBoard(context.Background(), tc.count)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("GetLeaderBoard() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr == nil {
+				if resLB == nil {
+					t.Fatal("GetLeaderBoard() returned nil, want non-nil")
+				}
+				if resLB.Length() != tc.mockLB.Length() {
+					t.Errorf("GetLeaderBoard() length = %d, want %d", resLB.Length(), tc.mockLB.Length())
 				}
 			}
 		})
