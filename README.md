@@ -49,7 +49,7 @@ RESTful API сервис для игры в «Крестики-нолики» с
 │   │       ├── mapper/                 # Мапперы доменных моделей в HTTP DTO
 │   │       └── middleware/             # Middleware (CORS, RequestLogger, Basic Auth)
 │   └── usecase/                        # Слой прикладных сценариев (оркестрация)
-│       ├── app/                        # AppService: создание игр, ходы, join, завершение игры
+│       ├── app/                        # GameService: создание игр, ходы, join, завершение игры
 │       ├── auth/                       # AuthenticateService: регистрация и авторизация
 │       └── user/                       # UserService: управление пользователями
 ├── migration/                          # SQL-миграции базы данных и встроенная FS (Go embed)

@@ -13,14 +13,14 @@ const (
 	MaxDepth = 10
 )
 
-type gameService struct {
+type gameRules struct {
 }
 
-func NewGameService() *gameService {
-	return &gameService{}
+func NewGameService() *gameRules {
+	return &gameRules{}
 }
 
-func (g *gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.GameBoard {
+func (g *gameRules) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game.GameBoard {
 	bestTurn := struct {
 		score int
 		x, y  int
@@ -75,7 +75,7 @@ func (g *gameService) GetNextTurn(ctx context.Context, gb *game.GameBoard) *game
 	return gb
 }
 
-func (g *gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, depth int) int {
+func (g *gameRules) recursiveScoring(ctx context.Context, gb game.GameBoard, depth int) int {
 	current, err := gb.NextPlayer()
 	if err != nil {
 		return 0
@@ -131,7 +131,7 @@ func (g *gameService) recursiveScoring(ctx context.Context, gb game.GameBoard, d
 	return score
 }
 
-func (g *gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
+func (g *gameRules) ValidateBoard(oldB, newB *game.GameBoard) error {
 	if newB.TurnNumber() != oldB.TurnNumber()+1 {
 		return fmt.Errorf("%w: wrong number of turns got %d need %d",
 			game.ErrInvalidMove, newB.TurnNumber(), oldB.TurnNumber()+1)
@@ -176,7 +176,7 @@ func (g *gameService) ValidateBoard(oldB, newB *game.GameBoard) error {
 	return nil
 }
 
-func (g *gameService) IsEnded(board [game.BoardSize][game.BoardSize]int) (int, game.GameStatus) {
+func (g *gameRules) IsEnded(board [game.BoardSize][game.BoardSize]int) (int, game.GameStatus) {
 
 	checkBoard := func(board [game.BoardSize][game.BoardSize]int, fns ...func([game.BoardSize][game.BoardSize]int) (int, bool)) (int, game.GameStatus) {
 		for _, fn := range fns {
