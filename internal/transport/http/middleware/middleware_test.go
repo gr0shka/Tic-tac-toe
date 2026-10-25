@@ -24,8 +24,7 @@ func (m mockAuthenticateService) Authenticate(ctx context.Context, login, passwo
 }
 
 func (m mockAuthenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
-	//TODO implement me
-	panic("implement me")
+	return *m.uID, m.err
 }
 
 func (m mockAuthenticateService) RefreshAccessToken(ctx context.Context, refreshToken string) (*auth.JwtResponse, error) {
@@ -56,21 +55,21 @@ func TestAuthenticator(t *testing.T) {
 		{
 			name:          "success authenticate",
 			mockErr:       nil,
-			authHeader:    "Basic " + base64.StdEncoding.EncodeToString([]byte("login:password")),
+			authHeader:    "Bearer " + base64.StdEncoding.EncodeToString([]byte("login:password")),
 			handlerCalled: true,
 			expectedCode:  http.StatusOK,
 		},
 		{
 			name:          "invalid auth header",
 			mockErr:       nil,
-			authHeader:    "Basic " + base64.StdEncoding.EncodeToString([]byte("login")),
+			authHeader:    "Bearer " + base64.StdEncoding.EncodeToString([]byte("login")),
 			handlerCalled: false,
 			expectedCode:  http.StatusUnauthorized,
 		},
 		{
 			name:          "user not exist",
 			mockErr:       user.ErrUserNotFound,
-			authHeader:    "Basic " + base64.StdEncoding.EncodeToString([]byte("login:password")),
+			authHeader:    "Bearer " + base64.StdEncoding.EncodeToString([]byte("login:password")),
 			handlerCalled: false,
 			expectedCode:  http.StatusUnauthorized,
 		},
