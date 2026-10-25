@@ -494,3 +494,65 @@ func TestGameService_JoinGame(t *testing.T) {
 		})
 	}
 }
+
+func TestGameService_AllGames(t *testing.T) {
+	repoErr := errors.New("db error")
+
+	cg1 := gameRules.NewCurrentGame(gameRules.NewGameBoard())
+	cg2 := gameRules.NewCurrentGame(gameRules.NewGameBoard())
+
+	type testCase struct {
+		name      string
+		mockGames []*gameRules.CurrentGame
+		repoErr   error
+		wantErr   error
+		wantCount int
+	}
+
+	testCases := []testCase{
+		{
+			name:      "success get all games",
+			mockGames: []*gameRules.CurrentGame{cg1, cg2},
+			repoErr:   nil,
+			wantErr:   nil,
+			wantCount: 2,
+		},
+		{
+			name:      "success empty games list",
+			mockGames: []*gameRules.CurrentGame{},
+			repoErr:   nil,
+			wantErr:   nil,
+			wantCount: 0,
+		},
+		{
+			name:      "failed repo error",
+			mockGames: nil,
+			repoErr:   repoErr,
+			wantErr:   repoErr,
+			wantCount: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepository{
+				sliceCG: tc.mockGames,
+				err:     tc.repoErr,
+			}
+			gs := mockGameRules{}
+			as := game.NewGameService(gs, repo, mockTransactor{})
+
+			games, err := as.AllGames(context.Background())
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("AllGames() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr == nil {
+				if len(games) != tc.wantCount {
+					t.Errorf("AllGames() count = %d, wantCount %d", len(games), tc.wantCount)
+				}
+			}
+		})
+	}
+}
