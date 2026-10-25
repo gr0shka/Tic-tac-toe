@@ -43,10 +43,6 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		responseError(w, err)
-		return
-	}
 }
 
 func (h *UserHandler) GetUserByToken(w http.ResponseWriter, r *http.Request) {
