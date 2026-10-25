@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	auth2 "github.com/gr0shka/Tic-tac-toe/internal/domain/auth"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
+	"github.com/gr0shka/Tic-tac-toe/internal/security/jwt"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,6 +32,8 @@ func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 }
 
 type mockJWTService struct {
+	token *auth2.Token
+	err   error
 }
 
 func (m mockJWTService) GenerateAccessToken(u user.User) (*auth2.Token, error) {
@@ -41,8 +45,7 @@ func (m mockJWTService) GenerateRefreshToken(u user.User) (*auth2.Token, error) 
 }
 
 func (m mockJWTService) ValidateAccessToken(at string) (*auth2.Token, error) {
-	//TODO implement me
-	panic("implement me")
+	return m.token, m.err
 }
 
 func (m mockJWTService) ValidateRefreshToken(rt string) (*auth2.Token, error) {
@@ -207,6 +210,67 @@ func TestAuthenticateService_Register(t *testing.T) {
 
 			if !errors.Is(err, tc.err) {
 				t.Errorf("error = %v, want = %v", err, tc.err)
+			}
+		})
+	}
+}
+
+func TestAuthenticateService_AuthenticateByToken(t *testing.T) {
+	validUserID := uuid.New()
+	validateErr := errors.New("invalid signature")
+
+	type testCase struct {
+		name      string
+		tokenStr  string
+		mockToken *auth2.Token
+		mockErr   error
+		wantID    uuid.UUID
+		wantErr   error
+	}
+
+	testCases := []testCase{
+		{
+			name:      "Success authenticate by token",
+			tokenStr:  "valid.jwt.token",
+			mockToken: auth2.NewToken(validUserID, time.Hour),
+			mockErr:   nil,
+			wantID:    validUserID,
+			wantErr:   nil,
+		},
+		{
+			name:      "Error validate access token",
+			tokenStr:  "corrupted.jwt.token",
+			mockToken: nil,
+			mockErr:   validateErr,
+			wantID:    uuid.Nil,
+			wantErr:   validateErr,
+		},
+		{
+			name:      "Error token has nil user id",
+			tokenStr:  "token.with.nil.uid",
+			mockToken: auth2.NewToken(uuid.Nil, time.Hour),
+			mockErr:   nil,
+			wantID:    uuid.Nil,
+			wantErr:   jwt.ErrInvalidToken,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pr := mockJWTService{
+				token: tc.mockToken,
+				err:   tc.mockErr,
+			}
+			as := auth.NewAuthenticateService(mockUserService{}, pr, mockRepo{}, mockTransactor{})
+
+			gotID, err := as.AuthenticateByToken(tc.tokenStr)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("AuthenticateByToken() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if gotID != tc.wantID {
+				t.Errorf("AuthenticateByToken() gotID = %v, wantID %v", gotID, tc.wantID)
 			}
 		})
 	}
