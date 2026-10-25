@@ -44,8 +44,8 @@ func (m mockAppService) ProcessPlayerMove(ctx context.Context, playerID, gameID 
 	return m.cg, m.outErr
 }
 
-func (m mockAppService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus) {
-	return m.winner, m.status
+func (m mockAppService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus, error) {
+	return m.winner, m.status, m.outErr
 }
 
 func (m mockAppService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
