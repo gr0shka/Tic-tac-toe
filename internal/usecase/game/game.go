@@ -1,4 +1,4 @@
-package app
+package game
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 )
 
-type AppService interface {
+type GameService interface {
 	CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error)
 	ProcessPlayerMove(
 		ctx context.Context,

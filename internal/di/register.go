@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gr0shka/Tic-tac-toe/internal/config"
-	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
+	gameRules "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
 	"github.com/gr0shka/Tic-tac-toe/internal/migration"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
@@ -20,8 +20,8 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
-	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/auth"
+	gameService "github.com/gr0shka/Tic-tac-toe/internal/usecase/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/fx"
@@ -40,23 +40,23 @@ func CreateApp() fx.Option {
 			postgres.NewClient,
 			fx.Annotate(
 				game.New,
-				fx.As(new(app.GameRepository)),
+				fx.As(new(gameService.GameRepository)),
 			),
 			fx.Annotate(
 				userRepo.New,
 				fx.As(new(user.UserRepository)),
 			),
 			fx.Annotate(
-				gameService.NewGameService,
-				fx.As(new(gameService.GameService)),
+				gameRules.NewGameService,
+				fx.As(new(gameRules.GameRules)),
 			),
 			fx.Annotate(
 				transactor.NewTransactor,
 				fx.As(new(usecase.Transactor)),
 			),
 			fx.Annotate(
-				app.NewAppService,
-				fx.As(new(app.AppService)),
+				gameService.NewGameService,
+				fx.As(new(gameService.GameService)),
 			),
 			fx.Annotate(
 				user.NewUserService,

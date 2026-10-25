@@ -3,6 +3,7 @@ package middleware_test
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -61,7 +62,7 @@ func TestAuthenticator(t *testing.T) {
 		},
 		{
 			name:          "invalid auth header",
-			mockErr:       nil,
+			mockErr:       errors.New("invalid auth header"),
 			authHeader:    "Bearer " + base64.StdEncoding.EncodeToString([]byte("login")),
 			handlerCalled: false,
 			expectedCode:  http.StatusUnauthorized,

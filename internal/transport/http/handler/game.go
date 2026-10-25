@@ -8,18 +8,18 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
+	gameRules "github.com/gr0shka/Tic-tac-toe/internal/domain/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/mapper"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
-	"github.com/gr0shka/Tic-tac-toe/internal/usecase/app"
+	"github.com/gr0shka/Tic-tac-toe/internal/usecase/game"
 )
 
 type GameHandler struct {
-	service app.AppService
+	service game.GameService
 }
 
-func NewGameHandler(service app.AppService) *GameHandler {
+func NewGameHandler(service game.GameService) *GameHandler {
 	return &GameHandler{service: service}
 }
 
@@ -28,7 +28,7 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, game.ErrInvalidArgument))
+		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, gameRules.ErrInvalidArgument))
 		return
 	}
 
@@ -41,7 +41,7 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	var gameBoard dto.GameBoardRequest
 	decoder := json.NewDecoder(r.Body)
 	if err = decoder.Decode(&gameBoard); err != nil {
-		responseError(w, fmt.Errorf(`%w: invalid request body`, game.ErrInvalidArgument))
+		responseError(w, fmt.Errorf(`%w: invalid request body`, gameRules.ErrInvalidArgument))
 		return
 	}
 
@@ -68,11 +68,11 @@ func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
 
 	var createRequest dto.CreateGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&createRequest); err != nil {
-		responseError(w, fmt.Errorf("%w: error decoding create request", game.ErrInvalidArgument))
+		responseError(w, fmt.Errorf("%w: error decoding create request", gameRules.ErrInvalidArgument))
 		return
 	}
 
-	cg, err := h.service.CreateGame(r.Context(), userID, game.GameMode(createRequest.Mode))
+	cg, err := h.service.CreateGame(r.Context(), userID, gameRules.GameMode(createRequest.Mode))
 	if err != nil {
 		responseError(w, err)
 		return
@@ -96,7 +96,7 @@ func (h *GameHandler) JoinGame(w http.ResponseWriter, r *http.Request) {
 
 	gameID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, game.ErrInvalidArgument))
+		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, gameRules.ErrInvalidArgument))
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 	gameUUID, err := uuid.Parse(r.PathValue("uuid"))
 	if err != nil {
-		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, game.ErrInvalidArgument))
+		responseError(w, fmt.Errorf(`%w: game uuid is not valid`, gameRules.ErrInvalidArgument))
 		return
 	}
 
@@ -187,7 +187,7 @@ func (h *GameHandler) GetLeaderBoard(w http.ResponseWriter, r *http.Request) {
 	if limit != "" {
 		val, err := strconv.Atoi(limit)
 		if err != nil {
-			responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, game.ErrInvalidArgument))
+			responseError(w, fmt.Errorf(`%w: invalid query parameter limit`, gameRules.ErrInvalidArgument))
 			return
 		}
 		limitInt = val

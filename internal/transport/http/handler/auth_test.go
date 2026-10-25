@@ -3,11 +3,13 @@ package handler_test
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
@@ -22,8 +24,12 @@ type mockAuthenticateService struct {
 }
 
 func (m mockAuthenticateService) Authenticate(ctx context.Context, login, password string) (*auth.JwtResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	return &auth.JwtResponse{
+		Type:                  "correct",
+		AccessToken:           "correct",
+		RefreshToken:          "correct",
+		RefreshTokenExpiresAt: time.Now(),
+	}, m.err
 }
 
 func (m mockAuthenticateService) AuthenticateByToken(token string) (uuid.UUID, error) {
@@ -122,39 +128,42 @@ func TestHandler_Authenticate(t *testing.T) {
 	type testCase struct {
 		name         string
 		mockUser     *user.User
-		authHeader   string
+		authBody     string
 		mockErr      error
 		expectedCode int
 	}
 
 	u := user.New(uuid.New(), "login", "password")
 
+	correctBody, _ := json.Marshal(dto.JwtRequest{
+		Login:    "login",
+		Password: "password",
+	})
+
+	unCorrectPasswordBody, _ := json.Marshal(dto.JwtRequest{
+		Login:    "login",
+		Password: "uncorrected",
+	})
+
 	testCases := []testCase{
 		{
 			name:         "success authenticate",
 			mockUser:     u,
-			authHeader:   "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Login()+":"+u.Password())),
+			authBody:     string(correctBody),
 			expectedCode: http.StatusOK,
 			mockErr:      nil,
 		},
 		{
-			name:         "empty authHeader",
+			name:         "empty authBody",
 			mockUser:     u,
-			authHeader:   "",
-			expectedCode: http.StatusUnauthorized,
-			mockErr:      nil,
-		},
-		{
-			name:         "invalid authHeader",
-			mockUser:     u,
-			authHeader:   "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Login())),
-			expectedCode: http.StatusUnauthorized,
-			mockErr:      nil,
+			authBody:     "",
+			expectedCode: http.StatusBadRequest,
+			mockErr:      errors.New("empty authBody"),
 		},
 		{
 			name:         "password incorrect",
 			mockUser:     u,
-			authHeader:   "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Login()+":"+u.Password())),
+			authBody:     string(unCorrectPasswordBody),
 			expectedCode: http.StatusUnauthorized,
 			mockErr:      user.ErrInvalidCredentials,
 		},
@@ -165,9 +174,8 @@ func TestHandler_Authenticate(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			req, _ := http.NewRequest("POST", "/user/login", nil)
+			req, _ := http.NewRequest("POST", "/user/login", strings.NewReader(tc.authBody))
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", tc.authHeader)
 
 			mockAS := mockAuthenticateService{nil, tc.mockErr}
 

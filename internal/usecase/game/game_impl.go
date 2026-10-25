@@ -1,4 +1,4 @@
-package app
+package game
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 )
 
-type appService struct {
-	gameService service.GameService
-	repository  GameRepository
-	tx          usecase.Transactor
+type gameService struct {
+	gameRules  service.GameRules
+	repository GameRepository
+	tx         usecase.Transactor
 }
 
-func (a *appService) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
+func (a *gameService) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
 	if count < 1 {
 		return nil, fmt.Errorf("%w: count users in leader board must be >= 1", game.ErrInvalidArgument)
 	}
@@ -29,7 +29,7 @@ func (a *appService) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 	return lb, nil
 }
 
-func (a *appService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
+func (a *gameService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
 	endedGames, err := a.repository.AllEndedGames(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("repository.AllEndedGames: %w", err)
@@ -38,15 +38,15 @@ func (a *appService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID
 	return endedGames, nil
 }
 
-func NewAppService(gameService service.GameService, rep GameRepository, tx usecase.Transactor) *appService {
-	return &appService{
-		gameService: gameService,
-		repository:  rep,
-		tx:          tx,
+func NewGameService(gameRules service.GameRules, rep GameRepository, tx usecase.Transactor) *gameService {
+	return &gameService{
+		gameRules:  gameRules,
+		repository: rep,
+		tx:         tx,
 	}
 }
 
-func (a *appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
+func (a *gameService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (*game.CurrentGame, error) {
 	var resultCG *game.CurrentGame
 
 	err := a.tx.Do(ctx, func(txCtx context.Context) error {
@@ -86,7 +86,7 @@ func (a *appService) JoinGame(ctx context.Context, gameID, playerID uuid.UUID) (
 	return resultCG, err
 }
 
-func (a *appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
+func (a *gameService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) {
 	res, err := a.repository.AllGames(ctx)
 	if err != nil {
 		return nil, err
@@ -95,17 +95,17 @@ func (a *appService) AllGames(ctx context.Context) ([]*game.CurrentGame, error) 
 	return res, nil
 }
 
-func (a *appService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus, error) {
+func (a *gameService) GameIsEnded(ctx context.Context, id uuid.UUID) (int, game.GameStatus, error) {
 	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return 0, game.StatusDraw, fmt.Errorf("repository.Get: %w", err)
 	}
 
-	player, status := a.gameService.IsEnded(cg.Board())
+	player, status := a.gameRules.IsEnded(cg.Board())
 	return player, status, nil
 }
 
-func (a *appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
+func (a *gameService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
 	if id == uuid.Nil {
 		return nil, fmt.Errorf("%w: gameID is nil", game.ErrInvalidArgument)
 	}
@@ -121,7 +121,7 @@ func (a *appService) CreateGame(ctx context.Context, id uuid.UUID, mode game.Gam
 	}
 }
 
-func (a *appService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (a *gameService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
 
 	player := game.NewPlayer(id, game.FirstPlayer, true)
@@ -146,7 +146,7 @@ func (a *appService) CreateGameWithBot(ctx context.Context, id uuid.UUID) (*game
 	return cg, nil
 }
 
-func (a *appService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (a *gameService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	gb := game.NewGameBoard()
 
 	player := game.NewPlayer(id, game.FirstPlayer, true)
@@ -166,7 +166,7 @@ func (a *appService) CreateGameWithPlayer(ctx context.Context, id uuid.UUID) (*g
 	return cg, nil
 }
 
-func (a *appService) ProcessPlayerMove(
+func (a *gameService) ProcessPlayerMove(
 	ctx context.Context,
 	playerID, gameID uuid.UUID,
 	board [game.BoardSize][game.BoardSize]int,
@@ -203,13 +203,13 @@ func (a *appService) ProcessPlayerMove(
 		next.SetBoard(board)
 		next.SetTurnNumber(current.TurnNumber() + 1)
 
-		if err = a.gameService.ValidateBoard(current.GameBoard, next); err != nil {
+		if err = a.gameRules.ValidateBoard(current.GameBoard, next); err != nil {
 			return err
 		}
 
 		nextCg := game.NewCurrentGameWithID(gameID, next)
 
-		winner, ended := a.gameService.IsEnded(nextCg.Board())
+		winner, ended := a.gameRules.IsEnded(nextCg.Board())
 		nextCg.SetWinner(winner)
 		nextCg.SetStatus(ended)
 		nextCg.SetCreatedAt(current.CreatedAt())
@@ -241,7 +241,7 @@ func (a *appService) ProcessPlayerMove(
 	return resultCG, err
 }
 
-func (a *appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) {
+func (a *gameService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) {
 	if cg.IsEnded() {
 		if cg.Status() == game.StatusDraw {
 			cg.SetActivePlayer(nil)
@@ -260,21 +260,21 @@ func (a *appService) checkTurn(cg *game.CurrentGame) (*game.CurrentGame, error) 
 	return cg, nil
 }
 
-func (a *appService) botTurn(ctx context.Context, cg *game.CurrentGame) (*game.CurrentGame, error) {
-	next := a.gameService.GetNextTurn(ctx, cg.GameBoard)
+func (a *gameService) botTurn(ctx context.Context, cg *game.CurrentGame) (*game.CurrentGame, error) {
+	next := a.gameRules.GetNextTurn(ctx, cg.GameBoard)
 	if next == nil {
 		return nil, fmt.Errorf("bot turn: failed calculating next turn")
 	}
 	cg.GameBoard = next
 
-	winner, ended := a.gameService.IsEnded(cg.Board())
+	winner, ended := a.gameRules.IsEnded(cg.Board())
 	cg.SetWinner(winner)
 	cg.SetStatus(ended)
 
 	return cg, nil
 }
 
-func (a *appService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
+func (a *gameService) GetGame(ctx context.Context, id uuid.UUID) (*game.CurrentGame, error) {
 	cg, err := a.repository.Get(ctx, id)
 	if err != nil {
 		return nil, err

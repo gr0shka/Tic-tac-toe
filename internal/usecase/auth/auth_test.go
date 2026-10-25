@@ -33,13 +33,11 @@ type mockJWTService struct {
 }
 
 func (m mockJWTService) GenerateAccessToken(u user.User) (*auth2.Token, error) {
-	//TODO implement me
-	panic("implement me")
+	return &auth2.Token{}, nil
 }
 
 func (m mockJWTService) GenerateRefreshToken(u user.User) (*auth2.Token, error) {
-	//TODO implement me
-	panic("implement me")
+	return &auth2.Token{}, nil
 }
 
 func (m mockJWTService) ValidateAccessToken(at string) (*auth2.Token, error) {
@@ -66,8 +64,7 @@ type mockRepo struct {
 }
 
 func (m mockRepo) SaveRefreshToken(ctx context.Context, t auth2.Token) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (m mockRepo) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*auth2.Token, error) {
