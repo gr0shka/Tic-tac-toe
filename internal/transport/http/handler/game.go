@@ -54,10 +54,7 @@ func (h *GameHandler) NextTurn(w http.ResponseWriter, r *http.Request) {
 	gameBoardResponse := mapper.ToGameBoardResponse(nextCg)
 
 	encoder := json.NewEncoder(w)
-	if err = encoder.Encode(gameBoardResponse); err != nil {
-		responseError(w, err)
-		return
-	}
+	encoder.Encode(gameBoardResponse)
 }
 
 func (h *GameHandler) NewGame(w http.ResponseWriter, r *http.Request) {
@@ -184,9 +181,7 @@ func (h *GameHandler) AllEndedGames(w http.ResponseWriter, r *http.Request) {
 func (h *GameHandler) GetLeaderBoard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	limitInt := 10
-
 	limit := r.URL.Query().Get("limit")
 
 	if limit != "" {
