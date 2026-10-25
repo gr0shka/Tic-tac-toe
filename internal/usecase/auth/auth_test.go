@@ -32,12 +32,14 @@ func (m mockUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.U
 }
 
 type mockJWTService struct {
-	token        *auth2.Token
-	err          error
-	refreshToken *auth2.Token
-	refreshErr   error
-	genAccessTok *auth2.Token
-	genAccessErr error
+	token         *auth2.Token
+	err           error
+	refreshToken  *auth2.Token
+	refreshErr    error
+	genAccessTok  *auth2.Token
+	genAccessErr  error
+	genRefreshTok *auth2.Token
+	genRefreshErr error
 }
 
 func (m mockJWTService) GenerateAccessToken(u user.User) (*auth2.Token, error) {
@@ -51,6 +53,12 @@ func (m mockJWTService) GenerateAccessToken(u user.User) (*auth2.Token, error) {
 }
 
 func (m mockJWTService) GenerateRefreshToken(u user.User) (*auth2.Token, error) {
+	if m.genRefreshErr != nil {
+		return nil, m.genRefreshErr
+	}
+	if m.genRefreshTok != nil {
+		return m.genRefreshTok, nil
+	}
 	return &auth2.Token{}, nil
 }
 
@@ -73,11 +81,16 @@ func (m mockJWTService) GetTokenIDFromToken(t string) (uuid.UUID, error) {
 }
 
 type mockRepo struct {
-	token *auth2.Token
-	err   error
+	token     *auth2.Token
+	err       error
+	deleteErr error
+	saveErr   error
 }
 
 func (m mockRepo) SaveRefreshToken(ctx context.Context, t auth2.Token) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
 	return m.err
 }
 
@@ -86,15 +99,21 @@ func (m mockRepo) GetRefreshTokenFromID(ctx context.Context, id uuid.UUID) (*aut
 }
 
 func (m mockRepo) DeleteRefreshToken(ctx context.Context, id uuid.UUID) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
 	return m.err
 }
 
 type mockTransactor struct {
+	err error
 }
 
 func (m mockTransactor) Do(ctx context.Context, fn func(txCtx context.Context) error) error {
-	//TODO implement me
-	panic("implement me")
+	if m.err != nil {
+		return m.err
+	}
+	return fn(ctx)
 }
 
 func TestAuthenticateService_Authenticate(t *testing.T) {
@@ -407,6 +426,176 @@ func TestAuthenticateService_RefreshAccessToken(t *testing.T) {
 				}
 				if res.Type != "Bearer" {
 					t.Errorf("RefreshAccessToken() Type = %v, want 'Bearer'", res.Type)
+				}
+			}
+		})
+	}
+}
+
+func TestAuthenticateService_RefreshRefreshToken(t *testing.T) {
+	validUserID := uuid.New()
+	tokenID := uuid.New()
+	newTokenID := uuid.New()
+	now := time.Now()
+	newExpiresAt := now.Add(time.Hour * 24 * 7)
+
+	oldRefreshToken := auth2.NewTokenWithFields(tokenID, validUserID, "old.refresh.token", now.Add(time.Hour), now)
+	newRefreshToken := auth2.NewTokenWithFields(newTokenID, validUserID, "new.refresh.token", newExpiresAt, now)
+	newAccessToken := auth2.NewTokenWithFields(uuid.New(), validUserID, "new.access.token", now.Add(time.Minute*15), now)
+	validUser := user.New(validUserID, "testLogin", "passHash")
+
+	validateErr := errors.New("refresh token invalid")
+	userErr := errors.New("user not found")
+	deleteErr := errors.New("failed deleting token")
+	genRefreshErr := errors.New("failed generating refresh token")
+	saveErr := errors.New("failed saving refresh token")
+	genAccessErr := errors.New("failed generating access token")
+
+	type testCase struct {
+		name          string
+		refreshToken  string
+		mockToken     *auth2.Token
+		mockTokenErr  error
+		mockUser      *user.User
+		mockUserErr   error
+		mockDeleteErr error
+		mockGenRefTok *auth2.Token
+		mockGenRefErr error
+		mockSaveErr   error
+		mockGenAccTok *auth2.Token
+		mockGenAccErr error
+		wantErr       error
+		wantAccess    string
+		wantRefresh   string
+	}
+
+	testCases := []testCase{
+		{
+			name:          "Success refresh refresh token",
+			refreshToken:  "old.refresh.token",
+			mockToken:     oldRefreshToken,
+			mockTokenErr:  nil,
+			mockUser:      validUser,
+			mockUserErr:   nil,
+			mockDeleteErr: nil,
+			mockGenRefTok: newRefreshToken,
+			mockGenRefErr: nil,
+			mockSaveErr:   nil,
+			mockGenAccTok: newAccessToken,
+			mockGenAccErr: nil,
+			wantErr:       nil,
+			wantAccess:    "new.access.token",
+			wantRefresh:   "new.refresh.token",
+		},
+		{
+			name:         "Failed validate refresh token",
+			refreshToken: "corrupted.token",
+			mockToken:    nil,
+			mockTokenErr: validateErr,
+			wantErr:      validateErr,
+		},
+		{
+			name:         "Failed user not found",
+			refreshToken: "old.refresh.token",
+			mockToken:    oldRefreshToken,
+			mockTokenErr: nil,
+			mockUser:     nil,
+			mockUserErr:  userErr,
+			wantErr:      userErr,
+		},
+		{
+			name:          "Failed delete refresh token in tx",
+			refreshToken:  "old.refresh.token",
+			mockToken:     oldRefreshToken,
+			mockTokenErr:  nil,
+			mockUser:      validUser,
+			mockUserErr:   nil,
+			mockDeleteErr: deleteErr,
+			wantErr:       deleteErr,
+		},
+		{
+			name:          "Failed generate new refresh token in tx",
+			refreshToken:  "old.refresh.token",
+			mockToken:     oldRefreshToken,
+			mockTokenErr:  nil,
+			mockUser:      validUser,
+			mockUserErr:   nil,
+			mockDeleteErr: nil,
+			mockGenRefTok: nil,
+			mockGenRefErr: genRefreshErr,
+			wantErr:       genRefreshErr,
+		},
+		{
+			name:          "Failed save new refresh token in tx",
+			refreshToken:  "old.refresh.token",
+			mockToken:     oldRefreshToken,
+			mockTokenErr:  nil,
+			mockUser:      validUser,
+			mockUserErr:   nil,
+			mockDeleteErr: nil,
+			mockGenRefTok: newRefreshToken,
+			mockGenRefErr: nil,
+			mockSaveErr:   saveErr,
+			wantErr:       saveErr,
+		},
+		{
+			name:          "Failed generate access token",
+			refreshToken:  "old.refresh.token",
+			mockToken:     oldRefreshToken,
+			mockTokenErr:  nil,
+			mockUser:      validUser,
+			mockUserErr:   nil,
+			mockDeleteErr: nil,
+			mockGenRefTok: newRefreshToken,
+			mockGenRefErr: nil,
+			mockSaveErr:   nil,
+			mockGenAccTok: nil,
+			mockGenAccErr: genAccessErr,
+			wantErr:       genAccessErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pr := mockJWTService{
+				refreshToken:  tc.mockToken,
+				refreshErr:    tc.mockTokenErr,
+				genRefreshTok: tc.mockGenRefTok,
+				genRefreshErr: tc.mockGenRefErr,
+				genAccessTok:  tc.mockGenAccTok,
+				genAccessErr:  tc.mockGenAccErr,
+			}
+			repo := mockRepo{
+				deleteErr: tc.mockDeleteErr,
+				saveErr:   tc.mockSaveErr,
+			}
+			us := mockUserService{
+				u:   tc.mockUser,
+				err: tc.mockUserErr,
+			}
+			as := auth.NewAuthenticateService(us, pr, repo, mockTransactor{})
+
+			res, err := as.RefreshRefreshToken(context.Background(), tc.refreshToken)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("RefreshRefreshToken() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr == nil {
+				if res == nil {
+					t.Fatal("RefreshRefreshToken() returned nil, want non-nil")
+				}
+				if res.AccessToken != tc.wantAccess {
+					t.Errorf("RefreshRefreshToken() AccessToken = %v, want %v", res.AccessToken, tc.wantAccess)
+				}
+				if res.RefreshToken != tc.wantRefresh {
+					t.Errorf("RefreshRefreshToken() RefreshToken = %v, want %v", res.RefreshToken, tc.wantRefresh)
+				}
+				if res.RefreshTokenExpiresAt != newExpiresAt {
+					t.Errorf("RefreshRefreshToken() RefreshTokenExpiresAt = %v, want %v", res.RefreshTokenExpiresAt, newExpiresAt)
+				}
+				if res.Type != "Bearer" {
+					t.Errorf("RefreshRefreshToken() Type = %v, want 'Bearer'", res.Type)
 				}
 			}
 		})
