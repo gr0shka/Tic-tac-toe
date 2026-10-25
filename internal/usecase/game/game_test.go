@@ -41,8 +41,7 @@ func (m mockRepository) GetLeaderBoard(ctx context.Context, count int) (*gameRul
 }
 
 func (m mockRepository) AllEndedGames(ctx context.Context, userID uuid.UUID) ([]*gameRules.CurrentGame, error) {
-	//TODO implement me
-	panic("implement me")
+	return m.sliceCG, m.err
 }
 
 func (m mockRepository) AllGames(ctx context.Context) ([]*gameRules.CurrentGame, error) {
@@ -551,6 +550,76 @@ func TestGameService_AllGames(t *testing.T) {
 			if tc.wantErr == nil {
 				if len(games) != tc.wantCount {
 					t.Errorf("AllGames() count = %d, wantCount %d", len(games), tc.wantCount)
+				}
+			}
+		})
+	}
+}
+
+func TestGameService_AllEndedGamesByUserID(t *testing.T) {
+	userID := uuid.New()
+	repoErr := errors.New("db error")
+
+	cg1 := gameRules.NewCurrentGame(gameRules.NewGameBoard())
+	cg1.SetStatus(gameRules.StatusPlayerWins)
+
+	cg2 := gameRules.NewCurrentGame(gameRules.NewGameBoard())
+	cg2.SetStatus(gameRules.StatusDraw)
+
+	type testCase struct {
+		name      string
+		userID    uuid.UUID
+		mockGames []*gameRules.CurrentGame
+		repoErr   error
+		wantErr   error
+		wantCount int
+	}
+
+	testCases := []testCase{
+		{
+			name:      "success get ended games",
+			userID:    userID,
+			mockGames: []*gameRules.CurrentGame{cg1, cg2},
+			repoErr:   nil,
+			wantErr:   nil,
+			wantCount: 2,
+		},
+		{
+			name:      "success empty ended games",
+			userID:    userID,
+			mockGames: []*gameRules.CurrentGame{},
+			repoErr:   nil,
+			wantErr:   nil,
+			wantCount: 0,
+		},
+		{
+			name:      "failed repo error",
+			userID:    userID,
+			mockGames: nil,
+			repoErr:   repoErr,
+			wantErr:   repoErr,
+			wantCount: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepository{
+				sliceCG: tc.mockGames,
+				err:     tc.repoErr,
+			}
+			gs := mockGameRules{}
+			as := game.NewGameService(gs, repo, mockTransactor{})
+
+			games, err := as.AllEndedGamesByUserID(context.Background(), tc.userID)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("AllEndedGamesByUserID() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr == nil {
+				if len(games) != tc.wantCount {
+					t.Errorf("AllEndedGamesByUserID() count = %d, wantCount %d", len(games), tc.wantCount)
 				}
 			}
 		})
