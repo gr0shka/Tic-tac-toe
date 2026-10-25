@@ -24,16 +24,15 @@ type mockAppService struct {
 	outErr  error
 	winner  int
 	status  game.GameStatus
+	lb      *game.LeaderBoard
 }
 
 func (m mockAppService) GetLeaderBoard(ctx context.Context, count int) (*game.LeaderBoard, error) {
-	//TODO implement me
-	panic("implement me")
+	return m.lb, m.outErr
 }
 
 func (m mockAppService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUID) ([]*game.CurrentGame, error) {
-	//TODO implement me
-	panic("implement me")
+	return m.sliceCG, m.outErr
 }
 
 func (m mockAppService) CreateGame(ctx context.Context, id uuid.UUID, mode game.GameMode) (*game.CurrentGame, error) {
@@ -105,7 +104,7 @@ func TestHandler_GetGame(t *testing.T) {
 			gb.AddPlayer(player1)
 
 			mockGame := game.NewCurrentGame(gb)
-			mockApp := mockAppService{mockGame, nil, tc.mockErr, 0, game.StatusPlayerTurn}
+			mockApp := mockAppService{cg: mockGame, outErr: tc.mockErr, status: game.StatusPlayerTurn}
 
 			h := handler.NewGameHandler(mockApp)
 
@@ -194,7 +193,7 @@ func TestHandler_NewGame(t *testing.T) {
 			gb.AddPlayer(player1)
 
 			mockGame := game.NewCurrentGame(gb)
-			mockApp := mockAppService{mockGame, nil, tc.mockErr, 0, game.StatusWaitingForPlayers}
+			mockApp := mockAppService{cg: mockGame, outErr: tc.mockErr, status: game.StatusWaitingForPlayers}
 
 			h := handler.NewGameHandler(mockApp)
 
@@ -300,7 +299,7 @@ func TestHandler_NextTurn(t *testing.T) {
 			gb.AddPlayer(player2)
 
 			mockGame := game.NewCurrentGame(gb)
-			mockApp := mockAppService{mockGame, nil, tc.mockErr, 0, game.StatusPlayerTurn}
+			mockApp := mockAppService{cg: mockGame, outErr: tc.mockErr, status: game.StatusPlayerTurn}
 
 			h := handler.NewGameHandler(mockApp)
 
@@ -393,7 +392,7 @@ func TestHandler_JoinGame(t *testing.T) {
 
 			mockGame := game.NewCurrentGame(gb)
 			mockGame.SetStatus(game.StatusWaitingForPlayers)
-			mockApp := mockAppService{mockGame, nil, tc.mockErr, 0, game.StatusWaitingForPlayers}
+			mockApp := mockAppService{cg: mockGame, outErr: tc.mockErr, status: game.StatusWaitingForPlayers}
 
 			h := handler.NewGameHandler(mockApp)
 
@@ -470,7 +469,7 @@ func TestHandler_AllGames(t *testing.T) {
 			mockCGSlice = append(mockCGSlice, mockGame1)
 			mockCGSlice = append(mockCGSlice, mockGame2)
 
-			mockAS := mockAppService{nil, mockCGSlice, tc.mockErr, 0, game.StatusPlayerTurn}
+			mockAS := mockAppService{sliceCG: mockCGSlice, outErr: tc.mockErr, status: game.StatusPlayerTurn}
 
 			h := handler.NewGameHandler(mockAS)
 
@@ -539,5 +538,91 @@ func cmpFieldGameBoardResponse(
 
 	if mockGame.GameBoard.Board() != actualResponse.Board {
 		t.Errorf("expected board %d, got %d", mockGame.GameBoard.Board(), actualResponse.Board)
+	}
+}
+
+func TestHandler_AllEndedGames(t *testing.T) {
+	validUserID := uuid.New()
+
+	gb := game.NewGameBoard()
+	p1 := game.NewPlayer(validUserID, game.FirstPlayer, true)
+	p2 := game.NewPlayer(uuid.New(), game.SecondPlayer, false)
+	_ = gb.AddPlayer(p1)
+	_ = gb.AddPlayer(p2)
+
+	cg := game.NewCurrentGame(gb)
+	cg.SetStatus(game.StatusPlayerWins)
+	cg.SetWinner(game.FirstPlayer)
+
+	type testCase struct {
+		name         string
+		setAuthUser  bool
+		mockGames    []*game.CurrentGame
+		mockErr      error
+		expectedCode int
+	}
+
+	testCases := []testCase{
+		{
+			name:         "success get ended games",
+			setAuthUser:  true,
+			mockGames:    []*game.CurrentGame{cg},
+			mockErr:      nil,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "failed user not in context",
+			setAuthUser:  false,
+			mockGames:    nil,
+			mockErr:      nil,
+			expectedCode: http.StatusInternalServerError,
+		},
+		{
+			name:         "failed service error",
+			setAuthUser:  true,
+			mockGames:    nil,
+			mockErr:      errors.New("db error"),
+			expectedCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/games/ended", nil)
+
+			if tc.setAuthUser {
+				ctx := middleware.ContextWithUserID(req.Context(), validUserID)
+				req = req.WithContext(ctx)
+			}
+
+			mockAS := mockAppService{
+				sliceCG: tc.mockGames,
+				outErr:  tc.mockErr,
+			}
+
+			h := handler.NewGameHandler(mockAS)
+			h.AllEndedGames(w, req)
+
+			res := w.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != tc.expectedCode {
+				t.Fatalf("expected status %d, got %d", tc.expectedCode, res.StatusCode)
+			}
+
+			if res.StatusCode == http.StatusOK {
+				var responseSlice []dto.GameBoardResponse
+				if err := json.NewDecoder(res.Body).Decode(&responseSlice); err != nil {
+					t.Fatalf("could not parse response body: %v", err)
+				}
+				if len(responseSlice) != len(tc.mockGames) {
+					t.Errorf("expected %d games, got %d", len(tc.mockGames), len(responseSlice))
+				}
+				if len(responseSlice) > 0 {
+					cmpFieldGameBoardResponse(tc.mockGames[0], t, responseSlice[0])
+				}
+			}
+		})
 	}
 }
