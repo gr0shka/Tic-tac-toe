@@ -626,3 +626,109 @@ func TestHandler_AllEndedGames(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_GetLeaderBoard(t *testing.T) {
+	playerID := uuid.New()
+	p1, _ := game.NewPlayerWinRatio(playerID, "player1", 5, 2, 1, 0.625)
+	lb := game.NewLeaderBoard(10)
+	lb.Add(*p1)
+
+	type testCase struct {
+		name         string
+		url          string
+		mockLB       *game.LeaderBoard
+		mockErr      error
+		expectedCode int
+	}
+
+	testCases := []testCase{
+		{
+			name:         "success default limit",
+			url:          "/leaderboard",
+			mockLB:       lb,
+			mockErr:      nil,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "success custom limit",
+			url:          "/leaderboard?limit=25",
+			mockLB:       lb,
+			mockErr:      nil,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "success limit capped at 100",
+			url:          "/leaderboard?limit=200",
+			mockLB:       lb,
+			mockErr:      nil,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "failed invalid limit parameter",
+			url:          "/leaderboard?limit=invalid",
+			mockLB:       nil,
+			mockErr:      nil,
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name:         "failed service error",
+			url:          "/leaderboard",
+			mockLB:       nil,
+			mockErr:      errors.New("db query error"),
+			expectedCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tc.url, nil)
+
+			mockAS := mockAppService{
+				lb:     tc.mockLB,
+				outErr: tc.mockErr,
+			}
+
+			h := handler.NewGameHandler(mockAS)
+			h.GetLeaderBoard(w, req)
+
+			res := w.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != tc.expectedCode {
+				t.Fatalf("expected status %d, got %d", tc.expectedCode, res.StatusCode)
+			}
+
+			if res.StatusCode == http.StatusOK {
+				var response dto.LeaderBoardResponse
+				if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+					t.Fatalf("could not parse response body: %v", err)
+				}
+				if len(response.Player) != tc.mockLB.Length() {
+					t.Errorf("expected %d players, got %d", tc.mockLB.Length(), len(response.Player))
+				}
+				if len(response.Player) > 0 {
+					p := response.Player[0]
+					if p.ID != playerID {
+						t.Errorf("expected ID %v, got %v", playerID, p.ID)
+					}
+					if p.Login != "player1" {
+						t.Errorf("expected Login 'player1', got '%v'", p.Login)
+					}
+					if p.Wins != 5 {
+						t.Errorf("expected Wins 5, got %d", p.Wins)
+					}
+					if p.Loss != 2 {
+						t.Errorf("expected Loss 2, got %d", p.Loss)
+					}
+					if p.Draw != 1 {
+						t.Errorf("expected Draw 1, got %d", p.Draw)
+					}
+					if p.Ratio != 0.625 {
+						t.Errorf("expected Ratio 0.625, got %f", p.Ratio)
+					}
+				}
+			}
+		})
+	}
+}
