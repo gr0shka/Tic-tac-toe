@@ -1,4 +1,4 @@
-package service_test
+package rules_test
 
 import (
 	"context"
@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	gameService "github.com/gr0shka/Tic-tac-toe/internal/domain/service"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game/rules"
 )
 
-func createGameService(board [game.BoardSize][game.BoardSize]int, numberOfTurn int) *game.GameBoard {
+func createGameBoard(board [game.BoardSize][game.BoardSize]int, numberOfTurn int) *game.GameBoard {
 	gb := game.NewGameBoard()
 	gb.SetBoard(board)
 
@@ -25,7 +25,7 @@ func createGameService(board [game.BoardSize][game.BoardSize]int, numberOfTurn i
 	return gb
 }
 
-func TestGameService_GetNextTurn(t *testing.T) {
+func TestRulesService_GetNextTurn(t *testing.T) {
 	type testCase struct {
 		name string
 		gb   *game.GameBoard
@@ -37,7 +37,7 @@ func TestGameService_GetNextTurn(t *testing.T) {
 	testCases := []testCase{
 		{
 			name: "first turn",
-			gb: createGameService(
+			gb: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
@@ -52,7 +52,7 @@ func TestGameService_GetNextTurn(t *testing.T) {
 		},
 		{
 			name: "winner turn",
-			gb: createGameService(
+			gb: createGameBoard(
 				[3][3]int{
 					{-1, 1, 0},
 					{-1, 1, -1},
@@ -67,7 +67,7 @@ func TestGameService_GetNextTurn(t *testing.T) {
 		},
 		{
 			name: "block player winner turn",
-			gb: createGameService(
+			gb: createGameBoard(
 				[3][3]int{
 					{0, 0, -1},
 					{-1, -1, -1},
@@ -84,7 +84,7 @@ func TestGameService_GetNextTurn(t *testing.T) {
 
 	for _, ts := range testCases {
 		t.Run(ts.name, func(t *testing.T) {
-			gs := gameService.NewGameService()
+			gs := rules.NewGameRules()
 			gb := gs.GetNextTurn(context.Background(), ts.gb)
 
 			if gb.TurnNumber() != ts.expectedTurnNumber {
@@ -98,7 +98,7 @@ func TestGameService_GetNextTurn(t *testing.T) {
 	}
 }
 
-func TestGameService_ValidateBoard(t *testing.T) {
+func TestRulesService_ValidateBoard(t *testing.T) {
 	type testCase struct {
 		name string
 		gb1  *game.GameBoard
@@ -109,13 +109,13 @@ func TestGameService_ValidateBoard(t *testing.T) {
 	testCases := []testCase{
 		{
 			name: "valid turn",
-			gb1: createGameService(
+			gb1: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				0),
-			gb2: createGameService(
+			gb2: createGameBoard(
 				[3][3]int{
 					{0, -1, -1},
 					{-1, -1, -1},
@@ -125,13 +125,13 @@ func TestGameService_ValidateBoard(t *testing.T) {
 		},
 		{
 			name: "no move",
-			gb1: createGameService(
+			gb1: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				0),
-			gb2: createGameService(
+			gb2: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
@@ -141,13 +141,13 @@ func TestGameService_ValidateBoard(t *testing.T) {
 		},
 		{
 			name: "multiple move",
-			gb1: createGameService(
+			gb1: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				0),
-			gb2: createGameService(
+			gb2: createGameBoard(
 				[3][3]int{
 					{0, 0, -1},
 					{-1, -1, -1},
@@ -157,13 +157,13 @@ func TestGameService_ValidateBoard(t *testing.T) {
 		},
 		{
 			name: "wrong number of turns",
-			gb1: createGameService(
+			gb1: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				0),
-			gb2: createGameService(
+			gb2: createGameBoard(
 				[3][3]int{
 					{0, -1, -1},
 					{-1, -1, -1},
@@ -173,13 +173,13 @@ func TestGameService_ValidateBoard(t *testing.T) {
 		},
 		{
 			name: "alter previous move",
-			gb1: createGameService(
+			gb1: createGameBoard(
 				[3][3]int{
 					{0, -1, -1},
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				1),
-			gb2: createGameService(
+			gb2: createGameBoard(
 				[3][3]int{
 					{1, -1, -1},
 					{-1, -1, -1},
@@ -189,13 +189,13 @@ func TestGameService_ValidateBoard(t *testing.T) {
 		},
 		{
 			name: "wrong player move",
-			gb1: createGameService(
+			gb1: createGameBoard(
 				[3][3]int{
 					{-1, -1, -1},
 					{-1, -1, -1},
 					{-1, -1, -1}},
 				0),
-			gb2: createGameService(
+			gb2: createGameBoard(
 				[3][3]int{
 					{1, -1, -1},
 					{-1, -1, -1},
@@ -207,7 +207,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 
 	for _, ts := range testCases {
 		t.Run(ts.name, func(t *testing.T) {
-			gs := gameService.NewGameService()
+			gs := rules.NewGameRules()
 
 			gotErr := gs.ValidateBoard(ts.gb1, ts.gb2)
 			if !errors.Is(gotErr, ts.err) {
@@ -217,7 +217,7 @@ func TestGameService_ValidateBoard(t *testing.T) {
 	}
 }
 
-func TestGameService_IsEnded(t *testing.T) {
+func TestRulesService_IsEnded(t *testing.T) {
 	type testCase struct {
 		name   string
 		board  [game.BoardSize][game.BoardSize]int
@@ -232,7 +232,7 @@ func TestGameService_IsEnded(t *testing.T) {
 				{-1, -1, -1},
 				{-1, -1, -1},
 				{-1, -1, -1}},
-			winner: gameService.Draw,
+			winner: rules.Draw,
 			ended:  game.StatusPlayerTurn,
 		},
 		{
@@ -241,7 +241,7 @@ func TestGameService_IsEnded(t *testing.T) {
 				{1, 1, 0},
 				{0, 0, 1},
 				{1, 1, 0}},
-			winner: gameService.Draw,
+			winner: rules.Draw,
 			ended:  game.StatusDraw,
 		},
 		{
@@ -266,7 +266,7 @@ func TestGameService_IsEnded(t *testing.T) {
 
 	for _, ts := range testCases {
 		t.Run(ts.name, func(t *testing.T) {
-			gs := gameService.NewGameService()
+			gs := rules.NewGameRules()
 
 			gotWinner, gotStatus := gs.IsEnded(ts.board)
 			if gotWinner != ts.winner {
