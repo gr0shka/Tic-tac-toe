@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/user"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/dto"
 	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/handler"
+	"github.com/gr0shka/Tic-tac-toe/internal/transport/http/middleware"
 )
 
 type mockUserService struct {
@@ -107,6 +109,87 @@ func TestHandler_GetUserByID(t *testing.T) {
 
 				if dtoUserResp.Login != tc.mockUser.Login() {
 					t.Errorf("expected %v, got %v", tc.mockUser.Login(), dtoUserResp.Login)
+				}
+			}
+		})
+	}
+}
+
+func TestHandler_GetUserByToken(t *testing.T) {
+	u := user.New(uuid.New(), "testUser", "secretHash")
+
+	type testCase struct {
+		name         string
+		setAuthUser  bool
+		mockUser     *user.User
+		mockErr      error
+		expectedCode int
+	}
+
+	testCases := []testCase{
+		{
+			name:         "success get user by token",
+			setAuthUser:  true,
+			mockUser:     u,
+			mockErr:      nil,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "failed user not in context",
+			setAuthUser:  false,
+			mockUser:     nil,
+			mockErr:      nil,
+			expectedCode: http.StatusInternalServerError,
+		},
+		{
+			name:         "user not found",
+			setAuthUser:  true,
+			mockUser:     nil,
+			mockErr:      user.ErrUserNotFound,
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:         "failed internal service error",
+			setAuthUser:  true,
+			mockUser:     nil,
+			mockErr:      errors.New("db connection failure"),
+			expectedCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/user/me", nil)
+
+			if tc.setAuthUser {
+				ctx := middleware.ContextWithUserID(req.Context(), u.ID())
+				req = req.WithContext(ctx)
+			}
+
+			mockUS := mockUserService{u: tc.mockUser, err: tc.mockErr}
+			h := handler.NewUserHandler(mockUS)
+
+			h.GetUserByToken(w, req)
+			res := w.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != tc.expectedCode {
+				t.Fatalf("handler returned wrong status code: got %v want %v", res.StatusCode, tc.expectedCode)
+			}
+
+			if res.StatusCode == http.StatusOK {
+				var dtoUserResp dto.UserInfoResponse
+				if err := json.NewDecoder(res.Body).Decode(&dtoUserResp); err != nil {
+					t.Fatalf("failed decoding response body: %v", err)
+				}
+
+				if dtoUserResp.ID != tc.mockUser.ID() {
+					t.Errorf("expected ID %v, got %v", tc.mockUser.ID(), dtoUserResp.ID)
+				}
+
+				if dtoUserResp.Login != tc.mockUser.Login() {
+					t.Errorf("expected Login %v, got %v", tc.mockUser.Login(), dtoUserResp.Login)
 				}
 			}
 		})
