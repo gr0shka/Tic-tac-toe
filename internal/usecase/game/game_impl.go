@@ -6,12 +6,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	"github.com/gr0shka/Tic-tac-toe/internal/domain/service"
+	"github.com/gr0shka/Tic-tac-toe/internal/domain/game/rules"
 	"github.com/gr0shka/Tic-tac-toe/internal/usecase"
 )
 
 type gameService struct {
-	gameRules  service.GameRules
+	gameRules  rules.GameRules
 	repository GameRepository
 	tx         usecase.Transactor
 }
@@ -38,7 +38,7 @@ func (a *gameService) AllEndedGamesByUserID(ctx context.Context, userID uuid.UUI
 	return endedGames, nil
 }
 
-func NewGameService(gameRules service.GameRules, rep GameRepository, tx usecase.Transactor) *gameService {
+func NewGameService(gameRules rules.GameRules, rep GameRepository, tx usecase.Transactor) *gameService {
 	return &gameService{
 		gameRules:  gameRules,
 		repository: rep,

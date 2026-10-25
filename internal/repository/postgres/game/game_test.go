@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gr0shka/Tic-tac-toe/internal/domain/game"
-	game2 "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
+	gameRepo "github.com/gr0shka/Tic-tac-toe/internal/repository/postgres/game"
 	"github.com/gr0shka/Tic-tac-toe/internal/repository/testutil"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -51,7 +51,7 @@ func createCurrentGame() *game.CurrentGame {
 	return cg
 }
 
-func createCurrentGameDTO() *game2.CurrentGameDTO {
+func createCurrentGameDTO() *gameRepo.CurrentGameDTO {
 	cg := createCurrentGame()
 
 	players := cg.Players()
@@ -70,9 +70,9 @@ func createCurrentGameDTO() *game2.CurrentGameDTO {
 		activePlayerID = cg.ActivePlayer().ID()
 	}
 
-	cgDTO := game2.CurrentGameDTO{
+	cgDTO := gameRepo.CurrentGameDTO{
 		ID:           cg.ID(),
-		Board:        game2.FlattenBoard(cg.Board()),
+		Board:        gameRepo.FlattenBoard(cg.Board()),
 		NumberOfTurn: cg.TurnNumber(),
 		Winner:       cg.Winner(),
 
@@ -107,7 +107,7 @@ func TestRepository_Save(t *testing.T) {
 		},
 	}
 
-	repo := game2.New(testPool)
+	repo := gameRepo.New(testPool)
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestRepository_Get(t *testing.T) {
 		},
 	}
 
-	repo := game2.New(testPool)
+	repo := gameRepo.New(testPool)
 
 	testCase := testCases[0]
 	t.Run(testCase.name, func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestRepository_AllGames(t *testing.T) {
 	cgEnded := game.NewCurrentGame(gbWith2Player)
 	cgEnded.SetStatus(game.StatusPlayerWins)
 
-	repo := game2.New(testPool)
+	repo := gameRepo.New(testPool)
 
 	repo.Save(context.Background(), cgEnded)
 	repo.Save(context.Background(), cgWaiting)
@@ -266,7 +266,7 @@ func TestRepository_Update(t *testing.T) {
 		},
 	}
 
-	repo := game2.New(testPool)
+	repo := gameRepo.New(testPool)
 	repo.Save(context.Background(), cgOld)
 
 	for _, testCase := range testCases {
@@ -319,14 +319,14 @@ func TestRepository_Mapper_DomainToDTO(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			cgDTO := game2.DomainToDTO(*testCase.cg)
+			cgDTO := gameRepo.DomainToDTO(*testCase.cg)
 
 			if cgDTO.ID != testCase.cg.ID() {
 				t.Errorf("ID error, expected %v, got %v", testCase.cg.ID(), cgDTO.ID)
 			}
 
-			if game2.UnFlattenBoard(cgDTO.Board) != testCase.cg.Board() {
-				t.Errorf("Board error, expected %v, got %v", testCase.cg.Board(), game2.UnFlattenBoard(cgDTO.Board))
+			if gameRepo.UnFlattenBoard(cgDTO.Board) != testCase.cg.Board() {
+				t.Errorf("Board error, expected %v, got %v", testCase.cg.Board(), gameRepo.UnFlattenBoard(cgDTO.Board))
 			}
 
 			if cgDTO.NumberOfTurn != testCase.cg.TurnNumber() {
@@ -339,7 +339,7 @@ func TestRepository_Mapper_DomainToDTO(t *testing.T) {
 func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 	type useCases struct {
 		name string
-		cg   *game2.CurrentGameDTO
+		cg   *gameRepo.CurrentGameDTO
 	}
 
 	testCases := []useCases{
@@ -352,15 +352,15 @@ func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cgDTO := testCase.cg
-			cg := game2.DTOToDomain(*testCase.cg)
+			cg := gameRepo.DTOToDomain(*testCase.cg)
 
 			if cgDTO.ID != cg.ID() {
 				t.Errorf("ID error, expected %v, got %v", cg.ID(), cgDTO.ID)
 			}
 
-			if game2.UnFlattenBoard(cgDTO.Board) != cg.Board() {
+			if gameRepo.UnFlattenBoard(cgDTO.Board) != cg.Board() {
 				t.Errorf("Board error, expected %v, got %v",
-					cg.Board(), game2.UnFlattenBoard(cgDTO.Board))
+					cg.Board(), gameRepo.UnFlattenBoard(cgDTO.Board))
 			}
 
 			if cgDTO.NumberOfTurn != cg.TurnNumber() {
