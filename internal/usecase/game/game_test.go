@@ -67,7 +67,7 @@ func (m mockTransactor) Do(ctx context.Context, fn func(txCtx context.Context) e
 	return fn(ctx)
 }
 
-func TestGameService_CreateGame(t *testing.T) {
+func TestGameService_CreateGameWithBot(t *testing.T) {
 	type testCase struct {
 		name    string
 		err     error
@@ -114,6 +114,87 @@ func TestGameService_CreateGame(t *testing.T) {
 
 			if tc.err == nil && gotCg == nil {
 				t.Errorf("CreateGameWithBot() gotCg = <nil>, want <not nil>")
+			}
+		})
+	}
+}
+
+func TestGameService_CreateGame(t *testing.T) {
+	validID := uuid.New()
+	saveErr := errors.New("db save error")
+
+	type testCase struct {
+		name            string
+		id              uuid.UUID
+		mode            gameRules.GameMode
+		repoErr         error
+		wantErr         error
+		wantStatus      gameRules.GameStatus
+		wantPlayerCount int
+	}
+
+	testCases := []testCase{
+		{
+			name:            "success create game player vs bot",
+			id:              validID,
+			mode:            gameRules.GameModePlayerVSBot,
+			repoErr:         nil,
+			wantErr:         nil,
+			wantStatus:      gameRules.StatusPlayerTurn,
+			wantPlayerCount: 2,
+		},
+		{
+			name:            "success create game player vs player",
+			id:              validID,
+			mode:            gameRules.GameModePlayerVSPlayer,
+			repoErr:         nil,
+			wantErr:         nil,
+			wantStatus:      gameRules.StatusWaitingForPlayers,
+			wantPlayerCount: 1,
+		},
+		{
+			name:    "failed nil user id",
+			id:      uuid.Nil,
+			mode:    gameRules.GameModePlayerVSBot,
+			wantErr: gameRules.ErrInvalidArgument,
+		},
+		{
+			name:    "failed invalid mode",
+			id:      validID,
+			mode:    gameRules.GameMode("INVALID_MODE"),
+			wantErr: gameRules.ErrInvalidArgument,
+		},
+		{
+			name:    "failed repo save error",
+			id:      validID,
+			mode:    gameRules.GameModePlayerVSPlayer,
+			repoErr: saveErr,
+			wantErr: saveErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepository{err: tc.repoErr}
+			gs := mockGameRules{}
+			as := game.NewGameService(gs, repo, mockTransactor{})
+
+			cg, err := as.CreateGame(context.Background(), tc.id, tc.mode)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("CreateGame() error = %v, wantErr %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr == nil {
+				if cg == nil {
+					t.Fatal("CreateGame() returned nil game, want non-nil")
+				}
+				if cg.Status() != tc.wantStatus {
+					t.Errorf("CreateGame() status = %v, wantStatus %v", cg.Status(), tc.wantStatus)
+				}
+				if len(cg.Players()) != tc.wantPlayerCount {
+					t.Errorf("CreateGame() players count = %d, want %d", len(cg.Players()), tc.wantPlayerCount)
+				}
 			}
 		})
 	}
