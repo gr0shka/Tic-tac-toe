@@ -24,7 +24,7 @@ func (m *repository) GetLeaderBoard(ctx context.Context, count int) (*game.Leade
 				WHERE status IN ($1, $2)
 				UNION ALL
 				SELECT player2_id AS user_id, status, winner_id
-				WHERE status IN ($1, $2) AND player2_id IS NOT NULL
+				WHERE status IN ($1, $2) AND player2_id IS NOT NULL AND player2_real = true
 			),
 
 			user_status AS (
