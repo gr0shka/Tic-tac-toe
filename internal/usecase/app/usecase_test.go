@@ -219,7 +219,11 @@ func TestAppService_GameIsEnded(t *testing.T) {
 
 			as := app.NewAppService(gs, repo, mockTransactor{})
 
-			winner, ended := as.GameIsEnded(context.Background(), tc.id)
+			winner, ended, err := as.GameIsEnded(context.Background(), tc.id)
+
+			if errors.Is(err, tc.err) {
+				t.Errorf("GameIsEnded() error = %v, wantErr %v", err, tc.err)
+			}
 
 			if winner != tc.winner {
 				t.Errorf("GameIsEnded() winner = %v, want %v", winner, tc.winner)
