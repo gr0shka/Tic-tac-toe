@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"math"
 	"os"
 	"testing"
 
@@ -366,6 +367,310 @@ func TestRepository_Mapper_DTOtoDomain(t *testing.T) {
 			if cgDTO.NumberOfTurn != cg.TurnNumber() {
 				t.Errorf("turn number error, expected %v, got %v",
 					cg.TurnNumber(), cgDTO.NumberOfTurn)
+			}
+		})
+	}
+}
+
+func truncateAll(t *testing.T) {
+	t.Helper()
+	_, err := testPool.Exec(context.Background(), "TRUNCATE current_game, users CASCADE")
+	if err != nil {
+		t.Fatalf("failed to truncate tables: %v", err)
+	}
+}
+
+func createTestUser(t *testing.T, id uuid.UUID, login string) {
+	t.Helper()
+	_, err := testPool.Exec(
+		context.Background(),
+		"INSERT INTO users (id, login, password) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+		id, login, "hash",
+	)
+	if err != nil {
+		t.Fatalf("failed inserting test user: %v", err)
+	}
+}
+
+func createFinishedGame(p1ID uuid.UUID, p2ID uuid.UUID, p2Real bool, status game.GameStatus, winnerIdx int) *game.CurrentGame {
+	gb := game.NewGameBoard()
+	p1 := game.NewPlayer(p1ID, game.FirstPlayer, true)
+	p2 := game.NewPlayer(p2ID, game.SecondPlayer, p2Real)
+	gb.AddPlayer(p1)
+	gb.AddPlayer(p2)
+
+	cg := game.NewCurrentGame(gb)
+	cg.SetStatus(status)
+	cg.SetWinner(winnerIdx)
+	return cg
+}
+
+func TestRepository_GetLeaderBoard(t *testing.T) {
+	aliceID := uuid.New()
+	bobID := uuid.New()
+	charlieID := uuid.New()
+
+	setupWithGames := func(t *testing.T) {
+		truncateAll(t)
+		createTestUser(t, aliceID, "alice")
+		createTestUser(t, bobID, "bob")
+		createTestUser(t, charlieID, "charlie")
+
+		repo := gameRepo.New(testPool)
+		games := []*game.CurrentGame{
+			createFinishedGame(aliceID, bobID, true, game.StatusPlayerWins, 0),         // Alice wins vs Bob
+			createFinishedGame(aliceID, bobID, true, game.StatusPlayerWins, 0),         // Alice wins vs Bob
+			createFinishedGame(bobID, charlieID, true, game.StatusPlayerWins, 0),       // Bob wins vs Charlie
+			createFinishedGame(aliceID, charlieID, true, game.StatusDraw, -1),          // Draw between Alice and Charlie
+			createFinishedGame(aliceID, bobID, true, game.StatusWaitingForPlayers, -1), // Incomplete game, should be ignored
+		}
+		for _, g := range games {
+			if err := repo.Save(context.Background(), g); err != nil {
+				t.Fatalf("failed to save game: %v", err)
+			}
+		}
+	}
+
+	setupEmpty := func(t *testing.T) {
+		truncateAll(t)
+	}
+
+	type expectedPlayer struct {
+		id        uuid.UUID
+		login     string
+		wins      int
+		loss      int
+		draw      int
+		wantRatio float32
+	}
+
+	type testCase struct {
+		name        string
+		setup       func(t *testing.T)
+		ctxFunc     func() (context.Context, context.CancelFunc)
+		count       int
+		wantErr     bool
+		wantLength  int
+		wantPlayers []expectedPlayer
+	}
+
+	defaultCtx := func() (context.Context, context.CancelFunc) {
+		return context.WithCancel(context.Background())
+	}
+
+	canceledCtx := func() (context.Context, context.CancelFunc) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		return ctx, cancel
+	}
+
+	testCases := []testCase{
+		{
+			name:       "success get leaderboard with ranking and stats",
+			setup:      setupWithGames,
+			ctxFunc:    defaultCtx,
+			count:      10,
+			wantErr:    false,
+			wantLength: 3,
+			wantPlayers: []expectedPlayer{
+				{
+					id:        aliceID,
+					login:     "alice",
+					wins:      2,
+					loss:      0,
+					draw:      1,
+					wantRatio: 2.0 / 3.0,
+				},
+				{
+					id:        bobID,
+					login:     "bob",
+					wins:      1,
+					loss:      2,
+					draw:      0,
+					wantRatio: 1.0 / 3.0,
+				},
+				{
+					id:        charlieID,
+					login:     "charlie",
+					wins:      0,
+					loss:      1,
+					draw:      1,
+					wantRatio: 0.0,
+				},
+			},
+		},
+		{
+			name:       "success get leaderboard with limit",
+			setup:      setupWithGames,
+			ctxFunc:    defaultCtx,
+			count:      1,
+			wantErr:    false,
+			wantLength: 1,
+			wantPlayers: []expectedPlayer{
+				{
+					id:        aliceID,
+					login:     "alice",
+					wins:      2,
+					loss:      0,
+					draw:      1,
+					wantRatio: 2.0 / 3.0,
+				},
+			},
+		},
+		{
+			name:        "success empty leaderboard when no completed games",
+			setup:       setupEmpty,
+			ctxFunc:     defaultCtx,
+			count:       10,
+			wantErr:     false,
+			wantLength:  0,
+			wantPlayers: nil,
+		},
+		{
+			name:        "failed get leaderboard on canceled context",
+			setup:       setupWithGames,
+			ctxFunc:     canceledCtx,
+			count:       10,
+			wantErr:     true,
+			wantLength:  0,
+			wantPlayers: nil,
+		},
+	}
+
+	repo := gameRepo.New(testPool)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.setup != nil {
+				tc.setup(t)
+			}
+
+			ctx, cancel := tc.ctxFunc()
+			defer cancel()
+
+			lb, err := repo.GetLeaderBoard(ctx, tc.count)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("GetLeaderBoard() error = %v, wantErr = %v", err, tc.wantErr)
+			}
+
+			if tc.wantErr {
+				return
+			}
+
+			if lb == nil {
+				t.Fatal("expected non-nil LeaderBoard")
+			}
+
+			if lb.Length() != tc.wantLength {
+				t.Fatalf("LeaderBoard length = %d, want %d", lb.Length(), tc.wantLength)
+			}
+
+			players := lb.GetPlayers()
+			for i, wantP := range tc.wantPlayers {
+				gotP := players[i]
+				if gotP.ID() != wantP.id {
+					t.Errorf("player[%d] ID = %v, want %v", i, gotP.ID(), wantP.id)
+				}
+				if gotP.Login() != wantP.login {
+					t.Errorf("player[%d] Login = %s, want %s", i, gotP.Login(), wantP.login)
+				}
+				if gotP.Wins() != wantP.wins {
+					t.Errorf("player[%d] Wins = %d, want %d", i, gotP.Wins(), wantP.wins)
+				}
+				if gotP.Loss() != wantP.loss {
+					t.Errorf("player[%d] Loss = %d, want %d", i, gotP.Loss(), wantP.loss)
+				}
+				if gotP.Draw() != wantP.draw {
+					t.Errorf("player[%d] Draw = %d, want %d", i, gotP.Draw(), wantP.draw)
+				}
+				if math.Abs(float64(gotP.Ratio()-wantP.wantRatio)) > 0.001 {
+					t.Errorf("player[%d] Ratio = %f, want %f", i, gotP.Ratio(), wantP.wantRatio)
+				}
+			}
+		})
+	}
+}
+
+func TestRepository_Mapper_DTOToLeaderBoard(t *testing.T) {
+	id1 := uuid.New()
+	id2 := uuid.New()
+
+	type testCase struct {
+		name       string
+		input      []gameRepo.PlayerWinRatioDTO
+		wantLength int
+	}
+
+	testCases := []testCase{
+		{
+			name: "success mapping dto to leaderboard",
+			input: []gameRepo.PlayerWinRatioDTO{
+				{
+					ID:    id1,
+					Login: "alice",
+					Wins:  5,
+					Loss:  2,
+					Draw:  1,
+					Ratio: 0.625,
+				},
+				{
+					ID:    id2,
+					Login: "bob",
+					Wins:  2,
+					Loss:  5,
+					Draw:  1,
+					Ratio: 0.25,
+				},
+			},
+			wantLength: 2,
+		},
+		{
+			name: "skip player with nil uuid",
+			input: []gameRepo.PlayerWinRatioDTO{
+				{
+					ID:    uuid.Nil,
+					Login: "invalid",
+					Wins:  0,
+					Loss:  0,
+					Draw:  0,
+					Ratio: 0,
+				},
+			},
+			wantLength: 0,
+		},
+		{
+			name:       "empty dto list",
+			input:      []gameRepo.PlayerWinRatioDTO{},
+			wantLength: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			lb := gameRepo.DTOToLeaderBoard(tc.input)
+			if lb == nil {
+				t.Fatal("expected non-nil LeaderBoard")
+			}
+			if lb.Length() != tc.wantLength {
+				t.Errorf("length = %d, want %d", lb.Length(), tc.wantLength)
+			}
+			if len(tc.input) > 0 && tc.wantLength > 0 {
+				p := lb.GetPlayers()[0]
+				if p.ID() != tc.input[0].ID {
+					t.Errorf("ID = %v, want %v", p.ID(), tc.input[0].ID)
+				}
+				if p.Login() != tc.input[0].Login {
+					t.Errorf("Login = %v, want %v", p.Login(), tc.input[0].Login)
+				}
+				if p.Wins() != tc.input[0].Wins {
+					t.Errorf("Wins = %v, want %v", p.Wins(), tc.input[0].Wins)
+				}
+				if p.Loss() != tc.input[0].Loss {
+					t.Errorf("Loss = %v, want %v", p.Loss(), tc.input[0].Loss)
+				}
+				if p.Draw() != tc.input[0].Draw {
+					t.Errorf("Draw = %v, want %v", p.Draw(), tc.input[0].Draw)
+				}
 			}
 		})
 	}
